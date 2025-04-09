@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env EXPO_NO_TELEMETRY=1 expo start",
-    "build:web": "expo build:web",
+    "build:web": "expo export --platform web",
     "lint": "expo lint"
   },
   "dependencies": {
@@ -49,6 +49,8 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
     "cross-env": "^7.0.3",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "webpack": "^5.99.5",
+    "webpack-cli": "^6.0.1"
   }
 }
