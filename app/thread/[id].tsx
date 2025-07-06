@@ -1,94 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
-import { ThreadView } from '@/components/community/ThreadView';
-import { supabase } from '@/lib/supabase';
+import React, { useState } from 'react';
+import { View, Text, Pressable, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Button } from '@/components/ui/button';
 
 export default function ThreadScreen() {
-  const { id } = useLocalSearchParams();
-  const [post, setPost] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [comment, setComment] = useState("");
 
-  useEffect(() => {
-    fetchPost();
-  }, [id]);
+  const post = {
+    username: "sharmadivyanshu265",
+    content: "hgj\njhkh",
+    likes: 0,
+    comments: 0,
+  };
 
-  const fetchPost = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // Get post with basic info
-      const { data: postData, error: postError } = await supabase
-        .from('posts')
-        .select(`
-          *,
-          profiles:user_id (username)
-        `)
-        .eq('id', id)
-        .single();
+  const handleBack = () => {
+    router.back();
+  };
 
-      if (postError) throw postError;
-
-      // Get likes
-      const { data: likesData, error: likesError } = await supabase
-        .from('likes')
-        .select('*');
-
-      if (likesError) throw likesError;
-
-      // Count likes for the post
-      const likesCount = likesData?.reduce((acc, like) => {
-        acc[like.post_id] = (acc[like.post_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      // Get user's like status if authenticated
-      let userLiked = false;
-      if (user) {
-        userLiked = likesData?.some(
-          like => like.post_id === id && like.user_id === user.id
-        ) || false;
-      }
-
-      // Combine the data
-      const postWithLikes = {
-        ...postData,
-        likes: likesCount[postData.id] || 0,
-        user_liked: userLiked,
-      };
-
-      setPost(postWithLikes);
-    } catch (error) {
-      console.error('Error fetching post:', error);
-    } finally {
-      setLoading(false);
+  const handlePost = () => {
+    if (comment.trim()) {
+      // Handle comment posting logic here
+      setComment("");
     }
   };
 
-  if (loading || !post) {
-    return null;
-  }
-
   return (
-    <>
-      <Stack.Screen 
-        options={{
-          title: 'Thread',
-        }} 
-      />
-      <View style={styles.container}>
-        <ThreadView
-          post={post}
-          onClose={() => {}}
-        />
-      </View>
-    </>
-  );
-}
+    <View className="flex-1 bg-background">
+      <View className="max-w-md mx-auto pb-24">
+        {/* Header */}
+        <View className="flex-row items-center p-4 border-b border-border bg-card">
+          <Pressable 
+            onPress={handleBack}
+            className="mr-3 p-1"
+          >
+            <Text className="text-foreground text-2xl">←</Text>
+          </Pressable>
+          <Text className="text-xl font-semibold text-foreground">Thread</Text>
+        </View>
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-}); 
+        {/* Original Post */}
+        <View className="p-4 border-b border-border">
+          <View className="bg-card rounded-lg p-4 shadow-sm border border-border">
+            <View className="mb-2">
+              <Text className="font-medium text-foreground">{post.username}</Text>
+            </View>
+            
+            <Text className="text-foreground mb-3">{post.content}</Text>
+            
+            <View className="flex-row items-center space-x-6">
+              <View className="flex-row items-center space-x-1">
+                <Text className="text-muted-foreground">🤍</Text>
+                <Text className="text-sm text-muted-foreground">{post.likes}</Text>
+              </View>
+              
+              <View className="flex-row items-center space-x-1">
+                <Text className="text-muted-foreground">💬</Text>
+                <Text className="text-sm text-muted-foreground">{post.comments}</Text>
+              </View>
+              
+              <View className="flex-row items-center space-x-1">
+                <Text className="text-muted-foreground">🔗</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Comments Section */}
+        <View className="p-4">
+          <Text className="text-lg font-medium text-foreground mb-4">Comments</Text>
+          {/* Comments would be rendered here */}
+        </View>
+
+        {/* Comment Input */}
+        <View className="absolute bottom-0 left-0 right-0 bg-card border-t border-border p-4">
+          <View className="max-w-md mx-auto">
+            <View className="flex-row items-center space-x-2 mb-3">
+              <Text className="text-2xl">📷</Text>
+              <TextInput
+                placeholder="Add a comment..."
+                value={comment}
+                onChangeText={setComment}
+                className="flex-1 text-muted-foreground bg-transparent"
+                multiline
+              />
+            </View>
+            <Button 
+              onPress={handlePost}
+              className="w-full bg-f1-red text-white font-medium rounded-lg py-3"
+            >
+              Post
+            </Button>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+} 

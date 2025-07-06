@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 35 29% 79%;
+    --foreground: 28 25% 32%;
+    --card: 37 31% 80%;
+    --card-foreground: 28 25% 32%;
+    --popover: 40 41% 87%;
+    --popover-foreground: 28 25% 32%;
+    --primary: 71 35% 45%;
+    --primary-foreground: 46 29% 97%;
+    --secondary: 44 31% 73%;
+    --secondary-foreground: 28 25% 32%;
+    --muted: 44 31% 73%;
+    --muted-foreground: 31 15% 47%;
+    --accent: 43 35% 71%;
+    --accent-foreground: 28 25% 32%;
+    --destructive: 12 58% 67%;
+    --destructive-foreground: 44 36% 96%;
+    --border: 23 24% 58%;
+    --input: 43 35% 71%;
+    --ring: 95 28% 63%;
+    --radius: 0.425rem;
+    --sidebar-background: 42 36% 75%;
+    --sidebar-foreground: 28 25% 32%;
+    --sidebar-primary: 95 28% 63%;
+    --sidebar-primary-foreground: 46 29% 97%;
+    --sidebar-accent: 41 26% 87%;
+    --sidebar-accent-foreground: 28 25% 32%;
+    --sidebar-border: 41 30% 86%;
+    --sidebar-ring: 95 28% 63%;
+    
+    /* Kodama Grove shadows */
+    --shadow-sm: 3px 3px 2px 0px hsl(88 22% 35% / 0.15), 3px 1px 2px -1px hsl(88 22% 35% / 0.15);
+    --shadow-md: 3px 3px 2px 0px hsl(88 22% 35% / 0.15), 3px 2px 4px -1px hsl(88 22% 35% / 0.15);
+    --shadow-lg: 3px 3px 2px 0px hsl(88 22% 35% / 0.15), 3px 4px 6px -1px hsl(88 22% 35% / 0.15);
+    
+    /* F1 brand color for CTA buttons */
+    --f1-red: 0 100% 60%;
+    
+    /* Enhanced gradients */
+    --gradient-warm: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--secondary)) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(95 28% 63%) 100%);
+    --gradient-f1: linear-gradient(135deg, hsl(var(--f1-red)) 0%, hsl(12 58% 67%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(40 41% 87%) 100%);
+  }
+
+  .dark {
+    --background: 40 11% 21%;
+    --foreground: 36 22% 87%;
+    --card: 37 14% 25%;
+    --card-foreground: 36 22% 87%;
+    --popover: 37 14% 25%;
+    --popover-foreground: 36 22% 87%;
+    --primary: 95 29% 60%;
+    --primary-foreground: 32 14% 15%;
+    --secondary: 30 16% 33%;
+    --secondary-foreground: 36 22% 87%;
+    --muted: 36 14% 28%;
+    --muted-foreground: 26 10% 62%;
+    --accent: 43 31% 55%;
+    --accent-foreground: 32 14% 15%;
+    --destructive: 12 45% 55%;
+    --destructive-foreground: 39 27% 91%;
+    --border: 30 16% 33%;
+    --input: 30 16% 33%;
+    --ring: 95 29% 60%;
+    --sidebar-background: 40 11% 21%;
+    --sidebar-foreground: 36 22% 87%;
+    --sidebar-primary: 95 29% 60%;
+    --sidebar-primary-foreground: 32 14% 15%;
+    --sidebar-accent: 43 31% 55%;
+    --sidebar-accent-foreground: 32 14% 15%;
+    --sidebar-border: 30 16% 33%;
+    --sidebar-ring: 95 29% 60%;
+    
+    /* Dark mode gradients */
+    --gradient-warm: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--secondary)) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(95 29% 60%) 100%);
+    --gradient-f1: linear-gradient(135deg, hsl(var(--f1-red)) 0%, hsl(12 45% 55%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(37 14% 25%) 100%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-serif;
+    font-family: 'Merriweather', serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Source Serif 4', serif;
+  }
+  
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}

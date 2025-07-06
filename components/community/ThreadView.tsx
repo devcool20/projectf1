@@ -11,7 +11,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { Camera, Heart, MessageCircle, Share2 } from 'lucide-react-native';
+import { Camera, Heart, MessageCircle, Share2, ArrowLeft } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 type ThreadViewProps = {
@@ -203,232 +203,356 @@ export function ThreadView({ post, onClose }: ThreadViewProps) {
     }
   };
 
+  const handleReplyTo = (username: string) => {
+    setNewComment(`@${username.toLowerCase()} `);
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={twStyles.outerContainer}>
+      {/* Header with yellowish background */}
+      <View style={twStyles.headerYellow}>
+        <TouchableOpacity onPress={onClose} style={twStyles.headerBack}>
+          <ArrowLeft size={28} color="#7c6a4d" />
+        </TouchableOpacity>
+        <Text style={twStyles.headerTitleYellow}>Post</Text>
+      </View>
       <ScrollView
-        style={styles.scrollView}
+        style={twStyles.scrollView}
+        contentContainerStyle={{ paddingBottom: 96 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
+        showsVerticalScrollIndicator={true}
       >
-        {/* Original Post */}
-        <View style={styles.postContainer}>
-          <Text style={styles.username}>{post.profiles?.username}</Text>
-          <Text style={styles.title}>{post.title}</Text>
-          <Text style={styles.content}>{post.content}</Text>
-          {post.image_url && (
-            <Image
-              source={{ uri: post.image_url }}
-              style={styles.postImage}
-              resizeMode="cover"
-            />
-          )}
-          <View style={styles.postActions}>
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={post.user_liked ? handleUnlike : handleLike}
-            >
-              <Heart 
-                size={20} 
-                color={post.user_liked ? '#E10600' : '#666666'} 
-                fill={post.user_liked ? '#E10600' : 'none'}
-              />
-              <Text style={[
-                styles.actionText,
-                post.user_liked && styles.actionTextActive
-              ]}>
-                {post.likes || 0}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <MessageCircle size={20} color="#666666" />
-              <Text style={styles.actionText}>{comments.length}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Share2 size={20} color="#666666" />
-            </TouchableOpacity>
+        {/* Main Post */}
+        <View style={twStyles.postContainer}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+            <View style={twStyles.avatar}>
+              <Text style={twStyles.avatarText}>{post.profiles?.username?.[0]?.toUpperCase() || 'U'}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={twStyles.username}>{post.profiles?.username || 'User'}</Text>
+              <Text style={twStyles.handleSmall}>@{post.profiles?.username?.toLowerCase() || 'user'} · <Text style={twStyles.dateSmall}>{new Date(post.created_at).toLocaleDateString()}</Text></Text>
+              <Text style={twStyles.content}>{post.content}</Text>
+              {post.image_url && (
+                <Image
+                  source={{ uri: post.image_url }}
+                  style={twStyles.postImage}
+                  resizeMode="cover"
+                />
+              )}
+              <View style={twStyles.postActions}>
+                <TouchableOpacity 
+                  style={twStyles.actionButton}
+                  onPress={post.user_liked ? handleUnlike : handleLike}
+                >
+                  <Heart 
+                    size={20} 
+                    color={post.user_liked ? '#E10600' : '#a08c6b'} 
+                    fill={post.user_liked ? '#E10600' : 'none'}
+                  />
+                  <Text style={[twStyles.actionTextSmall, post.user_liked && twStyles.actionTextActive]}>
+                    {post.likes || 0}
+                  </Text>
+                </TouchableOpacity>
+                <View style={twStyles.actionButton}>
+                  <MessageCircle size={20} color="#a08c6b" />
+                  <Text style={twStyles.actionTextSmall}>{comments.length}</Text>
+                </View>
+                <View style={twStyles.actionButton}>
+                  <Share2 size={20} color="#a08c6b" />
+                </View>
+              </View>
+            </View>
           </View>
         </View>
-
-        {/* Comments */}
-        <View style={styles.commentsContainer}>
-          <Text style={styles.commentsTitle}>Comments</Text>
-          {loading ? (
-            <ActivityIndicator color="#E10600" />
-          ) : (
-            comments.map((comment) => (
-              <View key={comment.id} style={styles.comment}>
-                <Text style={styles.commentUsername}>
-                  {comment.profiles?.username}
-                </Text>
-                <Text style={styles.commentContent}>{comment.content}</Text>
-                {comment.image_url && (
+        {/* Reply Box */}
+        <View style={twStyles.replyBoxInline}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding:10 }}>
+            <View style={twStyles.avatarSmall}>
+              <Text style={twStyles.avatarTextSmall}>{session?.user?.email?.[0]?.toUpperCase() || 'U'}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <TextInput
+                style={twStyles.replyInput}
+                placeholder="Post your reply"
+                value={newComment}
+                onChangeText={setNewComment}
+                multiline
+                placeholderTextColor="#a08c6b"
+              />
+              {image && (
+                <View style={twStyles.imagePreview}>
                   <Image
-                    source={{ uri: comment.image_url }}
-                    style={styles.commentImage}
+                    source={{ uri: image }}
+                    style={twStyles.previewImage}
                     resizeMode="cover"
                   />
-                )}
-                <Text style={styles.commentTime}>
-                  {new Date(comment.created_at).toLocaleDateString()}
-                </Text>
+                  <TouchableOpacity
+                    style={twStyles.removeImage}
+                    onPress={() => setImage(null)}
+                  >
+                    <Text style={twStyles.removeImageText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+               <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10}}>
+                <TouchableOpacity style={twStyles.imageButton} onPress={pickImage}>
+                  <Camera size={22} color="#a08c6b" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={twStyles.replyButton}
+                  onPress={handleSubmitComment}
+                  disabled={!newComment.trim() && !image}
+                >
+                  <Text style={twStyles.replyButtonText}>Reply</Text>
+                </TouchableOpacity>
               </View>
+            </View>
+          </View>
+        </View>
+        {/* Replies */}
+        <View style={twStyles.repliesContainer}>
+          {loading ? (
+            <View style={{ alignItems: 'center', marginTop: 32 }}>
+              <ActivityIndicator color="#E10600" />
+            </View>
+          ) : comments.length === 0 ? (
+            <Text style={twStyles.noReplies}>No replies yet.</Text>
+          ) : (
+            comments.map((comment) => (
+              <TouchableOpacity key={comment.id} onPress={() => handleReplyTo(comment.profiles?.username)}>
+                <View style={twStyles.reply}>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                    <View style={twStyles.avatarSmall}>
+                      <Text style={twStyles.avatarTextSmall}>{comment.profiles?.username?.[0]?.toUpperCase() || 'U'}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={twStyles.replyUsername}>{comment.profiles?.username || 'User'}</Text>
+                      <Text style={twStyles.replyHandleSmall}>@{comment.profiles?.username?.toLowerCase() || 'user'} · <Text style={twStyles.dateSmall}>{new Date(comment.created_at).toLocaleDateString()}</Text></Text>
+                      <Text style={twStyles.replyContent}>{comment.content}</Text>
+                      {comment.image_url && (
+                        <Image
+                          source={{ uri: comment.image_url }}
+                          style={twStyles.replyImage}
+                          resizeMode="cover"
+                        />
+                      )}
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
             ))
           )}
         </View>
       </ScrollView>
-
-      {/* Comment Input */}
-      <View style={styles.inputContainer}>
-        <TouchableOpacity
-          style={styles.imageButton}
-          onPress={pickImage}
-        >
-          <Camera size={24} color="#666666" />
-        </TouchableOpacity>
-        <TextInput
-          style={styles.input}
-          placeholder="Add a comment..."
-          value={newComment}
-          onChangeText={setNewComment}
-          multiline
-        />
-        {image && (
-          <View style={styles.imagePreview}>
-            <Image
-              source={{ uri: image }}
-              style={styles.previewImage}
-              resizeMode="cover"
-            />
-            <TouchableOpacity
-              style={styles.removeImage}
-              onPress={() => setImage(null)}
-            >
-              <Text style={styles.removeImageText}>×</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleSubmitComment}
-        >
-          <Text style={styles.submitButtonText}>Post</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const twStyles = StyleSheet.create({
+  outerContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'hsl(var(--card))',
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    minHeight: 600,
+    maxHeight: '95vh',
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  headerYellow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'hsl(var(--card))',
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: 'hsl(var(--border))',
+    zIndex: 10,
+  },
+  headerBack: {
+    marginRight: 12,
+    padding: 2,
+  },
+  headerTitleYellow: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'hsl(var(--foreground))',
+    fontFamily: 'Inter-SemiBold',
   },
   scrollView: {
     flex: 1,
+    backgroundColor: 'hsl(var(--card))',
   },
   postContainer: {
-    padding: 16,
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: 'hsl(var(--border))',
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'hsl(var(--primary))',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  avatarText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    fontFamily: 'Inter-SemiBold',
   },
   username: {
-    fontSize: 14,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'hsl(var(--foreground))',
     fontFamily: 'Inter-SemiBold',
-    color: '#666666',
-    marginBottom: 8,
+    marginBottom: 2,
   },
-  title: {
-    fontSize: 20,
-    fontFamily: 'Inter-SemiBold',
-    color: '#333333',
-    marginBottom: 8,
+  handleSmall: {
+    fontSize: 13,
+    color: '#a08c6b',
+    marginBottom: 6,
+    fontFamily: 'Inter',
+  },
+  dateSmall: {
+    fontSize: 12,
+    color: '#a08c6b',
+    fontFamily: 'Inter',
   },
   content: {
-    fontSize: 16,
+    fontSize: 17,
+    color: 'hsl(var(--foreground))',
+    marginBottom: 10,
     fontFamily: 'Inter',
-    color: '#333333',
-    marginBottom: 12,
   },
   postImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 12,
-    resizeMode: 'cover',
+    height: 220,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: 'hsl(var(--muted))',
   },
   postActions: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 24,
+    marginTop: 8,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  actionText: {
-    fontSize: 14,
+  actionTextSmall: {
+    fontSize: 13,
+    color: '#a08c6b',
     fontFamily: 'Inter',
-    color: '#666666',
   },
   actionTextActive: {
     color: '#E10600',
+    fontWeight: 'bold',
   },
-  commentsContainer: {
-    padding: 16,
+  repliesContainer: {
+    padding: 10,
+    backgroundColor: 'hsl(var(--card))',
   },
-  commentsTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#333333',
-    marginBottom: 16,
+  noReplies: {
+    color: '#a08c6b',
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 32,
+    fontFamily: 'Inter',
   },
-  comment: {
-    marginBottom: 16,
-    paddingBottom: 16,
+  reply: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 18,
+    paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: 'hsl(var(--border))',
   },
-  commentUsername: {
-    fontSize: 14,
+  avatarSmall: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'hsl(var(--primary))',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+  },
+  avatarTextSmall: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
     fontFamily: 'Inter-SemiBold',
-    color: '#666666',
+  },
+  replyUsername: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: 'hsl(var(--foreground))',
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 1,
+  },
+  replyHandleSmall: {
+    fontSize: 11,
+    color: '#a08c6b',
+    marginBottom: 4,
+    fontFamily: 'Inter',
+  },
+  replyContent: {
+    fontSize: 15,
+    color: 'hsl(var(--foreground))',
+    fontFamily: 'Inter',
     marginBottom: 4,
   },
-  commentContent: {
-    fontSize: 16,
-    fontFamily: 'Inter',
-    color: '#333333',
-    marginBottom: 8,
-  },
-  commentImage: {
+  replyImage: {
     width: '100%',
-    height: 150,
-    borderRadius: 8,
-    marginBottom: 8,
-    resizeMode: 'cover',
+    height: 160,
+    borderRadius: 10,
+    marginTop: 4,
+    backgroundColor: 'hsl(var(--muted))',
   },
-  commentTime: {
-    fontSize: 12,
-    fontFamily: 'Inter',
-    color: '#999999',
-  },
-  inputContainer: {
-    padding: 16,
+  replyBoxInline: {
     borderTopWidth: 1,
-    borderTopColor: '#F5F5F5',
-    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderColor: 'hsl(var(--border))',
+    backgroundColor: 'hsl(var(--card))',
   },
-  input: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
+  replyInput: {
+    backgroundColor: 'hsl(var(--background))',
     borderRadius: 8,
-    padding: 12,
-    marginRight: 8,
+    padding: 10,
+    fontSize: 15,
+    color: 'hsl(var(--foreground))',
     fontFamily: 'Inter',
+    minHeight: 40,
+    maxHeight: 100,
   },
   imageButton: {
-    padding: 8,
+    padding: 6,
+  },
+  replyButton: {
+    backgroundColor: '#E10600',
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  replyButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+    fontFamily: 'Inter-SemiBold',
   },
   imagePreview: {
     position: 'relative',
@@ -436,36 +560,24 @@ const styles = StyleSheet.create({
   },
   previewImage: {
     width: '100%',
-    height: 150,
+    height: 120,
     borderRadius: 8,
     resizeMode: 'cover',
   },
   removeImage: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    top: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 12,
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeImageText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    lineHeight: 24,
-  },
-  submitButton: {
-    backgroundColor: '#E10600',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
+    color: '#fff',
     fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    lineHeight: 22,
   },
 }); 

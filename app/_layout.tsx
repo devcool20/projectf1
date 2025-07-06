@@ -3,6 +3,7 @@ import { useFonts, RacingSansOne_400Regular } from '@expo-google-fonts/racing-sa
 import { Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { useEffect } from 'react';
 import { SplashScreen } from 'expo-router';
+import './globals.css';
 
 SplashScreen.preventAutoHideAsync();
 

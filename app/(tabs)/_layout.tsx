@@ -1,16 +1,16 @@
-import { Tabs } from 'expo-router';
+import { Slot, usePathname } from 'expo-router';
 import { useColorScheme } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
 import { useFonts, RacingSansOne_400Regular } from '@expo-google-fonts/racing-sans-one';
 import { Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { useEffect } from 'react';
 import { SplashScreen } from 'expo-router';
-import { HeaderRight } from '@/components/HeaderRight';
+import CustomBottomNav from '@/components/CustomBottomNav';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const pathname = usePathname();
   const [fontsLoaded, fontError] = useFonts({
     'RacingSansOne': RacingSansOne_400Regular,
     'Inter': Inter_400Regular,
@@ -27,54 +27,12 @@ export default function TabLayout() {
     return null;
   }
 
+  const showNav = !['/community', '/news'].includes(pathname);
+
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#E10600',
-        tabBarInactiveTintColor: '#666666',
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#F5F5F5',
-        },
-        headerRight: () => <HeaderRight />,
-      }}
-    >
-      <Tabs.Screen
-        name="community"
-        options={{
-          title: 'Community',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="comments" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="screenings"
-        options={{
-          title: 'Screenings',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="film" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="shop"
-        options={{
-          title: 'Shop',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="shopping-bag" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="drivers"
-        options={{
-          title: 'Drivers',
-          tabBarIcon: ({ color }) => (
-            <FontAwesome name="trophy" size={24} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <>
+      <Slot />
+      {showNav && <CustomBottomNav />}
+    </>
   );
 }

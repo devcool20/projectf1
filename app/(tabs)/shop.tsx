@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
+import ProductCard from '@/components/ProductCard';
 
 const products = [
   {
@@ -17,98 +18,24 @@ const products = [
 
 export default function ShopScreen() {
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Official F1 Merchandise</Text>
-        <Text style={styles.headerSubtitle}>Show your support for your favorite team</Text>
-      </View>
+    <View className="flex-1 bg-background">
+      <ScrollView className="flex-1 bg-background">
+        <View className="p-6 bg-gradient-primary">
+          <Text className="font-heading text-4xl text-primary-foreground mb-2">Official F1 Merchandise</Text>
+          <Text className="font-serif text-lg text-primary-foreground/80">Show your support for your favorite team</Text>
+        </View>
 
-      <View style={styles.content}>
-        {products.map((product) => (
-          <TouchableOpacity key={product.id} style={styles.productCard}>
-            <Image
-              source={{ uri: product.image }}
-              style={styles.productImage}
+        <View className="p-6">
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              name={product.name}
+              price={product.price}
+              imageUrl={product.image}
             />
-            <View style={styles.productInfo}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>${product.price}</Text>
-              <TouchableOpacity style={styles.addToCartButton}>
-                <Text style={styles.addToCartButtonText}>Add to Cart</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    padding: 20,
-    backgroundColor: '#000000',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontFamily: 'RacingSansOne',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    fontFamily: 'Inter',
-    color: '#FFFFFF',
-    opacity: 0.8,
-  },
-  content: {
-    padding: 20,
-  },
-  productCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  productImage: {
-    width: '100%',
-    height: 250,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-  },
-  productInfo: {
-    padding: 16,
-  },
-  productName: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#333333',
-    marginBottom: 8,
-  },
-  productPrice: {
-    fontSize: 20,
-    fontFamily: 'Inter-SemiBold',
-    color: '#E10600',
-    marginBottom: 16,
-  },
-  addToCartButton: {
-    backgroundColor: '#E10600',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  addToCartButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-});
