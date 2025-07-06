@@ -13,9 +13,15 @@ import { supabase } from '@/lib/supabase';
 type AuthModalProps = {
   visible: boolean;
   onClose: () => void;
+  /**
+   * Optional callback that is fired after a successful login/signup.
+   * This allows parent components to perform follow-up actions (e.g. navigation)
+   * before or after the modal closes.
+   */
+  onSuccess?: () => void;
 };
 
-export function AuthModal({ visible, onClose }: AuthModalProps) {
+export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,6 +69,8 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
         if (error) throw error;
       }
 
+      // Notify parent of successful authentication before closing the modal
+      onSuccess?.();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
