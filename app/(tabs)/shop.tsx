@@ -18,22 +18,24 @@ const products = [
 
 export default function ShopScreen() {
   return (
-    <View className="flex-1 bg-background">
-      <ScrollView className="flex-1 bg-background">
-        <View className="p-6 bg-gradient-primary">
-          <Text className="font-heading text-4xl text-primary-foreground mb-2">Official F1 Merchandise</Text>
-          <Text className="font-serif text-lg text-primary-foreground/80">Show your support for your favorite team</Text>
-        </View>
+    <View className="flex-1 bg-background items-center">
+      <ScrollView className="w-full max-w-3xl mt-4">
+        <View className="bg-card rounded-2xl shadow-lg overflow-hidden">
+          <View className="p-6 bg-gradient-primary">
+            <Text className="font-heading text-4xl text-primary-foreground mb-2">Official F1 Merchandise</Text>
+            <Text className="font-serif text-lg text-primary-foreground/80">Show your support for your favorite team</Text>
+          </View>
 
-        <View className="p-6">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              name={product.name}
-              price={product.price}
-              imageUrl={product.image}
-            />
-          ))}
+          <View className="p-6">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                name={product.name}
+                price={product.price}
+                imageUrl={product.image}
+              />
+            ))}
+          </View>
         </View>
       </ScrollView>
     </View>

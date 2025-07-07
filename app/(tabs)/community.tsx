@@ -15,11 +15,11 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { useRouter } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { ThreadView } from '@/components/community/ThreadView';
-import { Home, Users, Clapperboard, ShoppingBag, Trophy, User, Camera, X, ShoppingCart, Newspaper } from 'lucide-react-native';
+import { Home, Users, Clapperboard, ShoppingBag, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useColorScheme } from 'react-native';
 import NewPostCard, { PostProps } from '../../components/PostCard';
-import { NewsView } from '../../components/community/NewsView';
+import { ProfileModal } from '@/components/ProfileModal';
 
 const NAV_ITEMS = [
   { href: '/', icon: Home, name: 'Home' },
@@ -28,6 +28,7 @@ const NAV_ITEMS = [
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
   { href: '/drivers', icon: Trophy, name: 'Drivers' },
   { href: '#news', icon: Newspaper, name: 'News' },
+  { href: '#profile', icon: User, name: 'Profile' },
 ];
 
 const RSS_TO_JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.formula1.com/en/latest/all.xml';
@@ -43,7 +44,8 @@ export default function CommunityScreen() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [selectedThread, setSelectedThread] = useState<PostProps | null>(null);
   const [image, setImage] = useState<string | null>(null);
-  const [isViewingNews, setIsViewingNews] = useState(false);
+  const [isViewingThread, setIsViewingThread] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const { colorScheme } = useColorScheme();
   const router = useRouter();
 
@@ -163,49 +165,81 @@ export default function CommunityScreen() {
     }
   };
 
-  if (isViewingNews) {
-    return <NewsView onClose={() => setIsViewingNews(false)} />;
-  }
+  const handleThreadPress = (post: PostProps) => {
+    setSelectedThread(post);
+    setIsViewingThread(true);
+  };
+
+  const handleCloseThread = () => {
+    setSelectedThread(null);
+    setIsViewingThread(false);
+  };
+
   return (
     <View className="flex-row w-full min-h-screen bg-card">
       {/* Left Sidebar */}
-      <View className="w-64 p-4 space-y-4">
-        <View className="space-y-2">
-          <Text className="text-2xl font-bold text-primary">F1</Text>
+      <View className="w-64 p-4 flex flex-col">
+        <View>
+          <View className="px-3 mb-4">
+            <Text className="text-2xl font-bold text-primary">projectF1</Text>
+          </View>
+          <View className="space-y-1">
+            {NAV_ITEMS.map((item) => (
+              <TouchableOpacity
+                key={item.href}
+                onPress={() => {
+                  if (item.href === '#news') {
+                    router.push('/news');
+                  } else if (item.href === '#profile') {
+                    if (session) {
+                      setShowProfileModal(true);
+                    } else {
+                      setShowAuth(true);
+                    }
+                  } else {
+                    router.push(item.href as `http${string}` | `/${string}`);
+                  }
+                }}
+                className="flex-row items-center space-x-4 p-3 rounded-full hover:bg-muted"
+              >
+                <item.icon size={24} color={colorScheme === 'dark' ? 'white' : 'black'} strokeWidth={2} />
+                <Text className="text-xl font-bold text-foreground">{item.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-        <View className="space-y-1">
-          {NAV_ITEMS.map((item) => (
-            <TouchableOpacity
-              key={item.href}
-              onPress={() => {
-                if (item.href === '#news') {
-                  setIsViewingNews(true);
-                } else {
-                  router.push(item.href as `http${string}` | `/${string}`);
-                }
-              }}
-              className="flex-row items-center space-x-4 p-3 rounded-full hover:bg-muted"
-            >
-              <item.icon size={24} color={colorScheme === 'dark' ? 'white' : 'black'} strokeWidth={2} />
-              <Text className="text-xl font-bold text-foreground">{item.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity
-          onPress={handleCreatePost}
-          className="bg-red-800 w-full py-3 rounded-full flex items-center justify-center mt-4"
-        >
-          <Text className="text-white font-bold text-lg">Post</Text>
-        </TouchableOpacity>
+
+        <View className="flex-1" />
+
+        {session ? (
+          <TouchableOpacity onPress={() => setShowProfileModal(true)} className="flex-row items-center justify-between">
+            <View className="flex-row items-center space-x-3">
+              <Image
+                source={{ uri: session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${session.user.email}` }}
+                className="w-10 h-10 rounded-full bg-muted"
+              />
+              <View>
+                <Text className="font-bold text-foreground">{session.user.user_metadata.full_name || session.user.email}</Text>
+                <Text className="text-muted-foreground text-sm">@{session.user.user_metadata.username || session.user.email?.split('@')[0]}</Text>
+              </View>
+            </View>
+            <MoreHorizontal size={20} color="hsl(var(--foreground))" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={() => setShowAuth(true)}
+            className="bg-primary-red w-full py-3 rounded-full flex items-center justify-center"
+          >
+            <Text className="text-white font-bold text-lg">Log in</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Centered Scrollable Threads Container or Thread View */}
       <View className="flex-1 flex items-center border-x border-border">
         <View className="w-full max-w-2xl min-h-screen flex flex-col items-center">
-          {selectedThread ? (
-            <ThreadView post={selectedThread} onClose={() => setSelectedThread(null)} />
-          ) : isViewingNews ? (
-            <NewsView onClose={() => setIsViewingNews(false)} />
+          {isViewingThread ? (
+            <ThreadView post={selectedThread} onClose={handleCloseThread} />
           ) : (
             <View className="w-full bg-card rounded-2xl shadow-kodama-lg flex flex-col h-[95vh]">
               {/* Header for "For you" / "Following" */}
@@ -255,26 +289,20 @@ export default function CommunityScreen() {
                 </View>
 
                 {loading ? (
-                  <ActivityIndicator className="mt-8" size="large" />
+                  <ActivityIndicator className="mt-8" />
                 ) : (
-                  <View className="divide-y divide-border">
-                    <View className="px-4 py-4 space-y-4">
-                      {posts.map((post) => (
-                        <NewPostCard
-                          key={post.id}
-                          username={post.profiles?.username || 'Anonymous'}
-                          handle={post.profiles?.username || 'anonymous'}
-                          time="1h"
-                          content={post.content}
-                          likes={0}
-                          comments={0}
-                          reposts={0}
-                          avatarUrl={post.profiles?.avatar_url}
-                          onPress={() => setSelectedThread(post)}
-                        />
-                      ))}
-                    </View>
-                  </View>
+                  posts.map((post) => (
+                    <TouchableOpacity key={post.id} onPress={() => handleThreadPress(post)} className="border-b border-gray-700">
+                      <NewPostCard
+                        username={post.profiles?.username || 'Anonymous'}
+                        content={post.content}
+                        timestamp={post.created_at}
+                        likes={post.likes ?? 0}
+                        comments={post.comments ?? 0}
+                        isLiked={post.isLiked ?? false}
+                      />
+                    </TouchableOpacity>
+                  ))
                 )}
               </ScrollView>
             </View>
@@ -284,14 +312,28 @@ export default function CommunityScreen() {
       
       {/* Right Sidebar for News */}
       <View className="w-80 p-4 space-y-4">
-        <View className="bg-muted p-4 rounded-xl flex-1">
+        <View className="bg-muted p-4 rounded-xl">
           <Text className="text-xl font-bold text-foreground mb-4">What's happening</Text>
           {newsLoading ? (
             <ActivityIndicator />
           ) : (
             <ScrollView>
               {news.slice(0, 15).map((item, index) => (
-                <TouchableOpacity key={index} className="mb-4">
+                <TouchableOpacity
+                  key={index}
+                  className="mb-4"
+                  onPress={() =>
+                    router.push({
+                      pathname: '/news',
+                      params: {
+                        title: item.title,
+                        description: item.description,
+                        link: item.link,
+                        enclosure: item.enclosure?.link,
+                        source: item.source.name,
+                      },
+                    })}
+                >
                   <Text className="text-muted-foreground text-sm">{item.source.name} · Trending</Text>
                   <Text className="font-bold text-foreground">{item.title}</Text>
                   <Text className="text-muted-foreground text-sm">{item.description}</Text>
@@ -312,6 +354,16 @@ export default function CommunityScreen() {
           }}
         />
       )}
+
+      <ProfileModal
+        visible={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        session={session}
+        onLogin={() => {
+          setShowProfileModal(false);
+          setShowAuth(true);
+        }}
+      />
     </View>
   );
 }
