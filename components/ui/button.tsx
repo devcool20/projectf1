@@ -15,6 +15,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary",
         ghost: "bg-transparent",
         link: "bg-transparent",
+        cta: "bg-f1-red",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -41,6 +42,7 @@ const textVariants = cva(
         secondary: "text-secondary-foreground",
         ghost: "text-foreground",
         link: "text-primary",
+        cta: "text-white font-semibold",
       },
     },
     defaultVariants: {

@@ -45,12 +45,6 @@ export default function RootLayout() {
         }}
       />
       <Stack.Screen
-        name="create-post"
-        options={{
-          title: 'Create Post',
-        }}
-      />
-      <Stack.Screen
         name="thread/[id]"
         options={{
           title: 'Thread',

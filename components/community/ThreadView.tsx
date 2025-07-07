@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,70 +9,144 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft } from 'lucide-react-native';
-import PostCard, { PostProps } from '../PostCard';
+import { ArrowLeft, Trash2, Heart } from 'lucide-react-native';
+import PostCard from '../PostCard';
 
 type ThreadViewProps = {
-  post: PostProps | null;
+  thread: any | null;
   onClose: () => void;
+  session: any;
 };
 
-export function ThreadView({ post, onClose }: ThreadViewProps) {
-  const [comments, setComments] = useState<any[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [loadingComments, setLoadingComments] = useState(true);
+export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
+  const [replies, setReplies] = useState<any[]>([]);
+  const [newReply, setNewReply] = useState('');
+  const [loadingReplies, setLoadingReplies] = useState(true);
 
-  useEffect(() => {
-    if (post) {
-      fetchComments();
-    }
-  }, [post]);
-
-  const fetchComments = async () => {
-    if (!post) return;
-    setLoadingComments(true);
+  const fetchReplies = useCallback(async () => {
+    if (!thread) return;
+    setLoadingReplies(true);
     try {
       const { data, error } = await supabase
-        .from('comments')
-        .select('*, profiles:user_id(username, avatar_url)')
-        .eq('post_id', post.id)
+        .from('replies')
+        .select(`
+          *,
+          profiles:user_id(username, avatar_url),
+          likes:likes!reply_id(count)
+        `)
+        .eq('thread_id', thread.id)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      setComments(data);
+
+      if (session) {
+        const { data: userLikesData, error: userLikesError } = await supabase
+          .from('likes')
+          .select('reply_id')
+          .in('reply_id', data.map(r => r.id))
+          .eq('user_id', session.user.id);
+        
+        if (userLikesError) throw userLikesError;
+
+        const likedReplyIds = new Set(userLikesData.map(l => l.reply_id));
+        
+        const repliesWithStatus = data.map(r => ({
+          ...r,
+          isLiked: likedReplyIds.has(r.id),
+          likeCount: r.likes?.length || 0,
+        }));
+        setReplies(repliesWithStatus);
+      } else {
+        const repliesWithCounts = data.map(r => ({
+          ...r,
+          likeCount: r.likes?.length || 0,
+        }));
+        setReplies(repliesWithCounts);
+      }
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error('Error fetching replies:', error);
     } finally {
-      setLoadingComments(false);
+      setLoadingReplies(false);
+    }
+  }, [thread, session]);
+
+  useEffect(() => {
+    fetchReplies();
+  }, [fetchReplies]);
+
+  const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
+    if (!session) {
+      // or show auth modal
+      return;
+    }
+
+    // Optimistic update
+    setReplies(prevReplies => prevReplies.map(r => {
+      if (r.id === replyId) {
+        const newLikeCount = isLiked ? r.likeCount - 1 : r.likeCount + 1;
+        return { ...r, isLiked: !isLiked, likeCount: newLikeCount };
+      }
+      return r;
+    }));
+
+    try {
+      if (isLiked) {
+        const { error } = await supabase.from('likes').delete().match({ reply_id: replyId, user_id: session.user.id });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('likes').insert({ reply_id: replyId, user_id: session.user.id });
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      // Revert optimistic update on error
+      setReplies(prevReplies => prevReplies.map(r => {
+        if (r.id === replyId) {
+          const revertedLikeCount = isLiked ? r.likeCount + 1 : r.likeCount - 1;
+          return { ...r, isLiked: isLiked, likeCount: revertedLikeCount };
+        }
+        return r;
+      }));
     }
   };
 
-  const handlePostComment = async () => {
-    if (!post || !newComment.trim()) return;
+  const handlePostReply = async () => {
+    if (!thread || !newReply.trim()) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase.from('comments').insert({
-        content: newComment.trim(),
-        post_id: post.id,
+      const { error } = await supabase.from('replies').insert({
+        content: newReply.trim(),
+        thread_id: thread.id,
         user_id: user.id,
       });
 
       if (error) throw error;
 
-      setNewComment('');
-      fetchComments();
+      setNewReply('');
+      fetchReplies();
     } catch (error) {
-      console.error('Error posting comment:', error);
+      console.error('Error posting reply:', error);
+    }
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    try {
+      const { error } = await supabase.from('replies').delete().eq('id', replyId);
+      if (error) throw error;
+      await fetchReplies();
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+      alert('Failed to delete reply');
     }
   };
 
   const handleReplyTo = (username: string) => {
-    setNewComment(`@${username} `);
+    setNewReply(`@${username} `);
   };
 
-  if (!post) {
+  if (!thread) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" style={{ marginTop: 50 }} />
@@ -93,12 +167,17 @@ export function ThreadView({ post, onClose }: ThreadViewProps) {
         {/* Main Post - No Card */}
         <View style={styles.postContainer}>
            <PostCard
-            username={post.profiles?.username || 'Anonymous'}
-            content={post.content}
-            timestamp={post.created_at}
-            likes={post.likes || 0}
-            comments={comments.length}
-            isLiked={false}
+            username={thread.profiles?.username || 'Anonymous'}
+            avatarUrl={thread.profiles?.avatar_url}
+            content={thread.content}
+            imageUrl={thread.image_url}
+            timestamp={thread.created_at}
+            likes={thread.likes[0]?.count || 0}
+            comments={thread.replies[0]?.count || 0}
+            isLiked={thread.isLiked}
+            onCommentPress={() => {}}
+            onLikePress={() => {}}
+            onDeletePress={() => {}}
           />
         </View>
 
@@ -108,25 +187,34 @@ export function ThreadView({ post, onClose }: ThreadViewProps) {
             style={styles.replyInput}
             placeholder="Post your reply"
             placeholderTextColor="hsl(var(--muted-foreground))"
-            value={newComment}
-            onChangeText={setNewComment}
+            value={newReply}
+            onChangeText={setNewReply}
           />
-          <TouchableOpacity style={styles.replyButton} onPress={handlePostComment}>
+          <TouchableOpacity style={styles.replyButton} onPress={handlePostReply}>
             <Text style={styles.replyButtonText}>Reply</Text>
           </TouchableOpacity>
         </View>
 
         {/* Comments Section */}
-        {loadingComments ? (
+        {loadingReplies ? (
           <ActivityIndicator style={{ marginTop: 20 }} />
         ) : (
           <View style={styles.commentsContainer}>
-            {comments.map((comment) => (
-              <TouchableOpacity key={comment.id} onPress={() => handleReplyTo(comment.profiles?.username || 'Anonymous')}>
+            {replies.map((reply) => (
+              <TouchableOpacity key={reply.id} onLongPress={() => handleReplyTo(reply.profiles?.username || 'Anonymous')}>
                 <View style={styles.comment}>
                   <View style={styles.commentContent}>
-                    <Text style={styles.commentUsername}>{comment.profiles?.username || 'Anonymous'}</Text>
-                    <Text style={styles.commentText}>{comment.content}</Text>
+                    <Text style={styles.commentUsername}>{reply.profiles?.username || 'Anonymous'}</Text>
+                    <Text style={styles.commentText}>{reply.content}</Text>
+                    <View style={styles.commentActions}>
+                      <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={styles.actionButton}>
+                        <Heart size={16} color={reply.isLiked ? 'red' : 'hsl(var(--muted-foreground))'} />
+                        <Text style={styles.actionText}>{reply.likeCount || 0}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
+                        <Trash2 size={16} color="hsl(var(--muted-foreground))" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -204,9 +292,25 @@ const styles = StyleSheet.create({
   commentUsername: {
     fontWeight: 'bold',
     color: 'hsl(var(--foreground))',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   commentText: {
     color: 'hsl(var(--foreground))',
+    marginBottom: 8,
+  },
+  commentActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  actionText: {
+    marginLeft: 4,
+    color: 'hsl(var(--muted-foreground))',
+    fontSize: 12,
   },
 }); 

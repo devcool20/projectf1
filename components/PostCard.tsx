@@ -1,56 +1,68 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Heart, MessageCircle, Share2 } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { Heart, MessageCircle, Trash2 } from 'lucide-react-native';
 
-export interface PostProps {
-  id: string;
-  user_id: string;
+export type PostCardProps = {
+  username: string;
+  avatarUrl?: string;
   content: string;
-  created_at: string;
+  imageUrl?: string;
+  timestamp: string;
   likes: number;
   comments: number;
-  profiles: {
-    username: string;
-    avatar_url: string;
-  };
-  isLiked: boolean;
-  isCard?: boolean; // Keep this optional
-}
+  isLiked?: boolean;
+  onCommentPress: () => void;
+  onLikePress: () => void;
+  onDeletePress: () => void;
+};
 
 export default function PostCard({
   username,
+  avatarUrl,
   content,
+  imageUrl,
   timestamp,
   likes,
   comments,
   isLiked,
-}: Omit<PostProps, 'id' | 'user_id' | 'profiles'> & { username: string, timestamp: string }) {
+  onCommentPress,
+  onLikePress,
+  onDeletePress,
+}: PostCardProps) {
   
   return (
     <View className="w-full p-4">
       <View className="flex-row items-center mb-2">
-        <View className="w-10 h-10 rounded-full bg-muted items-center justify-center mr-3">
-          <Text className="text-lg font-bold text-muted-foreground">{username.charAt(0).toUpperCase()}</Text>
-        </View>
+        <Image
+          source={{ uri: avatarUrl || `https://ui-avatars.com/api/?name=${username.charAt(0)}&background=random` }}
+          className="w-10 h-10 rounded-full bg-muted mr-3"
+        />
         <View>
           <Text className="font-bold text-foreground">{username}</Text>
           <Text className="text-sm text-muted-foreground">{new Date(timestamp).toLocaleString()}</Text>
         </View>
       </View>
       <Text className="text-foreground my-2">{content}</Text>
+      {imageUrl && (
+        <Image
+          source={{ uri: imageUrl }}
+          className="w-full h-64 rounded-xl mt-2"
+          resizeMode="cover"
+        />
+      )}
       <View className="flex-row justify-between items-center mt-3">
         <View className="flex-row items-center space-x-4">
-          <TouchableOpacity className="flex-row items-center space-x-1">
+          <TouchableOpacity onPress={onLikePress} className="flex-row items-center space-x-1">
             <Heart size={20} color={isLiked ? 'red' : 'hsl(var(--muted-foreground))'} />
             <Text className="text-sm text-muted-foreground">{likes}</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="flex-row items-center space-x-1">
+          <TouchableOpacity onPress={onCommentPress} className="flex-row items-center space-x-1">
             <MessageCircle size={20} color="hsl(var(--muted-foreground))" />
             <Text className="text-sm text-muted-foreground">{comments}</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity>
-          <Share2 size={20} color="hsl(var(--muted-foreground))" />
+        <TouchableOpacity onPress={onDeletePress}>
+          <Trash2 size={18} color="hsl(var(--muted-foreground))" />
         </TouchableOpacity>
       </View>
     </View>

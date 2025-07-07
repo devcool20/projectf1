@@ -13,9 +13,10 @@ import { supabase } from '@/lib/supabase';
 type AuthModalProps = {
   visible: boolean;
   onClose: () => void;
+  onSuccess: () => void;
 };
 
-export function AuthModal({ visible, onClose }: AuthModalProps) {
+export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,6 +64,7 @@ export function AuthModal({ visible, onClose }: AuthModalProps) {
         if (error) throw error;
       }
 
+      onSuccess();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

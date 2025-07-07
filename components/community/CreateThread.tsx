@@ -12,12 +12,11 @@ import { supabase } from '@/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
 
-type CreatePostProps = {
+type CreateThreadProps = {
   onSuccess: () => void;
 };
 
-export function CreatePost({ onSuccess }: CreatePostProps) {
-  const [title, setTitle] = useState('');
+export function CreateThread({ onSuccess }: CreateThreadProps) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,13 +44,13 @@ export function CreatePost({ onSuccess }: CreatePostProps) {
 
       const filePath = `${Math.random()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
-        .from('post-images')
+        .from('thread-images')
         .upload(filePath, blob);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('post-images')
+        .from('thread-images')
         .getPublicUrl(filePath);
 
       return publicUrl;
@@ -61,38 +60,9 @@ export function CreatePost({ onSuccess }: CreatePostProps) {
     }
   };
 
-  const ensureProfileExists = async (userId: string) => {
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .limit(1)
-      .maybeSingle();
-
-    if (!profile) {
-      // Profile doesn't exist, create it with required fields
-      const { error: createError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          username: `user_${userId.substring(0, 8)}`,
-          full_name: null,
-          avatar_url: null,
-          bio: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-
-      if (createError) {
-        console.error('Error creating profile:', createError);
-        throw new Error('Failed to create profile');
-      }
-    }
-  };
-
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim()) {
-      setError('Please fill in all fields');
+    if (!content.trim()) {
+      setError('Please share your thoughts');
       return;
     }
 
@@ -103,27 +73,26 @@ export function CreatePost({ onSuccess }: CreatePostProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Ensure profile exists before creating post
-      await ensureProfileExists(user.id);
+      let imageUrl: string | undefined;
+      if (image) {
+        imageUrl = await uploadImage(image);
+      }
 
-      const { error: postError } = await supabase
-        .from('posts')
+      const { error: threadError } = await supabase
+        .from('threads')
         .insert({
-          title: title.trim(),
           content: content.trim(),
           user_id: user.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          image_url: imageUrl,
         });
 
-      if (postError) throw postError;
+      if (threadError) throw threadError;
 
-      setTitle('');
       setContent('');
       setImage(null);
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create post');
+      setError(err instanceof Error ? err.message : 'Failed to create thread');
     } finally {
       setLoading(false);
     }
@@ -131,17 +100,9 @@ export function CreatePost({ onSuccess }: CreatePostProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Post</Text>
+      <Text style={styles.title}>Create Thread</Text>
 
       {error && <Text style={styles.error}>{error}</Text>}
-
-      <TextInput
-        style={styles.input}
-        placeholder="Title"
-        value={title}
-        onChangeText={setTitle}
-        maxLength={100}
-      />
 
       <TextInput
         style={[styles.input, styles.contentInput]}
@@ -187,7 +148,7 @@ export function CreatePost({ onSuccess }: CreatePostProps) {
         {loading ? (
           <ActivityIndicator color="#FFFFFF" />
         ) : (
-          <Text style={styles.buttonText}>Post</Text>
+          <Text style={styles.buttonText}>Post Thread</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -196,37 +157,32 @@ export function CreatePost({ onSuccess }: CreatePostProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    flex: 1,
     padding: 16,
-    marginBottom: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#FFFFFF',
   },
   title: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333333',
+    textAlign: 'center',
   },
   input: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F3F3',
     borderRadius: 8,
     padding: 12,
+    fontSize: 16,
     marginBottom: 12,
-    fontFamily: 'Inter',
   },
   contentInput: {
-    height: 100,
+    height: 120,
     textAlignVertical: 'top',
   },
   imageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    backgroundColor: '#EAEAEA',
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
@@ -234,8 +190,7 @@ const styles = StyleSheet.create({
   imageButtonText: {
     marginLeft: 8,
     fontSize: 16,
-    fontFamily: 'Inter',
-    color: '#666666',
+    color: '#333333',
   },
   imagePreview: {
     position: 'relative',
@@ -245,38 +200,37 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: 8,
-    resizeMode: 'cover',
   },
   removeImage: {
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
   removeImageText: {
     color: '#FFFFFF',
     fontSize: 18,
-    lineHeight: 24,
+    fontWeight: 'bold',
   },
   button: {
-    backgroundColor: '#E10600',
+    backgroundColor: '#1DA1F2',
+    padding: 16,
     borderRadius: 8,
-    padding: 12,
     alignItems: 'center',
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   error: {
-    color: '#E10600',
+    color: '#FF3B30',
     marginBottom: 12,
-    fontFamily: 'Inter',
+    textAlign: 'center',
   },
-});
+}); 

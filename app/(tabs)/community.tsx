@@ -9,17 +9,23 @@ import {
   TouchableOpacity,
   Image,
   Linking,
+  ColorSchemeName,
+  useColorScheme as useNativeColorScheme,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { AuthModal } from '@/components/auth/AuthModal';
+import { AuthModal, AuthModalProps } from '@/components/auth/AuthModal';
 import { useRouter } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { ThreadView } from '@/components/community/ThreadView';
 import { Home, Users, Clapperboard, ShoppingBag, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useColorScheme } from 'react-native';
-import NewPostCard, { PostProps } from '../../components/PostCard';
 import { ProfileModal } from '@/components/ProfileModal';
+
+// Wrapper to handle web compatibility for useColorScheme
+function useColorScheme(): ColorSchemeName {
+  const ancs = useNativeColorScheme();
+  return ancs;
+}
 
 const NAV_ITEMS = [
   { href: '/', icon: Home, name: 'Home' },
@@ -34,7 +40,7 @@ const NAV_ITEMS = [
 const RSS_TO_JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.formula1.com/en/latest/all.xml';
 
 export default function CommunityScreen() {
-  const [posts, setPosts] = useState<PostProps[]>([]);
+  const [threads, setThreads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [session, setSession] = useState<any>(null);
@@ -42,36 +48,117 @@ export default function CommunityScreen() {
   const [content, setContent] = useState('');
   const [news, setNews] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
-  const [selectedThread, setSelectedThread] = useState<PostProps | null>(null);
+  const [selectedThread, setSelectedThread] = useState<any | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [isViewingThread, setIsViewingThread] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const { colorScheme } = useColorScheme();
+  const colorScheme = useColorScheme();
   const router = useRouter();
 
-  const fetchPosts = useCallback(async () => {
+  const handleDeleteThread = async (threadId: string) => {
     try {
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select(`*, profiles:user_id (username, avatar_url)`)
-        .order('created_at', { ascending: false });
-      if (postsError) throw postsError;
-      setPosts(postsData as any);
+      const { error } = await supabase.from('threads').delete().eq('id', threadId);
+      if (error) throw error;
+      await fetchThreads(session);
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error('Error deleting thread:', error);
+      alert('Failed to delete thread');
+    }
+  };
+
+  const fetchThreads = useCallback(async (currentSession: any) => {
+    try {
+      const { data: threadsData, error: threadsError } = await supabase
+        .from('threads')
+        .select(`
+          *,
+          profiles:user_id (username, avatar_url),
+          likes:likes!thread_id(count),
+          replies:replies!thread_id(count)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (threadsError) throw threadsError;
+
+      if (currentSession) {
+        const { data: userLikesData, error: userLikesError } = await supabase
+          .from('likes')
+          .select('thread_id')
+          .in('thread_id', threadsData.map(t => t.id))
+          .eq('user_id', currentSession.user.id);
+        
+        if (userLikesError) throw userLikesError;
+
+        const likedThreadIds = new Set(userLikesData.map(l => l.thread_id));
+        
+        const threadsWithStatus = threadsData.map(t => ({
+          ...t,
+          isLiked: likedThreadIds.has(t.id),
+          likeCount: t.likes?.length || 0,
+          replyCount: t.replies?.length || 0,
+        }));
+        setThreads(threadsWithStatus);
+      } else {
+        const threadsWithCounts = threadsData.map(t => ({
+          ...t,
+          likeCount: t.likes?.length || 0,
+          replyCount: t.replies?.length || 0,
+        }));
+        setThreads(threadsWithCounts);
+      }
+    } catch (error) {
+      console.error('Error fetching threads:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
+  
+  const handleLikeToggle = async (threadId: string, isLiked: boolean) => {
+    if (!session) {
+      setShowAuth(true);
+      return;
+    }
+
+    // Optimistic UI update
+    setThreads(prevThreads => prevThreads.map(t => {
+      if (t.id === threadId) {
+        const newLikeCount = isLiked ? t.likeCount - 1 : t.likeCount + 1;
+        return { ...t, isLiked: !isLiked, likeCount: newLikeCount };
+      }
+      return t;
+    }));
+
+    try {
+      if (isLiked) {
+        const { error } = await supabase.from('likes').delete().match({ thread_id: threadId, user_id: session.user.id });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('likes').insert({ thread_id: threadId, user_id: session.user.id });
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      // Revert optimistic update on error
+      setThreads(prevThreads => prevThreads.map(t => {
+        if (t.id === threadId) {
+          const revertedLikeCount = isLiked ? t.likeCount + 1 : t.likeCount - 1;
+          return { ...t, isLiked: isLiked, likeCount: revertedLikeCount };
+        }
+        return t;
+      }));
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      fetchThreads(session);
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      fetchThreads(session);
     });
 
     const fetchNews = async () => {
@@ -93,16 +180,15 @@ export default function CommunityScreen() {
         setNewsLoading(false);
       }
     };
-    fetchPosts();
     fetchNews();
-  }, [fetchPosts]);
+  }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchPosts();
-  }, [fetchPosts]);
+    fetchThreads(session);
+  }, [session]);
 
-  const handleCreatePost = async () => {
+  const handleCreateThread = async () => {
     if (!session) {
       setShowAuth(true);
       return;
@@ -119,7 +205,7 @@ export default function CommunityScreen() {
         const filePath = `${session.user.id}/${Math.random()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
-          .from('post-images')
+          .from('thread-images')
           .upload(filePath, blob, {
             contentType: blob.type,
             cacheControl: '3600',
@@ -129,13 +215,13 @@ export default function CommunityScreen() {
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
-          .from('post-images')
+          .from('thread-images')
           .getPublicUrl(filePath);
         
         imageUrl = publicUrl;
       }
 
-      const { error } = await supabase.from('posts').insert({
+      const { error } = await supabase.from('threads').insert({
         content: content.trim(),
         user_id: session.user.id,
         image_url: imageUrl,
@@ -145,10 +231,10 @@ export default function CommunityScreen() {
 
       setContent('');
       setImage(null);
-      await fetchPosts();
+      await fetchThreads(session);
     } catch (error) {
-      console.error('Error creating post:', error);
-      alert('Failed to create post');
+      console.error('Error creating thread:', error);
+      alert('Failed to create thread');
     }
   };
 
@@ -165,8 +251,8 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleThreadPress = (post: PostProps) => {
-    setSelectedThread(post);
+  const handleThreadPress = (thread: any) => {
+    setSelectedThread(thread);
     setIsViewingThread(true);
   };
 
@@ -197,12 +283,12 @@ export default function CommunityScreen() {
                       setShowAuth(true);
                     }
                   } else {
-                    router.push(item.href as `http${string}` | `/${string}`);
+                    router.push(item.href as any);
                   }
                 }}
                 className="flex-row items-center space-x-4 p-3 rounded-full hover:bg-muted"
               >
-                <item.icon size={24} color={colorScheme === 'dark' ? 'white' : 'black'} strokeWidth={2} />
+                <item.icon size={24} color="hsl(71, 35%, 45%)" />
                 <Text className="text-xl font-bold text-foreground">{item.name}</Text>
               </TouchableOpacity>
             ))}
@@ -238,8 +324,8 @@ export default function CommunityScreen() {
       {/* Centered Scrollable Threads Container or Thread View */}
       <View className="flex-1 flex items-center border-x border-border">
         <View className="w-full max-w-2xl min-h-screen flex flex-col items-center">
-          {isViewingThread ? (
-            <ThreadView post={selectedThread} onClose={handleCloseThread} />
+          {isViewingThread && selectedThread ? (
+            <ThreadView thread={selectedThread} onClose={handleCloseThread} session={session} />
           ) : (
             <View className="w-full bg-card rounded-2xl shadow-kodama-lg flex flex-col h-[95vh]">
               {/* Header for "For you" / "Following" */}
@@ -277,29 +363,31 @@ export default function CommunityScreen() {
                         <TouchableOpacity onPress={pickImage}>
                           <Camera size={24} color="#1DA1F2" />
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={handleCreatePost}
-                          className="bg-primary-red px-4 py-2 rounded-full"
-                        >
-                          <Text className="text-white font-bold">Post</Text>
+                        <TouchableOpacity onPress={handleCreateThread}>
+                          <Text className="text-lg text-muted-foreground font-bold">Post</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
                   </View>
                 </View>
-
+                
                 {loading ? (
                   <ActivityIndicator className="mt-8" />
                 ) : (
-                  posts.map((post) => (
-                    <TouchableOpacity key={post.id} onPress={() => handleThreadPress(post)} className="border-b border-gray-700">
-                      <NewPostCard
-                        username={post.profiles?.username || 'Anonymous'}
-                        content={post.content}
-                        timestamp={post.created_at}
-                        likes={post.likes ?? 0}
-                        comments={post.comments ?? 0}
-                        isLiked={post.isLiked ?? false}
+                  threads.map((thread) => (
+                    <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} className="border-b border-gray-700">
+                      <PostCard
+                        username={thread.profiles?.username || 'Anonymous'}
+                        avatarUrl={thread.profiles?.avatar_url}
+                        content={thread.content}
+                        imageUrl={thread.image_url}
+                        timestamp={thread.created_at}
+                        likes={thread.likeCount || 0}
+                        comments={thread.replyCount || 0}
+                        isLiked={thread.isLiked}
+                        onCommentPress={() => handleThreadPress(thread)}
+                        onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
+                        onDeletePress={() => handleDeleteThread(thread.id)}
                       />
                     </TouchableOpacity>
                   ))
@@ -309,7 +397,7 @@ export default function CommunityScreen() {
           )}
         </View>
       </View>
-      
+
       {/* Right Sidebar for News */}
       <View className="w-80 p-4 space-y-4">
         <View className="bg-muted p-4 rounded-xl">
@@ -344,26 +432,26 @@ export default function CommunityScreen() {
         </View>
       </View>
 
-      {showAuth && (
-        <AuthModal
-          visible={showAuth}
-          onClose={() => setShowAuth(false)}
-          onSuccess={() => {
-            setShowAuth(false);
-            fetchPosts();
+      <AuthModal
+        visible={showAuth}
+        onClose={() => setShowAuth(false)}
+        onSuccess={() => {
+          setShowAuth(false);
+          fetchThreads(session);
+        }}
+      />
+      
+      {session && (
+        <ProfileModal
+          visible={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          session={session}
+          onLogin={() => {
+            setShowProfileModal(false);
+            setShowAuth(true);
           }}
         />
       )}
-
-      <ProfileModal
-        visible={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        session={session}
-        onLogin={() => {
-          setShowProfileModal(false);
-          setShowAuth(true);
-        }}
-      />
     </View>
   );
 }
