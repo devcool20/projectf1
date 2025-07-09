@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import '../global.css';
+
 @layer base {
   :root {
     --background: 35 29% 79%;
@@ -72,40 +74,44 @@
     --gradient-f1: linear-gradient(135deg, hsl(var(--f1-red)) 0%, hsl(12 45% 55%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(37 14% 25%) 100%);
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
-
+  
   body {
     @apply bg-background text-foreground font-serif;
     font-family: 'Merriweather', serif;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Source Serif 4', serif;
   }
-  
+
   code, pre {
     font-family: 'JetBrains Mono', monospace;
   }
 
-  /* Pretty scrollbars, keep improvements */
+  /* Subtle but darker scrollbars - keep the improved version */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted));
+    background: hsl(215, 20%, 40%);
     border-radius: 8px;
-    border: 2px solid hsl(var(--background));
+    border: 1px solid hsl(var(--background));
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--secondary));
+    background: hsl(215, 20%, 30%);
   }
   ::-webkit-scrollbar-corner {
     background: transparent;
+  }
+  
+  /* Firefox scrollbar styling */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(215, 20%, 40%) transparent;
   }
 }

@@ -9,13 +9,39 @@ import {
   Platform,
 } from 'react-native';
 import { Button } from '@/components/ui/button';
+import { RadioCard } from '@/components/RadioCard';
+import { getRandomRadioCards } from '@/lib/radioCardData';
+import { useMemo } from 'react';
 
 const RSS_TO_JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.formula1.com/en/latest/all.xml';
+
+// Function to safely format date
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'Date unavailable';
+  
+  try {
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Date unavailable';
+    }
+    
+    // Format date in a readable way
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch (error) {
+    return 'Date unavailable';
+  }
+};
 
 export default function NewsScreen() {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [leftCardData, rightCardData] = useMemo(() => getRandomRadioCards(2), []);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -24,7 +50,12 @@ export default function NewsScreen() {
       const res = await fetch(RSS_TO_JSON_URL);
       const data = await res.json();
       if (data.status === 'ok' && data.items) {
-        setNews(data.items);
+        // Limit to 50 news items and clean descriptions
+        const cleanedNews = data.items.slice(0, 50).map((item: any) => ({
+          ...item,
+          description: item.description?.replace(/<[^>]*>/g, '')?.trim() || 'No description available',
+        }));
+        setNews(cleanedNews);
       } else {
         throw new Error(data.message || 'Failed to fetch news.');
       }
@@ -50,8 +81,34 @@ export default function NewsScreen() {
 
   return (
     <View className="flex-1 bg-background">
+      
+      {/* Left Fixed Radio Card */}
+      <View className="absolute top-1/2 left-12 w-56 -translate-y-1/2 z-10">
+        <RadioCard
+          teamColor={leftCardData.teamColor}
+          teamIcon={leftCardData.teamIcon}
+          title={leftCardData.driverName}
+          quote1={leftCardData.driverResponse}
+          quote2={leftCardData.teamResponse}
+        />
+      </View>
+      
+      {/* Right Fixed Radio Card */}
+      <View className="absolute top-1/2 right-12 w-56 -translate-y-1/2 z-10">
+        <RadioCard
+          teamColor={rightCardData.teamColor}
+          teamIcon={rightCardData.teamIcon}
+          title={rightCardData.driverName}
+          quote1={rightCardData.driverResponse}
+          quote2={rightCardData.teamResponse}
+        />
+      </View>
+
       <View className="p-4 bg-card border-b border-border">
         <Text className="text-2xl font-bold text-foreground">F1 News</Text>
+        <Text className="text-muted-foreground text-sm mt-1">
+          Latest Formula 1 news and updates • {news.length} articles
+        </Text>
       </View>
       <View className="flex-1 items-center justify-center">
         {loading ? (
@@ -69,23 +126,31 @@ export default function NewsScreen() {
           >
             {news.map((article, idx) => (
               <TouchableOpacity
-                key={idx}
-                className="mb-4 bg-card rounded-lg p-4 border border-border"
+                key={`${article.link}-${idx}`}
+                className="mb-4 bg-card rounded-lg p-4 border border-border hover:shadow-md transition-all duration-200"
                 onPress={() => openLink(article.link)}
               >
                 <View className="flex-1">
-                  <Text className="font-bold text-base mb-1 text-foreground">
+                  <Text className="font-bold text-base mb-2 text-foreground leading-tight">
                     {article.title}
                   </Text>
-                  <Text className="text-muted-foreground text-xs mb-2">
-                    {new Date(article.pubDate).toLocaleDateString()}
+                  <Text className="text-muted-foreground text-xs mb-3">
+                    {formatDate(article.pubDate)}
                   </Text>
-                  <Text className="text-foreground text-sm" numberOfLines={3}>
-                    {article.description.replace(/<[^>]*>/g, '').trim()}
+                  <Text className="text-foreground text-sm leading-relaxed" numberOfLines={3}>
+                    {article.description}
                   </Text>
                 </View>
               </TouchableOpacity>
             ))}
+            
+            {news.length === 0 && !loading && (
+              <View className="items-center py-8">
+                <Text className="text-muted-foreground text-center">
+                  No news articles available at the moment.
+                </Text>
+              </View>
+            )}
           </ScrollView>
         )}
       </View>

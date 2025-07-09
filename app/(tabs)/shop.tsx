@@ -1,5 +1,8 @@
 import { View, Text, ScrollView } from 'react-native';
 import ProductCard from '@/components/ProductCard';
+import { RadioCard } from '@/components/RadioCard';
+import { getRandomRadioCards } from '@/lib/radioCardData';
+import { useMemo } from 'react';
 
 const products = [
   {
@@ -17,25 +20,57 @@ const products = [
 ];
 
 export default function ShopScreen() {
-  return (
-    <View className="flex-1 bg-background items-center">
-      <ScrollView className="w-full max-w-3xl mt-4">
-        <View className="bg-card rounded-2xl shadow-lg overflow-hidden">
-          <View className="p-6 bg-gradient-primary">
-            <Text className="font-heading text-4xl text-primary-foreground mb-2">Official F1 Merchandise</Text>
-            <Text className="font-serif text-lg text-primary-foreground/80">Show your support for your favorite team</Text>
-          </View>
+  const [leftCardData, rightCardData] = useMemo(() => getRandomRadioCards(2), []);
 
-          <View className="p-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                name={product.name}
-                price={product.price}
-                imageUrl={product.image}
-              />
-            ))}
+  return (
+    <View className="flex-1 bg-background">
+      
+      {/* Left Fixed Radio Card */}
+      <View className="absolute top-1/2 left-12 w-56 -translate-y-1/2">
+        <RadioCard
+          teamColor={leftCardData.teamColor}
+          teamIcon={leftCardData.teamIcon}
+          title={leftCardData.driverName}
+          quote1={leftCardData.driverResponse}
+          quote2={leftCardData.teamResponse}
+        />
+      </View>
+      
+      {/* Right Fixed Radio Card */}
+      <View className="absolute top-1/2 right-12 w-56 -translate-y-1/2">
+        <RadioCard
+          teamColor={rightCardData.teamColor}
+          teamIcon={rightCardData.teamIcon}
+          title={rightCardData.driverName}
+          quote1={rightCardData.driverResponse}
+          quote2={rightCardData.teamResponse}
+        />
+      </View>
+
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <View className="items-center p-6">
+          
+          {/* Center Content */}
+          <View className="w-full max-w-md">
+            <View className="bg-card rounded-2xl shadow-lg overflow-hidden">
+              <View className="p-6 bg-gradient-primary">
+                <Text className="font-heading text-4xl text-primary-foreground mb-2">Official F1 Merchandise</Text>
+                <Text className="font-serif text-lg text-primary-foreground/80">Show your support for your favorite team</Text>
+              </View>
+
+              <View className="p-6">
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    name={product.name}
+                    price={product.price}
+                    imageUrl={product.image}
+                  />
+                ))}
+              </View>
+            </View>
           </View>
+          
         </View>
       </ScrollView>
     </View>

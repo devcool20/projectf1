@@ -11,6 +11,8 @@ import {
   Linking,
   ColorSchemeName,
   useColorScheme as useNativeColorScheme,
+  Modal,
+  Platform,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { AuthModal, AuthModalProps } from '@/components/auth/AuthModal';
@@ -39,6 +41,18 @@ const NAV_ITEMS = [
 
 const RSS_TO_JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.formula1.com/en/latest/all.xml';
 
+// Function to shuffle array and get random items
+const getRandomNews = (newsArray: any[], count: number = 5) => {
+  const shuffled = [...newsArray].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+};
+
+// Function to truncate text to specified number of lines
+const truncateToLines = (text: string, maxLength: number = 120) => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
+};
+
 export default function CommunityScreen() {
   const [threads, setThreads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +61,7 @@ export default function CommunityScreen() {
   const [showAuth, setShowAuth] = useState(false);
   const [content, setContent] = useState('');
   const [news, setNews] = useState<any[]>([]);
+  const [randomizedNews, setRandomizedNews] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [selectedThread, setSelectedThread] = useState<any | null>(null);
   const [image, setImage] = useState<string | null>(null);
@@ -173,6 +188,7 @@ export default function CommunityScreen() {
             source: { name: 'Formula 1' },
           }));
           setNews(transformedNews);
+          setRandomizedNews(getRandomNews(transformedNews, 5));
         }
       } catch (e) {
         console.error('Error fetching news:', e);
@@ -186,7 +202,11 @@ export default function CommunityScreen() {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchThreads(session);
-  }, [session]);
+    // Randomize news on refresh
+    if (news.length > 0) {
+      setRandomizedNews(getRandomNews(news, 5));
+    }
+  }, [session, news]);
 
   const handleCreateThread = async () => {
     if (!session) {
@@ -243,7 +263,7 @@ export default function CommunityScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.8,
+      quality: 1,
     });
 
     if (!result.canceled) {
@@ -298,18 +318,22 @@ export default function CommunityScreen() {
         <View className="flex-1" />
 
         {session ? (
-          <TouchableOpacity onPress={() => setShowProfileModal(true)} className="flex-row items-center justify-between">
-            <View className="flex-row items-center space-x-3">
+          <TouchableOpacity onPress={() => setShowProfileModal(true)} className="flex-row items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+            <View className="flex-row items-center space-x-2 flex-1">
               <Image
                 source={{ uri: session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${session.user.email}` }}
-                className="w-10 h-10 rounded-full bg-muted"
+                className="w-8 h-8 rounded-full bg-muted"
               />
-              <View>
-                <Text className="font-bold text-foreground">{session.user.user_metadata.full_name || session.user.email}</Text>
-                <Text className="text-muted-foreground text-sm">@{session.user.user_metadata.username || session.user.email?.split('@')[0]}</Text>
+              <View className="flex-1 min-w-0">
+                <Text className="font-semibold text-foreground text-sm truncate" numberOfLines={1}>
+                  {session.user.user_metadata.full_name || session.user.email}
+                </Text>
+                <Text className="text-muted-foreground text-xs truncate" numberOfLines={1}>
+                  @{session.user.user_metadata.username || session.user.email?.split('@')[0]}
+                </Text>
               </View>
             </View>
-            <MoreHorizontal size={20} color="hsl(var(--foreground))" />
+            <MoreHorizontal size={16} color="hsl(var(--foreground))" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -400,31 +424,39 @@ export default function CommunityScreen() {
 
       {/* Right Sidebar for News */}
       <View className="w-80 p-4 space-y-4">
-        <View className="bg-muted p-4 rounded-xl">
-          <Text className="text-xl font-bold text-foreground mb-4">What's happening</Text>
+        <View className="bg-muted rounded-xl flex-1">
+          <View className="p-4 border-b border-border">
+            <Text className="text-xl font-bold text-foreground">What's happening</Text>
+          </View>
           {newsLoading ? (
-            <ActivityIndicator />
+            <View className="flex-1 items-center justify-center p-8">
+              <ActivityIndicator />
+            </View>
           ) : (
-            <ScrollView>
-              {news.slice(0, 15).map((item, index) => (
+            <ScrollView 
+              className="flex-1" 
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={{ padding: 16 }}
+              style={{ maxHeight: '80vh' }}
+            >
+              {randomizedNews.map((item, index) => (
                 <TouchableOpacity
-                  key={index}
-                  className="mb-4"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/news',
-                      params: {
-                        title: item.title,
-                        description: item.description,
-                        link: item.link,
-                        enclosure: item.enclosure?.link,
-                        source: item.source.name,
-                      },
-                    })}
+                  key={`${item.link}-${index}`}
+                  className="mb-6 pb-4 border-b border-border/30"
+                  onPress={() => {
+                    if (item.link) {
+                      Linking.openURL(item.link).catch(err => {
+                        console.error('Failed to open link:', err);
+                      });
+                    }
+                  }}
                 >
-                  <Text className="text-muted-foreground text-sm">{item.source.name} · Trending</Text>
-                  <Text className="font-bold text-foreground">{item.title}</Text>
-                  <Text className="text-muted-foreground text-sm">{item.description}</Text>
+                  <Text className="font-bold text-foreground text-base mb-2 leading-tight" numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                  <Text className="text-muted-foreground text-sm leading-relaxed" numberOfLines={3}>
+                    {truncateToLines(item.description, 120)}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>

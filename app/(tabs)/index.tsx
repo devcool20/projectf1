@@ -1,9 +1,37 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
+import { RadioCard } from '@/components/RadioCard';
+import { getRandomRadioCards } from '@/lib/radioCardData';
+import { useMemo } from 'react';
 
 export default function HomeScreen() {
+  const [leftCardData, rightCardData] = useMemo(() => getRandomRadioCards(2), []);
+
   return (
     <View className="flex-1 bg-gradient-to-br from-background to-secondary/20">
+      
+      {/* Left Fixed Radio Card */}
+      <View className="absolute top-1/2 left-12 w-56 -translate-y-1/2 z-10">
+        <RadioCard
+          teamColor={leftCardData.teamColor}
+          teamIcon={leftCardData.teamIcon}
+          title={leftCardData.driverName}
+          quote1={leftCardData.driverResponse}
+          quote2={leftCardData.teamResponse}
+        />
+      </View>
+      
+      {/* Right Fixed Radio Card */}
+      <View className="absolute top-1/2 right-12 w-56 -translate-y-1/2 z-10">
+        <RadioCard
+          teamColor={rightCardData.teamColor}
+          teamIcon={rightCardData.teamIcon}
+          title={rightCardData.driverName}
+          quote1={rightCardData.driverResponse}
+          quote2={rightCardData.teamResponse}
+        />
+      </View>
+
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
         <View className="w-full max-w-md pb-24">
           {/* Header */}

@@ -22,7 +22,7 @@ export default function CustomBottomNav() {
       className="absolute left-0 right-0 bottom-0 z-50"
       style={{ backgroundColor: 'transparent' }}
     >
-      <View className="mx-auto mb-2 w-[98%] max-w-2xl rounded-2xl bg-gradient-to-br from-[#e7dbc7] to-[#e2d3be] shadow-kodama-lg flex-row justify-between items-center px-2 py-1 border border-[#e0d2b7]/70">
+      <View className="mx-auto mb-1 w-[96%] max-w-2xl rounded-xl bg-gradient-to-br from-[#e7dbc7] to-[#e2d3be] shadow-kodama-lg flex-row justify-between items-center px-1 py-0.5 border border-[#e0d2b7]/70 backdrop-blur-sm">
         {TABS.map((tab, idx) => {
           const isActive =
             tab.path === '/'
@@ -34,29 +34,30 @@ export default function CustomBottomNav() {
               key={tab.name}
               onPress={() => router.push(tab.path as any)}
               activeOpacity={0.8}
-              className="flex-1 items-center py-2"
+              className="flex-1 items-center py-1.5"
             >
               <Animated.View
                 style={{
-                  transform: [{ scale: isActive ? 1.2 : 1 }],
+                  transform: [{ scale: isActive ? 1.1 : 1 }],
                   shadowColor: isActive ? '#d32f2f' : 'transparent',
-                  shadowOpacity: isActive ? 0.25 : 0,
-                  shadowRadius: isActive ? 8 : 0,
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isActive ? 0.2 : 0,
+                  shadowRadius: isActive ? 6 : 0,
+                  shadowOffset: { width: 0, height: 1 },
                 }}
-                className={`rounded-full ${isActive ? 'bg-[#f9e6e1]/70' : ''} px-2 py-1 mb-1`}
+                className={`rounded-lg ${isActive ? 'bg-[#f9e6e1]/80' : ''} px-1.5 py-0.5 mb-0.5`}
               >
-                <Text className="text-2xl" style={{
+                <Text className="text-lg" style={{
                   color: isActive ? 'hsl(var(--f1-red))' : '#a08c6b',
                   fontWeight: isActive ? 'bold' : 'normal',
                 }}>{tab.icon}</Text>
               </Animated.View>
               <Text
-                className={`text-xs ${isActive ? 'font-bold text-[hsl(var(--f1-red))]' : 'text-[#7c6a4d]'}`}
+                className={`text-[10px] ${isActive ? 'font-bold text-[hsl(var(--f1-red))]' : 'text-[#7c6a4d]'}`}
                 style={{
                   textShadowColor: isActive ? '#fff' : 'transparent',
-                  textShadowRadius: isActive ? 2 : 0,
+                  textShadowRadius: isActive ? 1 : 0,
                 }}
+                numberOfLines={1}
               >
                 {tab.name}
               </Text>
