@@ -128,8 +128,8 @@ export function CreateThread({ onSuccess }: CreateThreadProps) {
         <View style={styles.imagePreview}>
           <Image
             source={{ uri: image }}
-            style={styles.previewImage}
-            resizeMode="cover"
+            style={[styles.previewImage, { backgroundColor: '#f3f4f6' }]}
+            resizeMode="contain"
           />
           <TouchableOpacity
             style={styles.removeImage}

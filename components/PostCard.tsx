@@ -46,8 +46,9 @@ export default function PostCard({
       {imageUrl && (
         <Image
           source={{ uri: imageUrl }}
-          className="w-full h-64 rounded-xl mt-2"
-          resizeMode="cover"
+          className="w-full h-48 rounded-xl mt-2"
+          resizeMode="contain"
+          style={{ backgroundColor: '#f3f4f6' }}
         />
       )}
       <View className="flex-row justify-between items-center mt-3">

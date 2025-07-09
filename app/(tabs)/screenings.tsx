@@ -1,10 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Image } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { RadioCard } from '@/components/RadioCard';
-import { radioCardData } from '@/lib/radioCardData';
+import { fetchRadioCardById, type RadioCardData } from '@/lib/radioCardData';
 
 export default function ScreeningsScreen() {
+  const [leftCardData, setLeftCardData] = useState<RadioCardData | null>(null);
+  const [rightCardData, setRightCardData] = useState<RadioCardData | null>(null);
+
+  useEffect(() => {
+    // Fetch specific cards by ID (Fernando Alonso - ID 9, Max Verstappen - ID 14)
+    const loadCards = async () => {
+      const [leftCard, rightCard] = await Promise.all([
+        fetchRadioCardById(9),  // Fernando Alonso
+        fetchRadioCardById(14), // Max Verstappen
+      ]);
+      setLeftCardData(leftCard);
+      setRightCardData(rightCard);
+    };
+    
+    loadCards();
+  }, []);
+
   const events = [
     {
       id: 1,
@@ -28,33 +45,36 @@ export default function ScreeningsScreen() {
     },
   ];
 
-  const leftCardData = radioCardData[8]; // Card with ID 9
-  const rightCardData = radioCardData[13]; // Card with ID 14
-
   return (
     <View className="flex-1 bg-gradient-to-br from-background to-secondary/20">
       
       {/* Left Fixed Radio Card */}
-      <View className="absolute top-1/2 left-12 w-56 -translate-y-1/2">
-        <RadioCard
-          teamColor={leftCardData.teamColor}
-          teamIcon={leftCardData.teamIcon}
-          title={leftCardData.driverName}
-          quote1={leftCardData.driverResponse}
-          quote2={leftCardData.teamResponse}
-        />
-      </View>
+      {leftCardData && (
+        <View className="absolute top-1/2 left-12 w-56 -translate-y-1/2">
+          <RadioCard
+            teamColor={leftCardData.teamColor}
+            teamIcon={leftCardData.teamIcon}
+            title={leftCardData.driverName}
+            driverResponse={leftCardData.driverResponse}
+            teamResponse={leftCardData.teamResponse}
+            responseOrder={leftCardData.responseOrder}
+          />
+        </View>
+      )}
       
       {/* Right Fixed Radio Card */}
-      <View className="absolute top-1/2 right-12 w-56 -translate-y-1/2">
-        <RadioCard
-          teamColor={rightCardData.teamColor}
-          teamIcon={rightCardData.teamIcon}
-          title={rightCardData.driverName}
-          quote1={rightCardData.driverResponse}
-          quote2={rightCardData.teamResponse}
-        />
-      </View>
+      {rightCardData && (
+        <View className="absolute top-1/2 right-12 w-56 -translate-y-1/2">
+          <RadioCard
+            teamColor={rightCardData.teamColor}
+            teamIcon={rightCardData.teamIcon}
+            title={rightCardData.driverName}
+            driverResponse={rightCardData.driverResponse}
+            teamResponse={rightCardData.teamResponse}
+            responseOrder={rightCardData.responseOrder}
+          />
+        </View>
+      )}
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="items-center p-6">

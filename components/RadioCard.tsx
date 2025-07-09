@@ -49,6 +49,9 @@ interface RadioCardProps {
   title?: string;
   quote1?: string;
   quote2?: string;
+  driverResponse?: string;
+  teamResponse?: string;
+  responseOrder?: 'T' | 'D';
 }
 
 /**
@@ -60,12 +63,27 @@ export const RadioCard = ({
   teamIcon,
   title = "LOREMIPSUM",
   quote1 = '"LOREM IPSUM DOLOR SIT AMET"',
-  quote2 = '"LOREM IPSUM DOLOR SIT AMET, CONSECTETUER"'
+  quote2 = '"LOREM IPSUM DOLOR SIT AMET, CONSECTETUER"',
+  driverResponse,
+  teamResponse,
+  responseOrder = 'D'
 }: RadioCardProps) => {
 
   const IconComponent = teamIcon ? (
     <Image source={teamLogos[teamIcon]} style={{ width: 38, height: 38 }} resizeMode="contain" className="mr-1" />
   ) : null;
+
+  // Determine which response comes first and second based on responseOrder
+  const firstResponse = responseOrder === 'D' ? driverResponse : teamResponse;
+  const secondResponse = responseOrder === 'D' ? teamResponse : driverResponse;
+  
+  // Use provided responses if available, otherwise fall back to quote1/quote2
+  const displayQuote1 = driverResponse && teamResponse ? firstResponse : quote1;
+  const displayQuote2 = driverResponse && teamResponse ? secondResponse : quote2;
+  
+  // Determine if the first/second response is from driver (for styling)
+  const isFirstResponseDriver = responseOrder === 'D';
+  const isSecondResponseDriver = responseOrder === 'T';
 
   return (
     <View 
@@ -99,12 +117,17 @@ export const RadioCard = ({
 
       {/* Bottom Section */}
       <View className="pt-1">
-        <Text className="text-gray-200 text-xs font-bold tracking-wide text-left">
-          {quote1}
+        <Text 
+          style={{ color: isFirstResponseDriver ? teamColor : '#d1d5db' }} 
+          className="text-xs font-bold tracking-wide text-left"
+        >
+          {displayQuote1}
         </Text>
-        {/* As requested, this second quote will take on the team color */}
-        <Text style={{ color: teamColor }} className="text-xs font-bold tracking-wide mt-1 text-right">
-          {quote2}
+        <Text 
+          style={{ color: isSecondResponseDriver ? teamColor : '#d1d5db' }} 
+          className="text-xs font-bold tracking-wide mt-1 text-right"
+        >
+          {displayQuote2}
         </Text>
       </View>
     </View>

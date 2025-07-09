@@ -285,9 +285,9 @@ export default function CommunityScreen() {
   };
 
   return (
-    <View className="flex-row w-full min-h-screen bg-card">
+    <View className="flex-row w-full h-screen bg-card overflow-hidden">
       {/* Left Sidebar */}
-      <View className="w-64 p-4 flex flex-col">
+      <View className="w-64 p-4 flex flex-col shrink-0">
         <View>
           <View className="px-3 mb-4">
             <Text className="text-2xl font-bold text-primary">projectF1</Text>
@@ -348,123 +348,123 @@ export default function CommunityScreen() {
         )}
       </View>
 
-      {/* Centered Scrollable Threads Container or Thread View */}
-      <View className="flex-1 flex items-center border-x border-border">
-        <View className="w-full max-w-2xl min-h-screen flex flex-col items-center">
-          {isViewingThread && selectedThread ? (
-            <ThreadView thread={selectedThread} onClose={handleCloseThread} session={session} />
-          ) : (
-            <View className="w-full bg-card rounded-2xl flex flex-col h-[95vh]">
-              {/* Header for "For you" / "Following" */}
-              <View className="flex-row justify-around border-b border-border p-4">
-                <Text className="text-lg font-bold text-foreground">For you</Text>
-                <Text className="text-lg font-bold text-muted-foreground">Following</Text>
-              </View>
-
-              {/* Scrollable Feed */}
-              <ScrollView
-                className="flex-1"
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-              >
-                <View className="p-4 border-b border-border">
-                  <View className="flex-row space-x-4">
-                    <User size={40} color="gray" />
-                    <View className="flex-1">
-                      <TextInput
-                        placeholder="What's happening?"
-                        placeholderTextColor="gray"
-                        className="text-lg text-foreground"
-                        value={content}
-                        onChangeText={setContent}
-                        multiline
-                      />
-                      {image && (
-                        <View className="relative mt-2">
-                          <Image source={{ uri: image }} className="w-full h-64 rounded-xl" />
-                          <TouchableOpacity onPress={() => setImage(null)} className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
-                            <X size={20} color="white" />
+      {/* Main Content: Threads and News */}
+      <View className="flex-1 border-x border-border">
+        <ScrollView>
+          <View className="flex-row justify-center p-4">
+            <View className="w-full max-w-2xl">
+              {isViewingThread && selectedThread ? (
+                <ThreadView thread={selectedThread} onClose={handleCloseThread} session={session} />
+              ) : (
+                <>
+                  {/* Header for "For you" / "Following" */}
+                  <View className="flex-row justify-around border-b border-border p-4 bg-card">
+                    <Text className="text-lg font-bold text-foreground">For you</Text>
+                    <Text className="text-lg font-bold text-muted-foreground">Following</Text>
+                  </View>
+                  
+                  {/* Create a new thread */}
+                  <View className="p-4 border-b border-border bg-card">
+                    <View className="flex-row space-x-4">
+                      <User size={40} color="gray" />
+                      <View className="flex-1">
+                        <TextInput
+                          placeholder="What's happening?"
+                          placeholderTextColor="gray"
+                          className="text-lg text-foreground"
+                          value={content}
+                          onChangeText={setContent}
+                          multiline
+                        />
+                        {image && (
+                          <View className="relative mt-2">
+                            <Image 
+                              source={{ uri: image }} 
+                              className="w-full h-48 rounded-xl" 
+                              resizeMode="contain"
+                              style={{ backgroundColor: '#f3f4f6' }}
+                            />
+                            <TouchableOpacity onPress={() => setImage(null)} className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
+                              <X size={20} color="white" />
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                        <View className="flex-row justify-between items-center mt-4">
+                          <TouchableOpacity onPress={pickImage}>
+                            <Camera size={24} color="#1DA1F2" />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={handleCreateThread}>
+                            <Text className="text-lg text-muted-foreground font-bold">Post</Text>
                           </TouchableOpacity>
                         </View>
-                      )}
-                      <View className="flex-row justify-between items-center mt-4">
-                        <TouchableOpacity onPress={pickImage}>
-                          <Camera size={24} color="#1DA1F2" />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={handleCreateThread}>
-                          <Text className="text-lg text-muted-foreground font-bold">Post</Text>
-                        </TouchableOpacity>
                       </View>
                     </View>
                   </View>
-                </View>
-                
-                {loading ? (
-                  <ActivityIndicator className="mt-8" />
-                ) : (
-                  threads.map((thread) => (
-                    <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} className="border-b border-gray-700">
-                      <PostCard
-                        username={thread.profiles?.username || 'Anonymous'}
-                        avatarUrl={thread.profiles?.avatar_url}
-                        content={thread.content}
-                        imageUrl={thread.image_url}
-                        timestamp={thread.created_at}
-                        likes={thread.likeCount || 0}
-                        comments={thread.replyCount || 0}
-                        isLiked={thread.isLiked}
-                        onCommentPress={() => handleThreadPress(thread)}
-                        onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
-                        onDeletePress={() => handleDeleteThread(thread.id)}
-                      />
-                    </TouchableOpacity>
-                  ))
-                )}
-              </ScrollView>
+                  
+                  {/* Threads Feed */}
+                  {loading ? (
+                    <ActivityIndicator className="mt-8" />
+                  ) : (
+                    threads.map((thread) => (
+                      <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} className="border-b border-border bg-card">
+                        <PostCard
+                          username={thread.profiles?.username || 'Anonymous'}
+                          avatarUrl={thread.profiles?.avatar_url}
+                          content={thread.content}
+                          imageUrl={thread.image_url}
+                          timestamp={thread.created_at}
+                          likes={thread.likeCount || 0}
+                          comments={thread.replyCount || 0}
+                          isLiked={thread.isLiked}
+                          onCommentPress={() => handleThreadPress(thread)}
+                          onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
+                          onDeletePress={() => handleDeleteThread(thread.id)}
+                        />
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </>
+              )}
             </View>
-          )}
-        </View>
-      </View>
 
-      {/* Right Sidebar for News */}
-      <View className="w-80 p-4 space-y-4">
-        <View className="bg-muted rounded-xl flex-1">
-          <View className="p-4 border-b border-border">
-            <Text className="text-xl font-bold text-foreground">What's happening</Text>
-          </View>
-          {newsLoading ? (
-            <View className="flex-1 items-center justify-center p-8">
-              <ActivityIndicator />
+            {/* Right Sidebar for News (now inside the main scroll) */}
+            <View className="w-80 ml-4 space-y-4 shrink-0">
+              <View className="bg-muted rounded-xl">
+                <View className="p-4 border-b border-border">
+                  <Text className="text-xl font-bold text-foreground">What's happening</Text>
+                </View>
+                {newsLoading ? (
+                  <View className="flex-1 items-center justify-center p-8">
+                    <ActivityIndicator />
+                  </View>
+                ) : (
+                  <View style={{ padding: 16 }}>
+                    {randomizedNews.map((item, index) => (
+                      <TouchableOpacity
+                        key={`${item.link}-${index}`}
+                        className="mb-6 pb-4 border-b border-border/30"
+                        onPress={() => {
+                          if (item.link) {
+                            Linking.openURL(item.link).catch(err => {
+                              console.error('Failed to open link:', err);
+                            });
+                          }
+                        }}
+                      >
+                        <Text className="font-bold text-foreground text-base mb-2 leading-tight" numberOfLines={2}>
+                          {item.title}
+                        </Text>
+                        <Text className="text-muted-foreground text-sm leading-relaxed" numberOfLines={3}>
+                          {truncateToLines(item.description, 120)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
             </View>
-          ) : (
-            <ScrollView 
-              className="flex-1" 
-              showsVerticalScrollIndicator={true}
-              contentContainerStyle={{ padding: 16 }}
-              style={{ maxHeight: '80vh' }}
-            >
-              {randomizedNews.map((item, index) => (
-                <TouchableOpacity
-                  key={`${item.link}-${index}`}
-                  className="mb-6 pb-4 border-b border-border/30"
-                  onPress={() => {
-                    if (item.link) {
-                      Linking.openURL(item.link).catch(err => {
-                        console.error('Failed to open link:', err);
-                      });
-                    }
-                  }}
-                >
-                  <Text className="font-bold text-foreground text-base mb-2 leading-tight" numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                  <Text className="text-muted-foreground text-sm leading-relaxed" numberOfLines={3}>
-                    {truncateToLines(item.description, 120)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-        </View>
+          </View>
+        </ScrollView>
       </View>
 
       <AuthModal
