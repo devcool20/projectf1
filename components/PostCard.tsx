@@ -65,9 +65,9 @@ export default function PostCard({
           </TouchableOpacity>
         </View>
         {canDelete && (
-          <TouchableOpacity onPress={onDeletePress}>
-            <Trash2 size={18} color="hsl(var(--muted-foreground))" />
-          </TouchableOpacity>
+        <TouchableOpacity onPress={onDeletePress}>
+          <Trash2 size={18} color="hsl(var(--muted-foreground))" />
+        </TouchableOpacity>
         )}
       </View>
     </View>

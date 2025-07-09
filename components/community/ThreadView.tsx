@@ -44,41 +44,41 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const { data: likesData, error: likesError } = await supabase
-          .from('likes')
-          .select('reply_id')
+      const { data: likesData, error: likesError } = await supabase
+        .from('likes')
+        .select('reply_id')
           .in('reply_id', data.map(r => r.id));
-        
-        if (likesError) throw likesError;
+      
+      if (likesError) throw likesError;
 
         const likeCountMap = likesData.reduce((acc: any, like: any) => {
-          acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
-          return acc;
+        acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
+        return acc;
         }, {});
 
-        if (session) {
-          const { data: userLikesData, error: userLikesError } = await supabase
-            .from('likes')
-            .select('reply_id')
+      if (session) {
+        const { data: userLikesData, error: userLikesError } = await supabase
+          .from('likes')
+          .select('reply_id')
             .in('reply_id', data.map(r => r.id))
-            .eq('user_id', session.user.id);
-          
-          if (userLikesError) throw userLikesError;
+          .eq('user_id', session.user.id);
+        
+        if (userLikesError) throw userLikesError;
 
-          const likedReplyIds = new Set(userLikesData.map(l => l.reply_id));
-          
-          const repliesWithStatus = data.map(r => ({
-            ...r,
-            isLiked: likedReplyIds.has(r.id),
-            likeCount: likeCountMap[r.id] || 0,
-          }));
-          setReplies(repliesWithStatus);
-        } else {
-          const repliesWithCounts = data.map(r => ({
-            ...r,
-            likeCount: likeCountMap[r.id] || 0,
-          }));
-          setReplies(repliesWithCounts);
+        const likedReplyIds = new Set(userLikesData.map(l => l.reply_id));
+        
+        const repliesWithStatus = data.map(r => ({
+          ...r,
+          isLiked: likedReplyIds.has(r.id),
+          likeCount: likeCountMap[r.id] || 0,
+        }));
+        setReplies(repliesWithStatus);
+      } else {
+        const repliesWithCounts = data.map(r => ({
+          ...r,
+          likeCount: likeCountMap[r.id] || 0,
+        }));
+        setReplies(repliesWithCounts);
         }
       } else {
         setReplies([]);
@@ -311,9 +311,9 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                           <Text style={styles.actionText}>{reply.likeCount || 0}</Text>
                         </TouchableOpacity>
                         {session && reply.user_id === session.user.id && (
-                          <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
-                            <Trash2 size={16} color="hsl(var(--muted-foreground))" />
-                          </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
+                          <Trash2 size={16} color="hsl(var(--muted-foreground))" />
+                        </TouchableOpacity>
                         )}
                       </View>
                     </View>
