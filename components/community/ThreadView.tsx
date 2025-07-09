@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
@@ -25,60 +26,62 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
   const [newReply, setNewReply] = useState('');
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replyImage, setReplyImage] = useState<string | null>(null);
+  const replyInputRef = useRef<TextInput>(null);
 
   const fetchReplies = useCallback(async () => {
     if (!thread) return;
     setLoadingReplies(true);
     try {
-      // Get replies with profile data
       const { data, error } = await supabase
         .from('replies')
         .select(`
           *,
-          profiles:user_id(username, avatar_url)
+          profiles:user_id (username, avatar_url)
         `)
         .eq('thread_id', thread.id)
         .order('created_at', { ascending: true });
+
       if (error) throw error;
 
-      // Get actual like counts for each reply
-      const replyIds = data.map(r => r.id);
-      const { data: likesData, error: likesError } = await supabase
-        .from('likes')
-        .select('reply_id')
-        .in('reply_id', replyIds);
-      
-      if (likesError) throw likesError;
-
-      // Count likes per reply
-      const likeCountMap = likesData.reduce((acc, like) => {
-        acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      if (session) {
-        const { data: userLikesData, error: userLikesError } = await supabase
+      if (data && data.length > 0) {
+        const { data: likesData, error: likesError } = await supabase
           .from('likes')
           .select('reply_id')
-          .in('reply_id', replyIds)
-          .eq('user_id', session.user.id);
+          .in('reply_id', data.map(r => r.id));
         
-        if (userLikesError) throw userLikesError;
+        if (likesError) throw likesError;
 
-        const likedReplyIds = new Set(userLikesData.map(l => l.reply_id));
-        
-        const repliesWithStatus = data.map(r => ({
-          ...r,
-          isLiked: likedReplyIds.has(r.id),
-          likeCount: likeCountMap[r.id] || 0,
-        }));
-        setReplies(repliesWithStatus);
+        const likeCountMap = likesData.reduce((acc: any, like: any) => {
+          acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
+          return acc;
+        }, {});
+
+        if (session) {
+          const { data: userLikesData, error: userLikesError } = await supabase
+            .from('likes')
+            .select('reply_id')
+            .in('reply_id', data.map(r => r.id))
+            .eq('user_id', session.user.id);
+          
+          if (userLikesError) throw userLikesError;
+
+          const likedReplyIds = new Set(userLikesData.map(l => l.reply_id));
+          
+          const repliesWithStatus = data.map(r => ({
+            ...r,
+            isLiked: likedReplyIds.has(r.id),
+            likeCount: likeCountMap[r.id] || 0,
+          }));
+          setReplies(repliesWithStatus);
+        } else {
+          const repliesWithCounts = data.map(r => ({
+            ...r,
+            likeCount: likeCountMap[r.id] || 0,
+          }));
+          setReplies(repliesWithCounts);
+        }
       } else {
-        const repliesWithCounts = data.map(r => ({
-          ...r,
-          likeCount: likeCountMap[r.id] || 0,
-        }));
-        setReplies(repliesWithCounts);
+        setReplies([]);
       }
     } catch (error) {
       console.error('Error fetching replies:', error);
@@ -195,18 +198,41 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
   };
 
   const handleDeleteReply = async (replyId: string) => {
+    if (!session) {
+      Alert.alert('You must be logged in to delete replies');
+      return;
+    }
+
     try {
+      // First check if the user owns this reply
+      const { data: replyData, error: fetchError } = await supabase
+        .from('replies')
+        .select('user_id')
+        .eq('id', replyId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      if (replyData.user_id !== session.user.id) {
+        Alert.alert('You can only delete your own replies');
+        return;
+      }
+
       const { error } = await supabase.from('replies').delete().eq('id', replyId);
       if (error) throw error;
       await fetchReplies();
     } catch (error) {
       console.error('Error deleting reply:', error);
-      alert('Failed to delete reply');
+      Alert.alert('Failed to delete reply');
     }
   };
 
   const handleReplyTo = (username: string) => {
     setNewReply(`@${username} `);
+    // Focus the input after a small delay to ensure the text is set
+    setTimeout(() => {
+      replyInputRef.current?.focus();
+    }, 100);
   };
 
   if (!thread) {
@@ -255,6 +281,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
               onCommentPress={() => {}}
               onLikePress={() => {}}
               onDeletePress={() => {}}
+              canDelete={false} // Disable delete for thread in thread view
             />
           </View>
 
@@ -283,9 +310,11 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                           <Heart size={16} color={reply.isLiked ? 'red' : 'hsl(var(--muted-foreground))'} />
                           <Text style={styles.actionText}>{reply.likeCount || 0}</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
-                          <Trash2 size={16} color="hsl(var(--muted-foreground))" />
-                        </TouchableOpacity>
+                        {session && reply.user_id === session.user.id && (
+                          <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
+                            <Trash2 size={16} color="hsl(var(--muted-foreground))" />
+                          </TouchableOpacity>
+                        )}
                       </View>
                     </View>
                   </View>
@@ -300,6 +329,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
       <View style={styles.replyBox}>
         <View style={styles.replyInputContainer}>
           <TextInput
+            ref={replyInputRef}
             style={styles.replyInput}
             placeholder="Post your reply"
             placeholderTextColor="hsl(var(--muted-foreground))"

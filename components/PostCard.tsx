@@ -14,6 +14,7 @@ export type PostCardProps = {
   onCommentPress: () => void;
   onLikePress: () => void;
   onDeletePress: () => void;
+  canDelete?: boolean; // New prop to control delete button visibility
 };
 
 export default function PostCard({
@@ -28,6 +29,7 @@ export default function PostCard({
   onCommentPress,
   onLikePress,
   onDeletePress,
+  canDelete = false,
 }: PostCardProps) {
   
   return (
@@ -62,9 +64,11 @@ export default function PostCard({
             <Text className="text-sm text-muted-foreground">{comments}</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={onDeletePress}>
-          <Trash2 size={18} color="hsl(var(--muted-foreground))" />
-        </TouchableOpacity>
+        {canDelete && (
+          <TouchableOpacity onPress={onDeletePress}>
+            <Trash2 size={18} color="hsl(var(--muted-foreground))" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
