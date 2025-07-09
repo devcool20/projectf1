@@ -39,7 +39,7 @@ const NAV_ITEMS = [
   { href: '#profile', icon: User, name: 'Profile' },
 ];
 
-const RSS_TO_JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.formula1.com/en/latest/all.xml';
+const RSS_TO_JSON_URL = 'https://feedtojson.vercel.app/https%3A%2F%2Fwww.formula1.com%2Fen%2Flatest%2Fall.xml';
 
 // Function to shuffle array and get random items
 const getRandomNews = (newsArray: any[], count: number = 5) => {
@@ -181,10 +181,13 @@ export default function CommunityScreen() {
       try {
         const res = await fetch(RSS_TO_JSON_URL);
         const data = await res.json();
-        if (data.status === 'ok' && data.items) {
+        if (data && data.items) {
           const transformedNews = data.items.map((item: any) => ({
             ...item,
-            description: item.description?.replace(/<[^>]*>/g, '') || 'No description available',
+            title: item.title || 'No title',
+            description: item.description?.replace(/<[^>]*>/g, '')?.trim() || 'No description available',
+            link: item.link || '#',
+            pubDate: item.published || item.publishedParsed || new Date().toISOString(),
             source: { name: 'Formula 1' },
           }));
           setNews(transformedNews);

@@ -13,7 +13,7 @@ import { RadioCard } from '@/components/RadioCard';
 import { getRandomRadioCards } from '@/lib/radioCardData';
 import { useMemo } from 'react';
 
-const RSS_TO_JSON_URL = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.formula1.com/en/latest/all.xml';
+const RSS_TO_JSON_URL = 'https://feedtojson.vercel.app/https%3A%2F%2Fwww.formula1.com%2Fen%2Flatest%2Fall.xml';
 
 // Function to safely format date
 const formatDate = (dateString: string) => {
@@ -49,15 +49,18 @@ export default function NewsScreen() {
     try {
       const res = await fetch(RSS_TO_JSON_URL);
       const data = await res.json();
-      if (data.status === 'ok' && data.items) {
-        // Limit to 50 news items and clean descriptions
-        const cleanedNews = data.items.slice(0, 50).map((item: any) => ({
+      if (data && data.items) {
+        // Clean descriptions and map RSS feed format
+        const cleanedNews = data.items.map((item: any) => ({
           ...item,
+          title: item.title || 'No title',
           description: item.description?.replace(/<[^>]*>/g, '')?.trim() || 'No description available',
+          link: item.link || '#',
+          pubDate: item.published || item.publishedParsed || new Date().toISOString(),
         }));
         setNews(cleanedNews);
       } else {
-        throw new Error(data.message || 'Failed to fetch news.');
+        throw new Error('Failed to fetch news or no items found.');
       }
     } catch (e: any) {
       setError(e.message);
