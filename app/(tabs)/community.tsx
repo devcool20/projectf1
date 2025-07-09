@@ -354,7 +354,7 @@ export default function CommunityScreen() {
           {isViewingThread && selectedThread ? (
             <ThreadView thread={selectedThread} onClose={handleCloseThread} session={session} />
           ) : (
-            <View className="w-full bg-card rounded-2xl shadow-kodama-lg flex flex-col h-[95vh]">
+            <View className="w-full bg-card rounded-2xl flex flex-col h-[95vh]">
               {/* Header for "For you" / "Following" */}
               <View className="flex-row justify-around border-b border-border p-4">
                 <Text className="text-lg font-bold text-foreground">For you</Text>
