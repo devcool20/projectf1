@@ -325,23 +325,8 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
         </ScrollView>
       </View>
 
-      {/* Fixed Reply Box at Bottom */}
+      {/* Fixed Reply Box at Bottom - Outside scroll container */}
       <View style={styles.replyBox}>
-        <View style={styles.replyInputContainer}>
-          <TextInput
-            ref={replyInputRef}
-            style={styles.replyInput}
-            placeholder="Post your reply"
-            placeholderTextColor="hsl(var(--muted-foreground))"
-            value={newReply}
-            onChangeText={setNewReply}
-            multiline
-          />
-          <TouchableOpacity onPress={pickReplyImage} style={styles.imagePickerButton}>
-            <Camera size={20} color="hsl(var(--muted-foreground))" />
-          </TouchableOpacity>
-        </View>
-        
         {replyImage && (
           <View style={styles.imagePreview}>
             <Image 
@@ -358,13 +343,28 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
           </View>
         )}
         
-        <TouchableOpacity 
-          style={[styles.replyButton, (!newReply.trim() && !replyImage) && styles.replyButtonDisabled]} 
-          onPress={handlePostReply}
-          disabled={!newReply.trim() && !replyImage}
-        >
-          <Text style={styles.replyButtonText}>Reply</Text>
-        </TouchableOpacity>
+        <View style={styles.replyInputContainer}>
+          <TextInput
+            ref={replyInputRef}
+            style={styles.replyInput}
+            placeholder="Post your reply"
+            placeholderTextColor="hsl(var(--muted-foreground))"
+            value={newReply}
+            onChangeText={setNewReply}
+            multiline={false}
+            numberOfLines={1}
+          />
+          <TouchableOpacity onPress={pickReplyImage} style={styles.imagePickerButton}>
+            <Camera size={20} color="hsl(var(--muted-foreground))" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.replyButton, (!newReply.trim() && !replyImage) && styles.replyButtonDisabled]} 
+            onPress={handlePostReply}
+            disabled={!newReply.trim() && !replyImage}
+          >
+            <Text style={styles.replyButtonText}>Reply</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -395,13 +395,14 @@ const styles = StyleSheet.create({
   },
   scrollWrapper: {
     flex: 1,
+    marginBottom: 60,
   },
   scrollContent: {
     flex: 1,
     backgroundColor: 'hsl(var(--background))',
   },
   scrollContentContainer: {
-    paddingBottom: 20,
+    paddingBottom: 80,
     flexGrow: 1,
   },
   postContainer: {
@@ -417,7 +418,7 @@ const styles = StyleSheet.create({
   },
   replyBox: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderTopWidth: 1,
     borderColor: 'hsl(var(--border))',
     backgroundColor: 'hsl(var(--card))',
@@ -426,28 +427,34 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    position: 'relative',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    height: 60,
   },
   replyInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    paddingVertical: 4,
   },
   replyInput: {
     flex: 1,
     color: 'hsl(var(--foreground))',
     paddingVertical: 8,
-    paddingRight: 8,
+    paddingHorizontal: 8,
+    marginRight: 8,
+    borderRadius: 16,
+    backgroundColor: 'hsl(var(--background))',
+    borderWidth: 1,
+    borderColor: 'hsl(var(--border))',
+    fontSize: 14,
+    minHeight: 36,
+    maxHeight: 36,
   },
   imagePickerButton: {
-    padding: 8,
+    padding: 6,
+    marginRight: 8,
   },
   imagePreview: {
     position: 'relative',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   previewImage: {
     width: '100%',
@@ -469,8 +476,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'hsl(var(--primary))',
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 20,
-    alignSelf: 'flex-end',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 60,
   },
   replyButtonDisabled: {
     backgroundColor: 'hsl(var(--muted))',
@@ -489,7 +499,7 @@ const styles = StyleSheet.create({
   commentsContainer: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 100,
+    paddingBottom: 20,
     minHeight: 400,
     flex: 1,
   },

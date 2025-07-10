@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, ScrollView, RefreshControl, Image, Pressable, Linking, Alert } from 'react-native';
-import AnimatedRadioCards from '@/components/AnimatedRadioCards';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
 
@@ -91,139 +90,123 @@ export default function ShopScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 bg-gradient-to-br from-background to-secondary/20 h-screen w-screen overflow-hidden">
-        {/* Animated Radio Cards */}
-        <AnimatedRadioCards />
+      <ScrollView 
+        className="flex-1" 
+        showsVerticalScrollIndicator={true} 
+        contentContainerStyle={{ alignItems: 'center', paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        style={{ overflow: 'auto' }}
+      >
+        <View className="w-full max-w-md pb-24">
+          {/* Header */}
+          <View className="bg-gradient-card p-6 shadow-kodama-lg">
+            <Text className="text-2xl font-heading font-bold text-foreground">
+              🛒 F1 Shop
+            </Text>
+            <Text className="text-muted-foreground mt-1">
+              Get your F1 merchandise and team gear
+            </Text>
+          </View>
 
-        <ScrollView 
-          className="flex-1" 
-          showsVerticalScrollIndicator={false} 
-          contentContainerStyle={{ alignItems: 'center', paddingBottom: 32 }}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          <View className="w-full max-w-md pb-24">
-            {/* Header */}
-            <View className="bg-gradient-card p-6 shadow-kodama-lg">
-              <Text className="text-2xl font-heading font-bold text-foreground">
-                🛒 F1 Shop
-              </Text>
-              <Text className="text-muted-foreground mt-1">
-                Get your F1 merchandise and team gear
-              </Text>
-            </View>
+          {/* Content */}
+          <View className="p-6">
+            {loading ? (
+              <View className="bg-gradient-card rounded-2xl p-8 items-center shadow-kodama-lg">
+                <Text className="text-6xl mb-4">⏳</Text>
+                <Text className="text-xl font-medium text-foreground">
+                  Loading products...
+                </Text>
+              </View>
+            ) : products.length === 0 ? (
+              <View className="bg-gradient-card rounded-2xl p-8 items-center shadow-kodama-lg">
+                <Text className="text-6xl mb-4">🛒</Text>
+                <Text className="text-2xl font-heading font-bold text-foreground mb-3">
+                  No Products Available
+                </Text>
+                <Text className="text-muted-foreground text-lg leading-relaxed text-center">
+                  Check back soon for F1 merchandise and team gear!
+                </Text>
+              </View>
+            ) : (
+              <View className="space-y-4">
+                {products.map((product) => (
+                  <View key={product.id} className="bg-gradient-card rounded-2xl shadow-kodama-lg overflow-hidden">
+                    {/* Header Image */}
+                    {product.image_url ? (
+                      <Image
+                        source={{ uri: product.image_url }}
+                        className="w-full h-48"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                        <Text className="text-4xl">🛍️</Text>
+                      </View>
+                    )}
 
-            {/* Content */}
-            <View className="p-6">
-              {loading ? (
-                <View className="bg-gradient-card rounded-2xl p-8 items-center shadow-kodama-lg">
-                  <Text className="text-6xl mb-4">⏳</Text>
-                  <Text className="text-xl font-medium text-foreground">
-                    Loading products...
-                  </Text>
-                </View>
-              ) : products.length === 0 ? (
-                <View className="bg-gradient-card rounded-2xl p-8 items-center shadow-kodama-lg">
-                  <Text className="text-6xl mb-4">🛒</Text>
-                  <Text className="text-2xl font-heading font-bold text-foreground mb-3">
-                    No Products Available
-                  </Text>
-                  <Text className="text-muted-foreground text-lg leading-relaxed text-center">
-                    Check back soon for F1 merchandise and team gear!
-                  </Text>
-                </View>
-              ) : (
-                <View className="space-y-4">
-                  {products.map((product) => (
-                    <View key={product.id} className="bg-gradient-card rounded-2xl shadow-kodama-lg overflow-hidden">
-                      {/* Header Image */}
-                      {product.image_url ? (
-                        <Image
-                          source={{ uri: product.image_url }}
-                          className="w-full h-48"
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View className="w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                          <Text className="text-4xl">🛍️</Text>
-                        </View>
-                      )}
-
-                      {/* Team Badge */}
-                      {product.team && (
-                        <View 
-                          className={`absolute top-3 right-3 bg-gradient-to-r ${getTeamColors(product.team)} px-2 py-1 rounded-full`}
-                        >
-                          <Text className="text-white text-xs font-medium">
-                            {product.team}
-                          </Text>
-                        </View>
-                      )}
-
-                      {/* Featured Badge */}
-                      {product.featured && (
-                        <View className="absolute top-3 left-3 bg-yellow-500 px-2 py-1 rounded-full">
-                          <Text className="text-white text-xs font-bold">⭐ FEATURED</Text>
-                        </View>
-                      )}
-
-                      {/* Content */}
-                      <View className="p-4">
-                        {/* Product Name */}
-                        <Text className="text-xl font-heading font-bold text-foreground mb-2">
-                          {product.product_name}
+                    {/* Team Badge */}
+                    {product.team && (
+                      <View 
+                        className={`absolute top-3 right-3 bg-gradient-to-r ${getTeamColors(product.team)} px-2 py-1 rounded-full`}
+                      >
+                        <Text className="text-white text-xs font-medium">
+                          {product.team}
                         </Text>
+                      </View>
+                    )}
 
-                        {/* Price */}
-                        <View className="mb-3">
-                          <Text className="text-lg font-bold text-primary">
-                            {formatPrice(product.price, product.currency)}
+                    {/* Featured Badge */}
+                    {product.featured && (
+                      <View className="absolute top-3 left-3 bg-yellow-500 px-2 py-1 rounded-full">
+                        <Text className="text-white text-xs font-bold">⭐ FEATURED</Text>
+                      </View>
+                    )}
+
+                    {/* Content */}
+                    <View className="p-4">
+                      {/* Product Name */}
+                      <Text className="text-xl font-heading font-bold text-foreground mb-2">
+                        {product.product_name}
+                      </Text>
+
+                      {/* Price */}
+                      <View className="mb-3">
+                        <Text className="text-lg font-bold text-primary">
+                          {formatPrice(product.price, product.currency)}
+                        </Text>
+                        {product.category && (
+                          <Text className="text-sm text-muted-foreground mt-1">
+                            {product.category}
                           </Text>
-                          {product.category && (
-                            <Text className="text-sm text-muted-foreground mt-1">
-                              {product.category}
-                            </Text>
-                          )}
-                        </View>
-
-                        {/* Description */}
-                        {product.description && (
-                          <Text className="text-sm text-muted-foreground leading-relaxed mb-4">
-                            {product.description}
-                          </Text>
-                        )}
-
-                        {/* Buy Now Button */}
-                        <Pressable
-                          onPress={() => handleBuyNow(product.product_link)}
-                          className="bg-primary rounded-xl py-3 px-4 shadow-lg"
-                        >
-                          <View className="flex-row items-center justify-center">
-                            <Text className="text-white text-base font-semibold mr-2">
-                              Buy Now
-                            </Text>
-                            <Text className="text-white text-base">🛒</Text>
-                          </View>
-                        </Pressable>
-
-                        {/* Availability Status */}
-                        {product.is_available === false && (
-                          <View className="mt-3 pt-3 border-t border-border">
-                            <Text className="text-xs text-muted-foreground text-center">
-                              Currently out of stock
-                            </Text>
-                          </View>
                         )}
                       </View>
+
+                      {/* Description */}
+                      {product.description && (
+                        <Text className="text-sm text-muted-foreground leading-relaxed mb-4">
+                          {product.description}
+                        </Text>
+                      )}
+
+                      {/* Buy Now Button */}
+                      <Pressable
+                        onPress={() => handleBuyNow(product.product_link)}
+                        className="bg-primary rounded-xl py-3 px-4 shadow-lg"
+                      >
+                        <Text className="text-primary-foreground text-center font-semibold text-base">
+                          🛒 Buy Now
+                        </Text>
+                      </Pressable>
                     </View>
-                  ))}
-                </View>
-              )}
-            </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
