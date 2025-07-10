@@ -27,14 +27,6 @@ const AnimatedRadioCards = () => {
   const cardTop = isWeb ? 150 : 120;
   const cardZIndex = isWeb ? 10 : 20;
 
-  // Larger hitSlop so the thin strip is easy to press
-  const leftHitSlop = isWeb
-    ? undefined
-    : { left: 0, right: cardWidth - visibleStrip, top: 30, bottom: 30 };
-  const rightHitSlop = isWeb
-    ? undefined
-    : { left: cardWidth - visibleStrip, right: 0, top: 30, bottom: 30 };
-
   // Debug info
   console.log('AnimatedRadioCards render:', {
     Platform: Platform.OS,
@@ -69,7 +61,6 @@ const AnimatedRadioCards = () => {
               width: cardWidth,
             },
           ]}
-          pointerEvents="auto"
         >
           <Pressable
             onPress={() => {
@@ -77,9 +68,9 @@ const AnimatedRadioCards = () => {
               toggleCard('left');
             }}
             disabled={isWeb}
-            hitSlop={leftHitSlop}
+            hitSlop={{ top: 20, bottom: 20, right: cardWidth - visibleStrip }}
           >
-            <View style={{ transform: [{ scale: cardScale }] }}>
+            <View style={{ transform: [{ scale: cardScale }] }} pointerEvents="none">
               <RadioCard
                 teamColor={leftCardData.teamColor}
                 teamIcon={leftCardData.teamIcon}
@@ -106,7 +97,6 @@ const AnimatedRadioCards = () => {
               width: cardWidth,
             },
           ]}
-          pointerEvents="auto"
         >
           <Pressable
             onPress={() => {
@@ -114,9 +104,9 @@ const AnimatedRadioCards = () => {
               toggleCard('right');
             }}
             disabled={isWeb}
-            hitSlop={rightHitSlop}
+            hitSlop={{ top: 20, bottom: 20, left: cardWidth - visibleStrip }}
           >
-            <View style={{ transform: [{ scale: cardScale }] }}>
+            <View style={{ transform: [{ scale: cardScale }] }} pointerEvents="none">
               <RadioCard
                 teamColor={rightCardData.teamColor}
                 teamIcon={rightCardData.teamIcon}
@@ -128,42 +118,6 @@ const AnimatedRadioCards = () => {
             </View>
           </Pressable>
         </Animated.View>
-      )}
-
-      {/* Edge touch areas for reliable tap detection */}
-      {!isWeb && (
-        <>
-          {/* Left edge touch area - much larger for easier clicking */}
-          <Pressable
-            onPress={() => {
-              console.log('EDGE LEFT PRESSED');
-              toggleCard('left');
-            }}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: Math.min(150, screenWidth * 0.3), // 30% of screen or 150px max
-              zIndex: 30,
-            }}
-          />
-          {/* Right edge touch area - much larger for easier clicking */}
-          <Pressable
-            onPress={() => {
-              console.log('EDGE RIGHT PRESSED');
-              toggleCard('right');
-            }}
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: Math.min(150, screenWidth * 0.3), // 30% of screen or 150px max
-              zIndex: 30,
-            }}
-          />
-        </>
       )}
 
       {/* Mobile overlay */}
