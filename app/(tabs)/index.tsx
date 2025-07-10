@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, SafeAreaView } from 'react-native';
-import { AnimatedRadioCards } from '@/components/AnimatedRadioCards';
+import AnimatedRadioCards from '@/components/AnimatedRadioCards';
 
 export default function HomeScreen() {
   return (

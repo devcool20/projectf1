@@ -9,7 +9,7 @@ import {
   Linking,
   SafeAreaView,
 } from 'react-native';
-import { AnimatedRadioCards } from '@/components/AnimatedRadioCards';
+import AnimatedRadioCards from '@/components/AnimatedRadioCards';
 
 const RSS_TO_JSON_URL = 'https://feedtojson.vercel.app/https%3A%2F%2Fwww.formula1.com%2Fen%2Flatest%2Fall.xml';
 

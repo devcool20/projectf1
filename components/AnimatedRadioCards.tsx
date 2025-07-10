@@ -1,15 +1,12 @@
 import React from 'react';
-import { View, Pressable, useWindowDimensions } from 'react-native';
+import { View, Pressable, Dimensions, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { RadioCard } from './RadioCard';
 import { useRadioCards } from '@/hooks/useRadioCards';
 
-interface AnimatedRadioCardsProps {
-  cardCount?: number;
-}
+const { width: screenWidth } = Dimensions.get('window');
 
-export const AnimatedRadioCards: React.FC<AnimatedRadioCardsProps> = ({ cardCount = 2 }) => {
-  const { width: screenWidth } = useWindowDimensions();
+const AnimatedRadioCards = () => {
   const {
     radioCards,
     activeCard,
@@ -17,31 +14,71 @@ export const AnimatedRadioCards: React.FC<AnimatedRadioCardsProps> = ({ cardCoun
     animatedRightCardStyle,
     toggleCard,
     isWeb,
-  } = useRadioCards(cardCount);
+  } = useRadioCards(2);
+
+  if (radioCards.length < 2) return null;
 
   const [leftCardData, rightCardData] = radioCards;
 
   // Responsive sizing
-  const cardWidth = isWeb ? 280 : 240;
-  const cardScale = isWeb ? 0.9 : 0.75;
-  const cardTop = isWeb ? 200 : 250;
+  const cardWidth = 280;
+  const visibleStrip = 14; // must match hook visibleAmount
+  const cardScale = isWeb ? 0.7 : 1;
+  const cardTop = isWeb ? 150 : 120;
+  const cardZIndex = isWeb ? 10 : 20;
+
+  // Larger hitSlop so the thin strip is easy to press
+  const leftHitSlop = isWeb
+    ? undefined
+    : { left: 0, right: cardWidth - visibleStrip, top: 30, bottom: 30 };
+  const rightHitSlop = isWeb
+    ? undefined
+    : { left: cardWidth - visibleStrip, right: 0, top: 30, bottom: 30 };
+
+  // Debug info
+  console.log('AnimatedRadioCards render:', {
+    Platform: Platform.OS,
+    screenWidth,
+    isWeb,
+    visibleStrip,
+    cardWidth
+  });
 
   return (
-    <>
+    <View
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        pointerEvents: 'box-none',
+        zIndex: 1000, // Ensure container is on top
+      }}
+    >
       {/* Left Radio Card */}
       {leftCardData && (
-        <Animated.View 
+        <Animated.View
           style={[
-            animatedLeftCardStyle, 
-            { 
-              position: 'absolute', 
+            animatedLeftCardStyle,
+            {
+              position: 'absolute',
+              left: 0,
               top: cardTop,
-              zIndex: 30, 
-              width: cardWidth, 
-            }
+              zIndex: cardZIndex,
+              width: cardWidth,
+            },
           ]}
+          pointerEvents="auto"
         >
-          <Pressable onPress={isWeb ? undefined : () => toggleCard('left')}>
+          <Pressable
+            onPress={() => {
+              console.log('LEFT CARD PRESSED');
+              toggleCard('left');
+            }}
+            disabled={isWeb}
+            hitSlop={leftHitSlop}
+          >
             <View style={{ transform: [{ scale: cardScale }] }}>
               <RadioCard
                 teamColor={leftCardData.teamColor}
@@ -55,21 +92,30 @@ export const AnimatedRadioCards: React.FC<AnimatedRadioCardsProps> = ({ cardCoun
           </Pressable>
         </Animated.View>
       )}
-      
+
       {/* Right Radio Card */}
       {rightCardData && (
-        <Animated.View 
+        <Animated.View
           style={[
-            animatedRightCardStyle, 
-            { 
-              position: 'absolute', 
+            animatedRightCardStyle,
+            {
+              position: 'absolute',
+              left: 0,
               top: cardTop,
-              zIndex: 30, 
-              width: cardWidth, 
-            }
+              zIndex: cardZIndex,
+              width: cardWidth,
+            },
           ]}
+          pointerEvents="auto"
         >
-          <Pressable onPress={isWeb ? undefined : () => toggleCard('right')}>
+          <Pressable
+            onPress={() => {
+              console.log('RIGHT CARD PRESSED');
+              toggleCard('right');
+            }}
+            disabled={isWeb}
+            hitSlop={rightHitSlop}
+          >
             <View style={{ transform: [{ scale: cardScale }] }}>
               <RadioCard
                 teamColor={rightCardData.teamColor}
@@ -83,6 +129,66 @@ export const AnimatedRadioCards: React.FC<AnimatedRadioCardsProps> = ({ cardCoun
           </Pressable>
         </Animated.View>
       )}
-    </>
+
+      {/* Edge touch areas for reliable tap detection */}
+      {!isWeb && (
+        <>
+          {/* Left edge touch area - much larger for easier clicking */}
+          <Pressable
+            onPress={() => {
+              console.log('EDGE LEFT PRESSED - WORKING!');
+              toggleCard('left');
+            }}
+            onPressIn={() => console.log('LEFT PRESS IN')}
+            onPressOut={() => console.log('LEFT PRESS OUT')}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: Math.min(150, screenWidth * 0.3), // 30% of screen or 150px max
+              zIndex: 30,
+              backgroundColor: 'rgba(255,0,0,0.3)', // More visible debug color
+            }}
+          />
+          {/* Right edge touch area - much larger for easier clicking */}
+          <Pressable
+            onPress={() => {
+              console.log('EDGE RIGHT PRESSED - WORKING!');
+              toggleCard('right');
+            }}
+            onPressIn={() => console.log('RIGHT PRESS IN')}
+            onPressOut={() => console.log('RIGHT PRESS OUT')}
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: Math.min(150, screenWidth * 0.3), // 30% of screen or 150px max
+              zIndex: 30,
+              backgroundColor: 'rgba(0,255,0,0.3)', // More visible debug color
+            }}
+          />
+        </>
+      )}
+
+      {/* Mobile overlay */}
+      {!isWeb && activeCard && (
+        <Pressable
+          onPress={() => toggleCard(activeCard)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            zIndex: 15,
+          }}
+        />
+      )}
+    </View>
   );
-}; 
+};
+
+export default AnimatedRadioCards; 

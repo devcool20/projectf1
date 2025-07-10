@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, SafeAreaView } from 'react-native';
 import EventCard from '@/components/EventCard';
-import { AnimatedRadioCards } from '@/components/AnimatedRadioCards';
+import AnimatedRadioCards from '@/components/AnimatedRadioCards';
 
 const upcomingEvents = [
   {
