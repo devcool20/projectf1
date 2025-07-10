@@ -285,6 +285,48 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
             />
           </View>
 
+          {/* Reply Box - Right after the main post */}
+          <View style={styles.replyBoxInline}>
+            {replyImage && (
+              <View style={styles.imagePreview}>
+                <Image 
+                  source={{ uri: replyImage }} 
+                  style={[styles.previewImage, { backgroundColor: '#f3f4f6' }]} 
+                  resizeMode="contain"
+                />
+                <TouchableOpacity 
+                  style={styles.removeImageButton} 
+                  onPress={() => setReplyImage(null)}
+                >
+                  <X size={16} color="white" />
+                </TouchableOpacity>
+              </View>
+            )}
+            
+            <View style={styles.replyInputContainer}>
+              <TextInput
+                ref={replyInputRef}
+                style={styles.replyInput}
+                placeholder="Post your reply"
+                placeholderTextColor="hsl(var(--muted-foreground))"
+                value={newReply}
+                onChangeText={setNewReply}
+                multiline={false}
+                numberOfLines={1}
+              />
+              <TouchableOpacity onPress={pickReplyImage} style={styles.imagePickerButton}>
+                <Camera size={20} color="hsl(var(--muted-foreground))" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.replyButton, (!newReply.trim() && !replyImage) && styles.replyButtonDisabled]} 
+                onPress={handlePostReply}
+                disabled={!newReply.trim() && !replyImage}
+              >
+                <Text style={styles.replyButtonText}>Reply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {/* Comments Section */}
           {loadingReplies ? (
             <View style={styles.loadingContainer}>
@@ -325,47 +367,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
         </ScrollView>
       </View>
 
-      {/* Fixed Reply Box at Bottom - Outside scroll container */}
-      <View style={styles.replyBox}>
-        {replyImage && (
-          <View style={styles.imagePreview}>
-            <Image 
-              source={{ uri: replyImage }} 
-              style={[styles.previewImage, { backgroundColor: '#f3f4f6' }]} 
-              resizeMode="contain"
-            />
-            <TouchableOpacity 
-              style={styles.removeImageButton} 
-              onPress={() => setReplyImage(null)}
-            >
-              <X size={16} color="white" />
-            </TouchableOpacity>
-          </View>
-        )}
-        
-        <View style={styles.replyInputContainer}>
-          <TextInput
-            ref={replyInputRef}
-            style={styles.replyInput}
-            placeholder="Post your reply"
-            placeholderTextColor="hsl(var(--muted-foreground))"
-            value={newReply}
-            onChangeText={setNewReply}
-            multiline={false}
-            numberOfLines={1}
-          />
-          <TouchableOpacity onPress={pickReplyImage} style={styles.imagePickerButton}>
-            <Camera size={20} color="hsl(var(--muted-foreground))" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.replyButton, (!newReply.trim() && !replyImage) && styles.replyButtonDisabled]} 
-            onPress={handlePostReply}
-            disabled={!newReply.trim() && !replyImage}
-          >
-            <Text style={styles.replyButtonText}>Reply</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+
     </View>
   );
 }
@@ -375,6 +377,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     backgroundColor: 'hsl(var(--background))',
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
@@ -395,14 +398,13 @@ const styles = StyleSheet.create({
   },
   scrollWrapper: {
     flex: 1,
-    marginBottom: 60,
   },
   scrollContent: {
     flex: 1,
     backgroundColor: 'hsl(var(--background))',
   },
   scrollContentContainer: {
-    paddingBottom: 80,
+    paddingBottom: 20,
     flexGrow: 1,
   },
   postContainer: {
@@ -416,18 +418,14 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     minHeight: 200,
   },
-  replyBox: {
+  replyBoxInline: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderTopWidth: 1,
+    borderBottomWidth: 1,
     borderColor: 'hsl(var(--border))',
     backgroundColor: 'hsl(var(--card))',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    height: 60,
+    marginBottom: 8,
   },
   replyInputContainer: {
     flexDirection: 'row',
