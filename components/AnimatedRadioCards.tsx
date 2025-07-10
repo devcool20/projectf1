@@ -136,11 +136,9 @@ const AnimatedRadioCards = () => {
           {/* Left edge touch area - much larger for easier clicking */}
           <Pressable
             onPress={() => {
-              console.log('EDGE LEFT PRESSED - WORKING!');
+              console.log('EDGE LEFT PRESSED');
               toggleCard('left');
             }}
-            onPressIn={() => console.log('LEFT PRESS IN')}
-            onPressOut={() => console.log('LEFT PRESS OUT')}
             style={{
               position: 'absolute',
               left: 0,
@@ -148,17 +146,14 @@ const AnimatedRadioCards = () => {
               bottom: 0,
               width: Math.min(150, screenWidth * 0.3), // 30% of screen or 150px max
               zIndex: 30,
-              backgroundColor: 'rgba(255,0,0,0.3)', // More visible debug color
             }}
           />
           {/* Right edge touch area - much larger for easier clicking */}
           <Pressable
             onPress={() => {
-              console.log('EDGE RIGHT PRESSED - WORKING!');
+              console.log('EDGE RIGHT PRESSED');
               toggleCard('right');
             }}
-            onPressIn={() => console.log('RIGHT PRESS IN')}
-            onPressOut={() => console.log('RIGHT PRESS OUT')}
             style={{
               position: 'absolute',
               right: 0,
@@ -166,7 +161,6 @@ const AnimatedRadioCards = () => {
               bottom: 0,
               width: Math.min(150, screenWidth * 0.3), // 30% of screen or 150px max
               zIndex: 30,
-              backgroundColor: 'rgba(0,255,0,0.3)', // More visible debug color
             }}
           />
         </>
