@@ -6,5 +6,11 @@
     }
   ],
   "buildCommand": "npm run build:web",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+
+  "git": {
+    "deploymentEnabled": {
+      "main": false
+    }
+  }
 } 
