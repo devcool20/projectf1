@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env EXPO_NO_TELEMETRY=1 expo start",
+    "dev:brave": "cross-env EXPO_NO_TELEMETRY=1 BROWSER=brave expo start",
     "build:web": "expo export --platform web",
     "lint": "expo lint"
   },

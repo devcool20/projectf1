@@ -15,6 +15,19 @@ import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
 import PostCard from '../PostCard';
 import * as ImagePicker from 'expo-image-picker';
 
+const TEAM_LOGOS: { [key: string]: any } = {
+  'Red Bull Racing': require('@/team-logos/redbull.png'),
+  'Scuderia Ferrari': require('@/team-logos/ferrari.png'),
+  'Mercedes-AMG': require('@/team-logos/mercedes.png'),
+  'McLaren': require('@/team-logos/mclaren.png'),
+  'Aston Martin': require('@/team-logos/astonmartin.png'),
+  'Alpine': require('@/team-logos/alpine.png'),
+  'Williams': require('@/team-logos/williams.png'),
+  'Haas': require('@/team-logos/haas.png'),
+  'Stake F1': require('@/team-logos/stake.png'),
+  'RB': require('@/team-logos/racingbulls.png'),
+};
+
 type ThreadViewProps = {
   thread: any | null;
   onClose: () => void;
@@ -37,7 +50,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
         .from('replies')
         .select(`
           *,
-          profiles:user_id (username, avatar_url)
+          profiles:user_id (username, avatar_url, favorite_team)
         `)
         .eq('thread_id', thread.id)
         .order('created_at', { ascending: true });
@@ -273,12 +286,14 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
     );
   }
 
+  const USERNAME_FONT_SIZE = 18;
+
   return (
     <View style={styles.container}>
       {/* Fixed Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
-          <ArrowLeft size={28} color="hsl(var(--foreground))" />
+          <ArrowLeft size={28} color="#3a3a3a" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} selectable={false}>Thread</Text>
       </View>
@@ -308,6 +323,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
               likes={threadData.likeCount || 0}
               comments={threadData.replyCount || 0}
               isLiked={threadData.isLiked}
+              favoriteTeam={threadData.profiles?.favorite_team}
               onCommentPress={() => {}}
               onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
                               onDeletePress={() => handleDeleteThread(threadData.id)}
@@ -338,7 +354,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                 ref={replyInputRef}
                 style={styles.replyInput}
                 placeholder="Post your reply"
-                placeholderTextColor="hsl(var(--muted-foreground))"
+                placeholderTextColor="#505050"
                 value={newReply}
                 onChangeText={setNewReply}
                 multiline={false}
@@ -346,7 +362,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                 selectable={true}
               />
               <TouchableOpacity onPress={pickReplyImage} style={styles.imagePickerButton}>
-                <Camera size={20} color="hsl(var(--muted-foreground))" />
+                <Camera size={20} color="#505050" />
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.replyButton, (!newReply.trim() && !replyImage) && styles.replyButtonDisabled]} 
@@ -369,7 +385,16 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                 <TouchableOpacity key={reply.id} onLongPress={() => handleReplyTo(reply.profiles?.username || 'Anonymous')}>
                   <View style={styles.comment}>
                     <View style={styles.commentContent}>
-                      <Text style={styles.commentUsername} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
+                      <View style={styles.commentUsernameRow}>
+                        <Text style={[styles.commentUsername, { fontSize: USERNAME_FONT_SIZE }]} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
+                        {reply.profiles?.favorite_team && TEAM_LOGOS[reply.profiles.favorite_team] && (
+                          <Image 
+                            source={TEAM_LOGOS[reply.profiles.favorite_team]} 
+                            style={{ width: USERNAME_FONT_SIZE * 1.2, height: USERNAME_FONT_SIZE * 1.2, marginLeft: 6 }}
+                            resizeMode="contain"
+                          />
+                        )}
+                      </View>
                       <Text style={styles.commentText} selectable={false}>{reply.content}</Text>
                       {reply.image_url && (
                         <Image 
@@ -380,13 +405,13 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                       )}
                       <View style={styles.commentActions}>
                         <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={styles.actionButton}>
-                          <Heart size={16} color={reply.isLiked ? 'red' : 'hsl(var(--muted-foreground))'} />
+                          <Heart size={16} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
                           {reply.likeCount > 0 && <Text style={styles.actionText} selectable={false}>{reply.likeCount}</Text>}
                         </TouchableOpacity>
                         {session && reply.user_id === session.user.id && (
-                          <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
-                            <Trash2 size={16} color="hsl(var(--muted-foreground))" />
-                          </TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
+                          <Trash2 size={16} color="#505050" />
+                        </TouchableOpacity>
                         )}
                       </View>
                     </View>
@@ -452,10 +477,10 @@ const styles = StyleSheet.create({
   replyBoxInline: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'hsl(var(--border))',
-    backgroundColor: 'hsl(var(--card))',
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
+    borderColor: 'transparent',
+    backgroundColor: 'transparent',
     marginBottom: 8,
   },
   replyInputContainer: {
@@ -470,9 +495,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     marginRight: 8,
     borderRadius: 16,
-    backgroundColor: 'hsl(var(--background))',
-    borderWidth: 1,
-    borderColor: 'hsl(var(--border))',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    borderColor: 'transparent',
     fontSize: 14,
     minHeight: 36,
     maxHeight: 36,
@@ -546,10 +571,19 @@ const styles = StyleSheet.create({
   commentContent: {
     flex: 1,
   },
+  commentUsernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   commentUsername: {
     fontWeight: 'bold',
     color: 'hsl(var(--foreground))',
-    marginBottom: 4,
+  },
+  commentTeamLogo: {
+    width: 12,
+    height: 12,
+    marginLeft: 6,
   },
   commentText: {
     color: 'hsl(var(--foreground))',

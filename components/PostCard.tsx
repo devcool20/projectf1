@@ -2,6 +2,21 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Heart, MessageCircle, Trash2 } from 'lucide-react-native';
 
+const TEAM_LOGOS: { [key: string]: any } = {
+  'Red Bull Racing': require('@/team-logos/redbull.png'),
+  'Scuderia Ferrari': require('@/team-logos/ferrari.png'),
+  'Mercedes-AMG': require('@/team-logos/mercedes.png'),
+  'McLaren': require('@/team-logos/mclaren.png'),
+  'Aston Martin': require('@/team-logos/astonmartin.png'),
+  'Alpine': require('@/team-logos/alpine.png'),
+  'Williams': require('@/team-logos/williams.png'),
+  'Haas': require('@/team-logos/haas.png'),
+  'Stake F1': require('@/team-logos/stake.png'),
+  'RB': require('@/team-logos/racingbulls.png'),
+};
+
+const USERNAME_FONT_SIZE = 18;
+
 export type PostCardProps = {
   username: string;
   avatarUrl?: string;
@@ -11,6 +26,7 @@ export type PostCardProps = {
   likes: number;
   comments: number;
   isLiked?: boolean;
+  favoriteTeam?: string;
   onCommentPress: () => void;
   onLikePress: () => void;
   onDeletePress: () => void;
@@ -26,6 +42,7 @@ export default function PostCard({
   likes,
   comments,
   isLiked,
+  favoriteTeam,
   onCommentPress,
   onLikePress,
   onDeletePress,
@@ -39,16 +56,25 @@ export default function PostCard({
           source={{ uri: avatarUrl || `https://ui-avatars.com/api/?name=${username.charAt(0)}&background=random` }}
           className="w-10 h-10 rounded-full bg-muted mr-3"
         />
-        <View>
-          <Text className="font-bold text-foreground" selectable={false}>{username}</Text>
-          <Text className="text-sm text-muted-foreground" selectable={false}>{new Date(timestamp).toLocaleString()}</Text>
+        <View className="flex-1">
+          <View className="flex-row items-center">
+            <Text style={{ fontWeight: 'bold', color: '#000000', fontSize: USERNAME_FONT_SIZE }} selectable={false}>{username}</Text>
+            {favoriteTeam && TEAM_LOGOS[favoriteTeam] && (
+              <Image 
+                source={TEAM_LOGOS[favoriteTeam]} 
+                style={{ width: USERNAME_FONT_SIZE * 1.2, height: USERNAME_FONT_SIZE * 1.2, marginLeft: 6 }}
+                resizeMode="contain"
+              />
+            )}
+          </View>
+          <Text style={{ fontSize: 14, color: '#505050' }} selectable={false}>{new Date(timestamp).toLocaleString()}</Text>
         </View>
       </View>
-      <Text className="text-foreground my-2" selectable={false}>{content}</Text>
+      <Text style={{ color: '#000000', marginVertical: 8 }} selectable={false}>{content}</Text>
       {imageUrl && (
         <View className="mt-3" style={{ alignSelf: 'flex-start' }}>
-          <Image
-            source={{ uri: imageUrl }}
+        <Image
+          source={{ uri: imageUrl }}
             className="h-80"
             resizeMode="cover"
             style={{ 
@@ -56,23 +82,23 @@ export default function PostCard({
               width: 300,
               maxWidth: '100%'
             }}
-          />
+        />
         </View>
       )}
       <View className="flex-row justify-between items-center mt-3">
         <View className="flex-row items-center space-x-4">
           <TouchableOpacity onPress={onLikePress} className="flex-row items-center space-x-1">
-            <Heart size={20} color={isLiked ? 'red' : 'hsl(var(--muted-foreground))'} />
+            <Heart size={20} color={isLiked ? '#dc2626' : '#505050'} fill={isLiked ? '#dc2626' : 'none'} />
             {likes > 0 && <Text className="text-sm text-muted-foreground" selectable={false}>{likes}</Text>}
           </TouchableOpacity>
           <TouchableOpacity onPress={onCommentPress} className="flex-row items-center space-x-1">
-            <MessageCircle size={20} color="hsl(var(--muted-foreground))" />
+            <MessageCircle size={20} color="#505050" />
             {comments > 0 && <Text className="text-sm text-muted-foreground" selectable={false}>{comments}</Text>}
           </TouchableOpacity>
         </View>
         {canDelete && (
         <TouchableOpacity onPress={onDeletePress}>
-          <Trash2 size={18} color="hsl(var(--muted-foreground))" />
+          <Trash2 size={18} color="#505050" />
         </TouchableOpacity>
         )}
       </View>

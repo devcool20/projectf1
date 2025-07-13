@@ -140,7 +140,7 @@ export default function CommunityScreen() {
         .from('threads')
         .select(`
           *,
-          profiles:user_id (username, avatar_url),
+          profiles:user_id (username, avatar_url, favorite_team),
           likes:likes!thread_id(count),
           replies:replies!thread_id(count)
         `)
@@ -190,7 +190,7 @@ export default function CommunityScreen() {
         .from('threads')
         .select(`
           *,
-          profiles:user_id (username, avatar_url),
+          profiles:user_id (username, avatar_url, favorite_team),
           likes:likes!thread_id(count),
           replies:replies!thread_id(count)
         `)
@@ -420,7 +420,7 @@ export default function CommunityScreen() {
     <>
         <View>
           <View className="px-3 mb-4">
-            <Text className="text-2xl font-bold text-primary" selectable={false}>projectF1</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }} selectable={false}>projectF1</Text>
           </View>
           <View className="space-y-1">
             {NAV_ITEMS.map((item) => (
@@ -440,52 +440,53 @@ export default function CommunityScreen() {
                   }
                 closeSidebar(); // Close sidebar on navigation
                 }}
-                className="flex-row items-center space-x-4 p-3 rounded-full hover:bg-muted"
+                style={{ flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 9999 }}
+                className="space-x-4 hover:bg-muted"
               >
-                <item.icon size={24} color="hsl(71, 35%, 45%)" />
-                <Text className="text-xl font-bold text-foreground" selectable={false}>{item.name}</Text>
+                <item.icon size={24} color="#8b7300" />
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000000' }} selectable={false}>{item.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
         <View className="flex-1" />
         {session ? (
-          <TouchableOpacity onPress={() => setShowProfileModal(true)} className="flex-row items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+          <TouchableOpacity onPress={() => setShowProfileModal(true)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, borderRadius: 8 }} className="hover:bg-muted/50">
             <View className="flex-row items-center space-x-2 flex-1">
               <Image
                 source={{ uri: session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${session.user.email}` }}
-                className="w-8 h-8 rounded-full bg-muted"
+                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#f5f5f5' }}
               />
               <View className="flex-1 min-w-0">
-                <Text className="font-semibold text-foreground text-sm truncate" numberOfLines={1} selectable={false}>
+                <Text style={{ fontWeight: '600', color: '#000000', fontSize: 14 }} numberOfLines={1} selectable={false}>
                   {session.user.user_metadata.full_name || session.user.email}
                 </Text>
-                <Text className="text-muted-foreground text-xs truncate" numberOfLines={1} selectable={false}>
+                <Text style={{ color: '#505050', fontSize: 12 }} numberOfLines={1} selectable={false}>
                   @{session.user.user_metadata.username || session.user.email?.split('@')[0]}
                 </Text>
               </View>
             </View>
-            <MoreHorizontal size={16} color="hsl(var(--foreground))" />
+            <MoreHorizontal size={16} color="#000000" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             onPress={() => setShowAuth(true)}
-            className="bg-primary-red w-full py-3 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: '#dc2626', width: '100%', paddingVertical: 12, borderRadius: 9999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
           >
-            <Text className="text-white font-bold text-lg" selectable={false}>Log in</Text>
+            <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 18 }} selectable={false}>Log in</Text>
           </TouchableOpacity>
         )}
     </>
   );
 
   return (
-    <View className="w-full h-screen bg-card">
+    <View style={{ width: '100%', height: '100vh', backgroundColor: '#ffffff' }}>
       {/* Mobile Header */}
-      <View className="md:hidden flex-row items-center justify-between p-4 border-b border-border bg-card">
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="md:hidden">
         <TouchableOpacity onPress={toggleSidebar}>
-          <Menu size={24} color="hsl(var(--foreground))" />
+          <Menu size={24} color="#000000" />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-foreground" selectable={false}>Community</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000000' }} selectable={false}>Community</Text>
         <View className="w-6" />{/* Spacer */}
       </View>
 
@@ -497,7 +498,7 @@ export default function CommunityScreen() {
             onPress={closeSidebar}
           >
             <Animated.View style={[animatedSidebarStyle, { width: 256, height: '100%' }]}>
-              <Pressable className="h-full bg-card p-4" onPress={() => {}}>
+              <Pressable style={{ height: '100%', backgroundColor: '#ffffff', padding: 16 }} onPress={() => {}}>
                 <SidebarContent />
               </Pressable>
             </Animated.View>
@@ -510,7 +511,7 @@ export default function CommunityScreen() {
         </View>
 
         {/* Main Content */}
-        <View className="flex-1 border-x-0 md:border-x border-border">
+        <View style={{ flex: 1, borderLeftWidth: 0, borderRightWidth: 0, borderLeftColor: '#e5e5e5', borderRightColor: '#e5e5e5' }} className="md:border-x">
           <ScrollView ref={scrollViewRef}>
             <View className="flex-col lg:flex-row justify-center p-0 md:p-4">
               <View className="w-full lg:max-w-2xl">
@@ -519,31 +520,34 @@ export default function CommunityScreen() {
           ) : (
                   <>
               {/* Header for "For you" / "Following" */}
-                    <View className="flex-row justify-around border-b border-border p-4 bg-card">
-                <Text className="text-lg font-bold text-foreground" selectable={false}>For you</Text>
-                <Text className="text-lg font-bold text-muted-foreground" selectable={false}>Following</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', borderBottomWidth: 1, borderBottomColor: '#9ca3af', padding: 16, backgroundColor: '#ffffff' }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000000' }} selectable={false}>For you</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#505050' }} selectable={false}>Following</Text>
               </View>
 
                     {/* Create a new thread */}
-                    <View className="p-4 border-b border-border bg-card">
+                    <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
                   <View className="flex-row space-x-4">
                     <User size={40} color="gray" />
                     <View className="flex-1">
                       <TextInput
                         placeholder="What's happening?"
                         placeholderTextColor="gray"
-                        className="text-lg text-foreground"
-                        value={content}
-                        onChangeText={setContent}
-                        multiline
                         style={{
+                          fontSize: 18,
+                          color: '#000000',
                           userSelect: 'text',
                           WebkitUserSelect: 'text',
                           cursor: 'text',
                           pointerEvents: 'auto',
                           caretColor: 'auto',
                           outline: 'none',
+                          backgroundColor: 'transparent',
+                          borderWidth: 0,
                         }}
+                        value={content}
+                        onChangeText={setContent}
+                        multiline
                         selectable={true}
                       />
                       {image && (
@@ -564,7 +568,7 @@ export default function CommunityScreen() {
                           <Camera size={24} color="#1DA1F2" />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleCreateThread}>
-                          <Text className="text-lg text-muted-foreground font-bold" selectable={false}>Post</Text>
+                          <Text style={{ fontSize: 18, color: '#dc2626', fontWeight: 'bold' }} selectable={false}>Post</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -576,7 +580,7 @@ export default function CommunityScreen() {
                   <ActivityIndicator className="mt-8" />
                 ) : (
                   threads.map((thread) => (
-                        <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} className="border-b border-border bg-card">
+                        <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
                       <PostCard
                         username={thread.profiles?.username || 'Anonymous'}
                         avatarUrl={thread.profiles?.avatar_url}
@@ -586,6 +590,7 @@ export default function CommunityScreen() {
                         likes={thread.likeCount || 0}
                         comments={thread.replyCount || 0}
                         isLiked={thread.isLiked}
+                        favoriteTeam={thread.profiles?.favorite_team}
                         onCommentPress={() => handleThreadPress(thread)}
                         onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
                         onDeletePress={() => handleDeleteThread(thread.id)}
