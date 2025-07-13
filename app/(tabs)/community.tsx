@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -73,6 +73,31 @@ export default function CommunityScreen() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const sidebarTranslateX = useSharedValue(-256);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Fetch news from RSS feed
+  const fetchNews = useCallback(async () => {
+    try {
+      const res = await fetch(RSS_TO_JSON_URL);
+      const data = await res.json();
+      if (data && data.items) {
+        const transformedNews = data.items.map((item: any) => ({
+          ...item,
+          title: item.title || 'No title',
+          description: item.description?.replace(/<[^>]*>/g, '')?.trim() || 'No description available',
+          link: item.link || '#',
+          pubDate: item.published || item.publishedParsed || new Date().toISOString(),
+          source: { name: 'Formula 1' },
+        }));
+        setNews(transformedNews);
+        setRandomizedNews(getRandomNews(transformedNews, 5));
+      }
+    } catch (error) {
+      console.error('Error fetching news:', error);
+    } finally {
+      setNewsLoading(false);
+    }
+  }, []);
 
   const animatedSidebarStyle = useAnimatedStyle(() => {
     return {
@@ -99,26 +124,7 @@ export default function CommunityScreen() {
   };
 
   const handleDeleteThread = async (threadId: string) => {
-    if (!session) {
-      alert('You must be logged in to delete threads');
-      return;
-    }
-
     try {
-      // First check if the user owns this thread
-      const { data: threadData, error: fetchError } = await supabase
-        .from('threads')
-        .select('user_id')
-        .eq('id', threadId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      if (threadData.user_id !== session.user.id) {
-        alert('You can only delete your own threads');
-        return;
-      }
-
       const { error } = await supabase.from('threads').delete().eq('id', threadId);
       if (error) throw error;
       await fetchThreads(session);
@@ -156,15 +162,15 @@ export default function CommunityScreen() {
         const threadsWithStatus = threadsData.map(t => ({
           ...t,
           isLiked: likedThreadIds.has(t.id),
-          likeCount: t.likes?.length || 0,
-          replyCount: t.replies?.length || 0,
+          likeCount: t.likes[0]?.count || 0,
+          replyCount: t.replies[0]?.count || 0,
         }));
         setThreads(threadsWithStatus);
       } else {
         const threadsWithCounts = threadsData.map(t => ({
           ...t,
-          likeCount: t.likes?.length || 0,
-          replyCount: t.replies?.length || 0,
+          likeCount: t.likes[0]?.count || 0,
+          replyCount: t.replies[0]?.count || 0,
         }));
         setThreads(threadsWithCounts);
       }
@@ -173,6 +179,52 @@ export default function CommunityScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  }, []);
+
+  const fetchSpecificThread = useCallback(async (threadId: string) => {
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      const { data: threadData, error: threadError } = await supabase
+        .from('threads')
+        .select(`
+          *,
+          profiles:user_id (username, avatar_url),
+          likes:likes!thread_id(count),
+          replies:replies!thread_id(count)
+        `)
+        .eq('id', threadId)
+        .single();
+
+      if (threadError) throw threadError;
+
+      // Check if user liked this thread
+      let isLiked = false;
+      if (currentSession) {
+        const { data: userLikeData, error: userLikeError } = await supabase
+          .from('likes')
+          .select('thread_id')
+          .eq('thread_id', threadId)
+          .eq('user_id', currentSession.user.id)
+          .single();
+
+        if (!userLikeError && userLikeData) {
+          isLiked = true;
+        }
+      }
+
+      const threadWithStatus = {
+        ...threadData,
+        isLiked,
+        likeCount: threadData.likes[0]?.count || 0,
+        replyCount: threadData.replies[0]?.count || 0,
+      };
+
+      setSelectedThread(threadWithStatus);
+      setIsViewingThread(true);
+    } catch (error) {
+      console.error('Error fetching specific thread:', error);
     }
   }, []);
   
@@ -223,40 +275,67 @@ export default function CommunityScreen() {
       fetchThreads(session);
     });
 
-    const fetchNews = async () => {
-      setNewsLoading(true);
-      try {
-        const res = await fetch(RSS_TO_JSON_URL);
-        const data = await res.json();
-        if (data && data.items) {
-          const transformedNews = data.items.map((item: any) => ({
-            ...item,
-            title: item.title || 'No title',
-            description: item.description?.replace(/<[^>]*>/g, '')?.trim() || 'No description available',
-            link: item.link || '#',
-            pubDate: item.published || item.publishedParsed || new Date().toISOString(),
-            source: { name: 'Formula 1' },
-          }));
-          setNews(transformedNews);
-          setRandomizedNews(getRandomNews(transformedNews, 5));
-        }
-      } catch (e) {
-        console.error('Error fetching news:', e);
-      } finally {
-        setNewsLoading(false);
+    // Fetch news from RSS feed
+    fetchNews();
+
+    // Check if URL contains thread ID on page load
+    const currentPath = window.location.pathname;
+    const threadIdMatch = currentPath.match(/\/thread\/([^\/]+)/);
+    if (threadIdMatch) {
+      const threadId = threadIdMatch[1];
+      // Fetch the specific thread
+      fetchSpecificThread(threadId);
+    }
+
+    // Handle browser back button
+    const handlePopState = () => {
+      const currentPath = window.location.pathname;
+      const threadIdMatch = currentPath.match(/\/thread\/([^\/]+)/);
+      if (threadIdMatch) {
+        const threadId = threadIdMatch[1];
+        fetchSpecificThread(threadId);
+      } else {
+        setSelectedThread(null);
+        setIsViewingThread(false);
       }
     };
-    fetchNews();
-  }, []);
+
+        // Simple text selection prevention that doesn't interfere with inputs
+    const preventTextSelection = (e: Event) => {
+      const target = e.target as HTMLElement;
+      
+      // Always allow selection in input elements
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || 
+          target.hasAttribute('contenteditable') || target.closest('input, textarea')) {
+        return;
+      }
+      
+      // Only prevent text selection, not other interactions
+      if (e.type === 'selectstart') {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    // Add minimal event listeners
+    document.addEventListener('selectstart', preventTextSelection, { passive: false });
+
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('selectstart', preventTextSelection);
+    };
+
+
+  }, [fetchNews]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchThreads(session);
-    // Randomize news on refresh
-    if (news.length > 0) {
-      setRandomizedNews(getRandomNews(news, 5));
-    }
-  }, [session, news]);
+    // Refresh news on refresh
+    fetchNews();
+  }, [session, fetchNews]);
 
   const handleCreateThread = async () => {
     if (!session) {
@@ -324,18 +403,24 @@ export default function CommunityScreen() {
   const handleThreadPress = (thread: any) => {
     setSelectedThread(thread);
     setIsViewingThread(true);
+    // Update URL with thread ID without navigating
+    window.history.pushState({}, '', `/thread/${thread.id}`);
+    // Scroll to top when opening thread
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   const handleCloseThread = () => {
     setSelectedThread(null);
     setIsViewingThread(false);
+    // Update URL back to community
+    window.history.pushState({}, '', '/community');
   };
 
   const SidebarContent = () => (
     <>
         <View>
           <View className="px-3 mb-4">
-            <Text className="text-2xl font-bold text-primary">projectF1</Text>
+            <Text className="text-2xl font-bold text-primary" selectable={false}>projectF1</Text>
           </View>
           <View className="space-y-1">
             {NAV_ITEMS.map((item) => (
@@ -358,7 +443,7 @@ export default function CommunityScreen() {
                 className="flex-row items-center space-x-4 p-3 rounded-full hover:bg-muted"
               >
                 <item.icon size={24} color="hsl(71, 35%, 45%)" />
-                <Text className="text-xl font-bold text-foreground">{item.name}</Text>
+                <Text className="text-xl font-bold text-foreground" selectable={false}>{item.name}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -372,10 +457,10 @@ export default function CommunityScreen() {
                 className="w-8 h-8 rounded-full bg-muted"
               />
               <View className="flex-1 min-w-0">
-                <Text className="font-semibold text-foreground text-sm truncate" numberOfLines={1}>
+                <Text className="font-semibold text-foreground text-sm truncate" numberOfLines={1} selectable={false}>
                   {session.user.user_metadata.full_name || session.user.email}
                 </Text>
-                <Text className="text-muted-foreground text-xs truncate" numberOfLines={1}>
+                <Text className="text-muted-foreground text-xs truncate" numberOfLines={1} selectable={false}>
                   @{session.user.user_metadata.username || session.user.email?.split('@')[0]}
                 </Text>
               </View>
@@ -387,7 +472,7 @@ export default function CommunityScreen() {
             onPress={() => setShowAuth(true)}
             className="bg-primary-red w-full py-3 rounded-full flex items-center justify-center"
           >
-            <Text className="text-white font-bold text-lg">Log in</Text>
+            <Text className="text-white font-bold text-lg" selectable={false}>Log in</Text>
           </TouchableOpacity>
         )}
     </>
@@ -400,7 +485,7 @@ export default function CommunityScreen() {
         <TouchableOpacity onPress={toggleSidebar}>
           <Menu size={24} color="hsl(var(--foreground))" />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-foreground">Community</Text>
+        <Text className="text-xl font-bold text-foreground" selectable={false}>Community</Text>
         <View className="w-6" />{/* Spacer */}
       </View>
 
@@ -426,7 +511,7 @@ export default function CommunityScreen() {
 
         {/* Main Content */}
         <View className="flex-1 border-x-0 md:border-x border-border">
-          <ScrollView>
+          <ScrollView ref={scrollViewRef}>
             <View className="flex-col lg:flex-row justify-center p-0 md:p-4">
               <View className="w-full lg:max-w-2xl">
           {isViewingThread && selectedThread ? (
@@ -435,8 +520,8 @@ export default function CommunityScreen() {
                   <>
               {/* Header for "For you" / "Following" */}
                     <View className="flex-row justify-around border-b border-border p-4 bg-card">
-                <Text className="text-lg font-bold text-foreground">For you</Text>
-                <Text className="text-lg font-bold text-muted-foreground">Following</Text>
+                <Text className="text-lg font-bold text-foreground" selectable={false}>For you</Text>
+                <Text className="text-lg font-bold text-muted-foreground" selectable={false}>Following</Text>
               </View>
 
                     {/* Create a new thread */}
@@ -451,6 +536,15 @@ export default function CommunityScreen() {
                         value={content}
                         onChangeText={setContent}
                         multiline
+                        style={{
+                          userSelect: 'text',
+                          WebkitUserSelect: 'text',
+                          cursor: 'text',
+                          pointerEvents: 'auto',
+                          caretColor: 'auto',
+                          outline: 'none',
+                        }}
+                        selectable={true}
                       />
                       {image && (
                         <View className="relative mt-2">
@@ -470,7 +564,7 @@ export default function CommunityScreen() {
                           <Camera size={24} color="#1DA1F2" />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleCreateThread}>
-                          <Text className="text-lg text-muted-foreground font-bold">Post</Text>
+                          <Text className="text-lg text-muted-foreground font-bold" selectable={false}>Post</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -508,7 +602,7 @@ export default function CommunityScreen() {
               <View className="hidden lg:block w-80 ml-12 space-y-4 shrink-0">
                 <View className="bg-muted rounded-xl">
           <View className="p-4 border-b border-border">
-            <Text className="text-xl font-bold text-foreground">What's happening</Text>
+            <Text className="text-xl font-bold text-foreground" selectable={false}>What's happening</Text>
           </View>
           {newsLoading ? (
             <View className="flex-1 items-center justify-center p-8">
@@ -518,20 +612,14 @@ export default function CommunityScreen() {
                     <View style={{ padding: 16 }}>
               {randomizedNews.map((item, index) => (
                 <TouchableOpacity
-                  key={`${item.link}-${index}`}
+                  key={`${item.title}-${index}`}
                   className="mb-6 pb-4 border-b border-border/30"
-                  onPress={() => {
-                    if (item.link) {
-                      Linking.openURL(item.link).catch(err => {
-                        console.error('Failed to open link:', err);
-                      });
-                    }
-                  }}
+                  onPress={() => Linking.openURL(item.link)}
                 >
-                  <Text className="font-bold text-foreground text-base mb-2 leading-tight" numberOfLines={2}>
+                  <Text className="font-bold text-foreground text-base mb-2 leading-tight" numberOfLines={2} selectable={false}>
                     {item.title}
                   </Text>
-                  <Text className="text-muted-foreground text-sm leading-relaxed" numberOfLines={3}>
+                  <Text className="text-muted-foreground text-sm leading-relaxed" numberOfLines={3} selectable={false}>
                     {truncateToLines(item.description, 120)}
                   </Text>
                 </TouchableOpacity>

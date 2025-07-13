@@ -26,6 +26,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
   const [newReply, setNewReply] = useState('');
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replyImage, setReplyImage] = useState<string | null>(null);
+  const [threadData, setThreadData] = useState(thread);
   const replyInputRef = useRef<TextInput>(null);
 
   const fetchReplies = useCallback(async () => {
@@ -94,6 +95,10 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
     fetchReplies();
   }, [fetchReplies]);
 
+  useEffect(() => {
+    setThreadData(thread);
+  }, [thread]);
+
   const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
     if (!session) {
       // or show auth modal
@@ -126,6 +131,38 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
           return { ...r, isLiked: isLiked, likeCount: revertedLikeCount };
         }
         return r;
+      }));
+    }
+  };
+
+  const handleThreadLikeToggle = async (threadId: string, isLiked: boolean) => {
+    if (!session) {
+      // or show auth modal
+      return;
+    }
+
+    // Optimistic update
+    setThreadData(prevThread => ({
+      ...prevThread,
+      isLiked: !isLiked,
+      likeCount: isLiked ? prevThread.likeCount - 1 : prevThread.likeCount + 1
+    }));
+
+    try {
+      if (isLiked) {
+        const { error } = await supabase.from('likes').delete().match({ thread_id: threadId, user_id: session.user.id });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('likes').insert({ thread_id: threadId, user_id: session.user.id });
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error toggling thread like:', error);
+      // Revert optimistic update on error
+      setThreadData(prevThread => ({
+        ...prevThread,
+        isLiked: isLiked,
+        likeCount: isLiked ? prevThread.likeCount + 1 : prevThread.likeCount - 1
       }));
     }
   };
@@ -198,32 +235,25 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
   };
 
   const handleDeleteReply = async (replyId: string) => {
-    if (!session) {
-      Alert.alert('You must be logged in to delete replies');
-      return;
-    }
-
     try {
-      // First check if the user owns this reply
-      const { data: replyData, error: fetchError } = await supabase
-        .from('replies')
-        .select('user_id')
-        .eq('id', replyId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      if (replyData.user_id !== session.user.id) {
-        Alert.alert('You can only delete your own replies');
-        return;
-      }
-
       const { error } = await supabase.from('replies').delete().eq('id', replyId);
       if (error) throw error;
       await fetchReplies();
     } catch (error) {
       console.error('Error deleting reply:', error);
       Alert.alert('Failed to delete reply');
+    }
+  };
+
+  const handleDeleteThread = async (threadId: string) => {
+    try {
+      const { error } = await supabase.from('threads').delete().eq('id', threadId);
+      if (error) throw error;
+      // Navigate back to community after deleting thread
+      onClose();
+    } catch (error) {
+      console.error('Error deleting thread:', error);
+      Alert.alert('Failed to delete thread');
     }
   };
 
@@ -250,7 +280,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
         <TouchableOpacity onPress={onClose} style={styles.backButton}>
           <ArrowLeft size={28} color="hsl(var(--foreground))" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thread</Text>
+        <Text style={styles.headerTitle} selectable={false}>Thread</Text>
       </View>
 
       {/* Scrollable Content Wrapper */}
@@ -270,18 +300,18 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
           {/* Main Post */}
           <View style={styles.postContainer}>
              <PostCard
-              username={thread.profiles?.username || 'Anonymous'}
-              avatarUrl={thread.profiles?.avatar_url}
-              content={thread.content}
-              imageUrl={thread.image_url}
-              timestamp={thread.created_at}
-              likes={thread.likes[0]?.count || 0}
-              comments={thread.replies[0]?.count || 0}
-              isLiked={thread.isLiked}
+              username={threadData.profiles?.username || 'Anonymous'}
+              avatarUrl={threadData.profiles?.avatar_url}
+              content={threadData.content}
+              imageUrl={threadData.image_url}
+              timestamp={threadData.created_at}
+              likes={threadData.likeCount || 0}
+              comments={threadData.replyCount || 0}
+              isLiked={threadData.isLiked}
               onCommentPress={() => {}}
-              onLikePress={() => {}}
-              onDeletePress={() => {}}
-              canDelete={false} // Disable delete for thread in thread view
+              onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
+                              onDeletePress={() => handleDeleteThread(threadData.id)}
+              canDelete={session && threadData.user_id === session.user.id}
             />
           </View>
 
@@ -313,6 +343,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                 onChangeText={setNewReply}
                 multiline={false}
                 numberOfLines={1}
+                selectable={true}
               />
               <TouchableOpacity onPress={pickReplyImage} style={styles.imagePickerButton}>
                 <Camera size={20} color="hsl(var(--muted-foreground))" />
@@ -322,7 +353,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                 onPress={handlePostReply}
                 disabled={!newReply.trim() && !replyImage}
               >
-                <Text style={styles.replyButtonText}>Reply</Text>
+                <Text style={styles.replyButtonText} selectable={false}>Reply</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -338,8 +369,8 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                 <TouchableOpacity key={reply.id} onLongPress={() => handleReplyTo(reply.profiles?.username || 'Anonymous')}>
                   <View style={styles.comment}>
                     <View style={styles.commentContent}>
-                      <Text style={styles.commentUsername}>{reply.profiles?.username || 'Anonymous'}</Text>
-                      <Text style={styles.commentText}>{reply.content}</Text>
+                      <Text style={styles.commentUsername} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
+                      <Text style={styles.commentText} selectable={false}>{reply.content}</Text>
                       {reply.image_url && (
                         <Image 
                           source={{ uri: reply.image_url }} 
@@ -350,12 +381,12 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                       <View style={styles.commentActions}>
                         <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={styles.actionButton}>
                           <Heart size={16} color={reply.isLiked ? 'red' : 'hsl(var(--muted-foreground))'} />
-                          <Text style={styles.actionText}>{reply.likeCount || 0}</Text>
+                          {reply.likeCount > 0 && <Text style={styles.actionText} selectable={false}>{reply.likeCount}</Text>}
                         </TouchableOpacity>
                         {session && reply.user_id === session.user.id && (
-                        <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
-                          <Trash2 size={16} color="hsl(var(--muted-foreground))" />
-                        </TouchableOpacity>
+                          <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
+                            <Trash2 size={16} color="hsl(var(--muted-foreground))" />
+                          </TouchableOpacity>
                         )}
                       </View>
                     </View>
@@ -445,6 +476,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     minHeight: 36,
     maxHeight: 36,
+    userSelect: 'text',
+    WebkitUserSelect: 'text',
+    cursor: 'text',
+    pointerEvents: 'auto',
+    caretColor: 'auto',
+    outline: 'none',
   },
   imagePickerButton: {
     padding: 6,

@@ -34,11 +34,11 @@ export default function ThreadPost({ post }: ThreadPostProps) {
         <View className="flex-row items-center space-x-4">
           <TouchableOpacity className="flex-row items-center space-x-1">
             <Text className="text-xl">🤍</Text>
-            <Text className="text-sm text-muted-foreground">{post.likes}</Text>
+            {post.likes > 0 && <Text className="text-sm text-muted-foreground">{post.likes}</Text>}
           </TouchableOpacity>
           <TouchableOpacity className="flex-row items-center space-x-1">
             <Text className="text-xl">💬</Text>
-            <Text className="text-sm text-muted-foreground">{post.comments}</Text>
+            {post.comments > 0 && <Text className="text-sm text-muted-foreground">{post.comments}</Text>}
           </TouchableOpacity>
         </View>
         <TouchableOpacity>
