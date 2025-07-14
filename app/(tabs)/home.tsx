@@ -14,10 +14,10 @@ export default function HomeScreen() {
             {/* Header */}
             <View className="bg-gradient-card p-6 shadow-kodama-lg">
               <Text className="text-2xl font-heading font-bold text-foreground animate-fade-in">
-                🏎️ F1 Fan Hub
+                🏎️ Project F1
               </Text>
               <Text className="text-muted-foreground mt-1">
-                Your ultimate Formula 1 community
+                Your ultimate Formula 1 community.
               </Text>
             </View>
             {/* Welcome Section */}
@@ -25,10 +25,10 @@ export default function HomeScreen() {
               <View className="bg-gradient-primary rounded-2xl p-8 items-center shadow-kodama-lg animate-fade-up">
                 <Text className="text-6xl mb-4 animate-bounce-gentle">🏁</Text>
                 <Text className="text-2xl font-heading font-bold text-primary-foreground mb-3 text-center">
-                  Welcome to F1 Fan Hub
+                  Welcome to Project F1
                 </Text>
                 <Text className="text-primary-foreground/90 text-lg leading-relaxed text-center">
-                  Connect with fellow Formula 1 enthusiasts, join race screenings, and stay updated with the latest racing community!
+                  Connect with fellow Formula 1 enthusiasts, join race screenings(coming soon), and stay updated with the latest racing community!
                 </Text>
               </View>
             </View>
@@ -37,12 +37,12 @@ export default function HomeScreen() {
               <View className="flex-row gap-4">
                 <View className="flex-1 bg-gradient-card rounded-xl p-4 items-center shadow-kodama-md animate-fade-up">
                   <Text className="text-2xl mb-2">👥</Text>
-                  <Text className="text-lg font-heading font-bold text-foreground">2.4k</Text>
+                  <Text className="text-lg font-heading font-bold text-foreground"></Text>
                   <Text className="text-xs text-muted-foreground text-center">Active Members</Text>
                 </View>
                 <View className="flex-1 bg-gradient-card rounded-xl p-4 items-center shadow-kodama-md animate-fade-up">
                   <Text className="text-2xl mb-2">🏆</Text>
-                  <Text className="text-lg font-heading font-bold text-foreground">23</Text>
+                  <Text className="text-lg font-heading font-bold text-foreground">24</Text>
                   <Text className="text-xs text-muted-foreground text-center">Races This Season</Text>
                 </View>
               </View>

@@ -10,6 +10,7 @@ import {
   Alert,
   FlatList,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
@@ -272,7 +273,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
           onCommentPress={() => {}}
           onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
           onDeletePress={() => handleDeleteThread(threadData.id)}
-          canDelete={session && threadData.user_id === session.user.id}
+          canDelete={session && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
           canAdminDelete={isCurrentUserAdmin()}
           isAdmin={isUserAdmin(threadData.user_id)}
         />
@@ -307,6 +308,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
           </TouchableOpacity>
         </View>
       </View>
+      <View style={{ borderBottomWidth: 1, borderBottomColor: '#747272', marginBottom: 8 }} />
     </>
   );
 
@@ -331,7 +333,16 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
         </View>
         <Text style={styles.commentText}>{reply.content}</Text>
         {reply.image_url && (
-          <Image source={{ uri: reply.image_url }} style={styles.replyImage} resizeMode="contain" />
+          <Image 
+            source={{ uri: reply.image_url }} 
+            style={[
+              styles.replyImage,
+              Platform.OS === 'web'
+                ? { alignSelf: 'flex-start', width: 220, height: 180, maxWidth: 220, borderRadius: 12, marginLeft: 0, marginRight: 0, objectFit: 'cover' }
+                : { alignSelf: 'flex-start', width: 220, height: 180, maxWidth: 220, borderRadius: 12, marginLeft: 0, marginRight: 0 }
+            ]} 
+            resizeMode="cover"
+          />
         )}
         <View style={styles.commentActions}>
           <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={styles.actionButton}>
@@ -366,6 +377,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
         )}
         contentContainerStyle={styles.scrollContentContainer}
       />
+      <View style={{ height: 40 }} />
     </SafeAreaView>
   );
 };

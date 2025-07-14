@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  Platform,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
@@ -369,7 +370,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
               onCommentPress={() => {}}
               onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
               onDeletePress={() => handleDeleteThread(threadData.id)}
-              canDelete={session && threadData.user_id === session.user.id}
+              canDelete={session && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
               canAdminDelete={isCurrentUserAdmin()}
               isAdmin={isUserAdmin(threadData.user_id)}
             />
@@ -417,6 +418,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
               </TouchableOpacity>
             </View>
           </View>
+          <View style={{ borderBottomWidth: 1.5, borderBottomColor: '#bdbdbd', marginBottom: 8 }} />
 
           {/* Comments Section */}
           {loadingReplies ? (
@@ -454,8 +456,13 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
                       {reply.image_url && (
                         <Image 
                           source={{ uri: reply.image_url }} 
-                          style={[styles.replyImage, { backgroundColor: '#f3f4f6' }]} 
-                          resizeMode="contain"
+                          style={[
+                            styles.replyImage,
+                            Platform.OS === 'web'
+                              ? { alignSelf: 'flex-start', width: 220, height: 180, maxWidth: 220, borderRadius: 12, marginLeft: 0, marginRight: 0, objectFit: 'cover' }
+                              : { alignSelf: 'flex-start', width: 220, height: 180, maxWidth: 220, borderRadius: 12, marginLeft: 0, marginRight: 0 }
+                          ]} 
+                          resizeMode="cover"
                         />
                       )}
                       <View style={styles.commentActions}>
@@ -473,12 +480,11 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
                   </View>
                 </TouchableOpacity>
               ))}
+              <View style={{ height: 40 }} />
             </View>
           )}
         </ScrollView>
       </View>
-
-
     </View>
   );
 }

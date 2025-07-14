@@ -468,7 +468,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
         </View>
 
         {/* Content */}
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={true}>
           <View style={{ padding: 24 }}>
             {activeTab === 'account' && (
               <>
