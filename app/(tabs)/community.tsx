@@ -642,7 +642,7 @@ export default function CommunityScreen() {
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            marginBottom: 32,
+            marginBottom: 16,
             shadowColor: '#dc2626',
             shadowOpacity: 0.15,
             shadowRadius: 4,
@@ -679,7 +679,7 @@ export default function CommunityScreen() {
   }, [fetchCurrentUserAvatar, showProfileModal]);
 
   return (
-    <View style={{ width: '100%', height: '100vh', backgroundColor: '#ffffff' }}>
+    <View style={{ width: '100%', height: '100%', backgroundColor: '#ffffff' }}>
       {/* Mobile Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="md:hidden">
         <TouchableOpacity onPress={toggleSidebar}>

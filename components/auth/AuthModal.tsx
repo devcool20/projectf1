@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Modal,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 
@@ -73,6 +74,26 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
     }
   };
 
+  // Google Sign-In handler
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'http://localhost:8081/community',
+        },
+      });
+      if (error) throw error;
+      // The user will be redirected to Google and then back to /community
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign-in error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -85,7 +106,6 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
           <Text style={styles.title}>
             {mode === 'login' ? 'Welcome Back!' : 'Join F1 Community'}
           </Text>
-          
           {error && <Text style={styles.error}>{error}</Text>}
 
           <TextInput
@@ -117,6 +137,19 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
                 {mode === 'login' ? 'Sign In' : 'Sign Up'}
               </Text>
             )}
+          </TouchableOpacity>
+
+          {/* Google Sign-In Button */}
+          <TouchableOpacity
+            style={styles.googleButton}
+            onPress={signInWithGoogle}
+            disabled={loading}
+          >
+            <Image
+              source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
+              style={{ width: 20, height: 20, marginRight: 8 }}
+            />
+            <Text style={styles.googleButtonText}>Sign in with Google</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -171,6 +204,23 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  googleButton: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#dc2626',
+  },
+  googleButtonText: {
+    color: '#dc2626',
+    fontWeight: 'bold',
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
   },
