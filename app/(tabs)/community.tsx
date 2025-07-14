@@ -80,10 +80,16 @@ export default function CommunityScreen() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   const [adminUserId, setAdminUserId] = useState<string>('');
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(null);
+  const [avatarCacheBust, setAvatarCacheBust] = useState<number>(Date.now());
   const colorScheme = useColorScheme();
   const router = useRouter();
   const sidebarTranslateX = useSharedValue(-256);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const handleAvatarUpdated = useCallback((url: string) => {
+    setCurrentAvatarUrl(url);
+    setAvatarCacheBust(Date.now());
+  }, []);
 
   // Fetch news from RSS feed
   const fetchNews = useCallback(async () => {
@@ -278,10 +284,19 @@ export default function CommunityScreen() {
       return;
     }
 
-    // Optimistic UI update
+    // Optimistic UI update for both threads and followingThreads
     setThreads(prevThreads => prevThreads.map(t => {
       if (t.id === threadId) {
         const newLikeCount = isLiked ? t.likeCount - 1 : t.likeCount + 1;
+        return { ...t, isLiked: !isLiked, likeCount: newLikeCount };
+      }
+      return t;
+    }));
+
+    // Also update followingThreads state
+    setFollowingThreads(prevThreads => prevThreads.map(t => {
+      if (t.id === threadId) {
+        const newLikeCount = isLiked ? (t.likeCount || 0) - 1 : (t.likeCount || 0) + 1;
         return { ...t, isLiked: !isLiked, likeCount: newLikeCount };
       }
       return t;
@@ -297,10 +312,17 @@ export default function CommunityScreen() {
       }
     } catch (error) {
       console.error("Error toggling like:", error);
-      // Revert optimistic update on error
+      // Revert optimistic update on error for both states
       setThreads(prevThreads => prevThreads.map(t => {
         if (t.id === threadId) {
           const revertedLikeCount = isLiked ? t.likeCount + 1 : t.likeCount - 1;
+          return { ...t, isLiked: isLiked, likeCount: revertedLikeCount };
+        }
+        return t;
+      }));
+      setFollowingThreads(prevThreads => prevThreads.map(t => {
+        if (t.id === threadId) {
+          const revertedLikeCount = isLiked ? (t.likeCount || 0) + 1 : (t.likeCount || 0) - 1;
           return { ...t, isLiked: isLiked, likeCount: revertedLikeCount };
         }
         return t;
@@ -364,8 +386,10 @@ export default function CommunityScreen() {
 
         // Simple text selection prevention that doesn't interfere with inputs
     const preventTextSelection = (e: Event) => {
-      const target = e.target as HTMLElement;
-      
+      const target = e.target as Element | null;
+      if (!target || !(target instanceof HTMLElement)) {
+        return;
+      }
       // Always allow selection in input elements
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || 
           target.hasAttribute('contenteditable') || target.closest('input, textarea')) {
@@ -523,36 +547,40 @@ export default function CommunityScreen() {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: threadsData, error } = await supabase
         .from('threads')
         .select(`
-          id,
-          content,
-          image_url,
-          created_at,
-          user_id,
+          *,
           profiles:user_id (
             username,
-            favorite_team,
-            avatar_url
-          )
+            avatar_url,
+            favorite_team
+          ),
+          likes:likes!thread_id(count),
+          replies:replies!thread_id(count)
         `)
         .in('user_id', followingUserIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Transform the data to match the expected format
-      const transformedThreads = data.map((item: any) => ({
-        id: item.id,
-        content: item.content,
-        image_url: item.image_url,
-        created_at: item.created_at,
-        user_id: item.user_id,
-        profiles: item.profiles,
-        likeCount: 0, // We'll need to fetch this separately if needed
-        replyCount: 0, // We'll need to fetch this separately if needed
-        isLiked: false, // We'll need to fetch this separately if needed
+      // Get user's likes for these threads
+      const { data: userLikesData, error: userLikesError } = await supabase
+        .from('likes')
+        .select('thread_id')
+        .in('thread_id', threadsData.map(t => t.id))
+        .eq('user_id', currentSession.user.id);
+      
+      if (userLikesError) throw userLikesError;
+
+      const likedThreadIds = new Set(userLikesData.map(l => l.thread_id));
+      
+      // Transform the data to match the expected format with correct counts
+      const transformedThreads = threadsData.map((item: any) => ({
+        ...item,
+        isLiked: likedThreadIds.has(item.id),
+        likeCount: item.likes[0]?.count || 0,
+        replyCount: item.replies[0]?.count || 0,
       }));
 
       setFollowingThreads(transformedThreads);
@@ -613,7 +641,8 @@ export default function CommunityScreen() {
                 return (
                   <>
                     <Image
-                      source={{ uri: currentAvatarUrl || session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${displayUsername.charAt(0)}` }}
+                      key={avatarCacheBust}
+                      source={{ uri: currentAvatarUrl ? `${currentAvatarUrl}?t=${avatarCacheBust}` : (session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${displayUsername.charAt(0)}`) }}
                       style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#f5f5f5' }}
                     />
                     <View className="flex-1 min-w-0">
@@ -895,6 +924,7 @@ export default function CommunityScreen() {
             setShowProfileModal(false);
             setShowAuth(true);
           }}
+          onAvatarChange={handleAvatarUpdated}
         />
       )}
 
