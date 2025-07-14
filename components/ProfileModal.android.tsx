@@ -18,6 +18,9 @@ const F1_TEAMS: F1Team[] = [
   { name: 'RB', color: '#6366F1', logo: require('@/team-logos/racingbulls.png') },
 ];
 
+const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
+const ADMIN_LOGO = require('@/assets/images/favicon.png');
+
 export const ProfileModal: FC<ProfileModalProps> = ({ 
   visible, 
   onClose, 
@@ -25,6 +28,20 @@ export const ProfileModal: FC<ProfileModalProps> = ({
   onLogin 
 }) => {
   const [selectedTeam, setSelectedTeam] = useState<F1Team>(F1_TEAMS[0]);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Helper function to check if current user is admin
+  const isCurrentUserAdmin = () => {
+    return session?.user?.email === ADMIN_EMAIL || isAdmin;
+  };
+
+  // Get the logo to display (admin logo overrides team logo)
+  const getDisplayLogo = () => {
+    if (isCurrentUserAdmin()) {
+      return ADMIN_LOGO;
+    }
+    return selectedTeam.logo;
+  };
 
   // Load user's favorite team when modal opens
   useEffect(() => {
@@ -33,7 +50,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .select('favorite_team')
+            .select('favorite_team, is_admin')
             .eq('id', session.user.id)
             .single();
           
@@ -48,6 +65,9 @@ export const ProfileModal: FC<ProfileModalProps> = ({
               setSelectedTeam(userTeam);
             }
           }
+          
+          // Set admin status from database
+          setIsAdmin(data?.is_admin || false);
         } catch (error) {
           console.error('Error fetching team preference:', error);
         }
@@ -117,53 +137,78 @@ export const ProfileModal: FC<ProfileModalProps> = ({
         </View>
       </View>
 
-      {/* Team Selection Section */}
-      <View style={styles.teamSection}>
-        <Text style={styles.sectionTitle}>Favorite Team</Text>
-        
-        <View style={styles.teamCard}>
-          <View style={styles.infoHeader}>
-            <Trophy size={20} color="#747272" />
-            <Text style={styles.infoLabel}>Current Selection</Text>
-          </View>
+      {/* Team Selection Section - Hidden for Admin */}
+      {!isCurrentUserAdmin() && (
+        <View style={styles.teamSection}>
+          <Text style={styles.sectionTitle}>Favorite Team</Text>
           
-          <View style={styles.currentTeamRow}>
-            <Image 
-              source={selectedTeam.logo} 
-              style={styles.teamLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.teamName}>{selectedTeam.name}</Text>
-          </View>
-
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.teamScrollView}
-          >
-            <View style={styles.teamOptionsRow}>
-              {F1_TEAMS.map((team) => (
-                <TouchableOpacity
-                  key={team.name}
-                  style={[
-                    styles.teamOption,
-                    selectedTeam.name === team.name 
-                      ? styles.teamOptionSelected 
-                      : styles.teamOptionUnselected
-                  ]}
-                  onPress={() => handleTeamSelect(team)}
-                >
-                  <Image 
-                    source={team.logo} 
-                    style={styles.teamOptionLogo}
-                    resizeMode="contain"
-                  />
-                </TouchableOpacity>
-              ))}
+          <View style={styles.teamCard}>
+            <View style={styles.infoHeader}>
+              <Trophy size={20} color="#747272" />
+              <Text style={styles.infoLabel}>Current Selection</Text>
             </View>
-          </ScrollView>
+            
+            <View style={styles.currentTeamRow}>
+              <Image 
+                source={getDisplayLogo()} 
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.teamName}>{selectedTeam.name}</Text>
+            </View>
+
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.teamScrollView}
+            >
+              <View style={styles.teamOptionsRow}>
+                {F1_TEAMS.map((team) => (
+                  <TouchableOpacity
+                    key={team.name}
+                    style={[
+                      styles.teamOption,
+                      selectedTeam.name === team.name 
+                        ? styles.teamOptionSelected 
+                        : styles.teamOptionUnselected
+                    ]}
+                    onPress={() => handleTeamSelect(team)}
+                  >
+                    <Image 
+                      source={team.logo} 
+                      style={styles.teamOptionLogo}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
         </View>
-      </View>
+      )}
+
+      {/* Admin Status Display */}
+      {isCurrentUserAdmin() && (
+        <View style={styles.teamSection}>
+          <Text style={styles.sectionTitle}>Admin Status</Text>
+          
+          <View style={[styles.teamCard, { backgroundColor: '#fef2f2', borderWidth: 2, borderColor: '#dc2626' }]}>
+            <View style={styles.infoHeader}>
+              <Trophy size={20} color="#dc2626" />
+              <Text style={[styles.infoLabel, { color: '#dc2626', fontWeight: '600' }]}>Administrator</Text>
+            </View>
+            
+            <View style={styles.currentTeamRow}>
+              <Image 
+                source={ADMIN_LOGO} 
+                style={styles.teamLogo}
+                resizeMode="contain"
+              />
+              <Text style={[styles.teamName, { color: '#dc2626', fontWeight: '600' }]}>Admin Badge</Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* Stats Section */}
       <View style={styles.statsSection}>

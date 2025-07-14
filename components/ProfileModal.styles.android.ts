@@ -106,8 +106,8 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
   },
   teamLogo: {
-    width: 32,
-    height: 32,
+    width: 36, // Changed from 32 to 36
+    height: 36, // Changed from 32 to 36
     borderRadius: 4,
     marginRight: 12,
   },
@@ -139,8 +139,8 @@ export const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   teamOptionLogo: {
-    width: 24,
-    height: 24,
+    width: 28, // Changed from 24 to 28
+    height: 28, // Changed from 24 to 28
   },
   statsSection: {
     marginBottom: 24,

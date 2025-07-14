@@ -15,6 +15,8 @@ import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
 import PostCard from '../PostCard';
 import * as ImagePicker from 'expo-image-picker';
 
+const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
+
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
   'Scuderia Ferrari': require('@/team-logos/ferrari.png'),
@@ -32,15 +34,49 @@ type ThreadViewProps = {
   thread: any | null;
   onClose: () => void;
   session: any;
+  onProfilePress?: (userId: string) => void;
 };
 
-export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
+export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadViewProps) {
   const [replies, setReplies] = useState<any[]>([]);
   const [newReply, setNewReply] = useState('');
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [threadData, setThreadData] = useState(thread);
+  const [adminUserId, setAdminUserId] = useState<string>('');
   const replyInputRef = useRef<TextInput>(null);
+
+  // Helper function to check if current user is admin
+  const isCurrentUserAdmin = () => {
+    return session?.user?.email === ADMIN_EMAIL;
+  };
+
+  // Helper function to check if a user ID is admin
+  const isUserAdmin = (userId: string) => {
+    return userId === adminUserId;
+  };
+
+  // Function to check and load admin users from database
+  const loadAdminUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('is_admin', true);
+      
+      if (error) {
+        console.error('Error loading admin users:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Set the first admin user ID found (there should only be one)
+        setAdminUserId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error in loadAdminUsers:', error);
+    }
+  };
 
   const fetchReplies = useCallback(async () => {
     if (!thread) return;
@@ -111,6 +147,11 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
   useEffect(() => {
     setThreadData(thread);
   }, [thread]);
+
+  useEffect(() => {
+    // Load admin users from database
+    loadAdminUsers();
+  }, []);
 
   const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
     if (!session) {
@@ -324,10 +365,13 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
               comments={threadData.replyCount || 0}
               isLiked={threadData.isLiked}
               favoriteTeam={threadData.profiles?.favorite_team}
+              userId={threadData.user_id}
               onCommentPress={() => {}}
               onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
-                              onDeletePress={() => handleDeleteThread(threadData.id)}
+              onDeletePress={() => handleDeleteThread(threadData.id)}
               canDelete={session && threadData.user_id === session.user.id}
+              canAdminDelete={isCurrentUserAdmin()}
+              isAdmin={isUserAdmin(threadData.user_id)}
             />
           </View>
 
@@ -386,8 +430,19 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                   <View style={styles.comment}>
                     <View style={styles.commentContent}>
                       <View style={styles.commentUsernameRow}>
-                        <Text style={[styles.commentUsername, { fontSize: USERNAME_FONT_SIZE }]} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
-                        {reply.profiles?.favorite_team && TEAM_LOGOS[reply.profiles.favorite_team] && (
+                        <TouchableOpacity 
+                          onPress={() => reply.user_id && onProfilePress && onProfilePress(reply.user_id)}
+                          disabled={!reply.user_id || !onProfilePress}
+                        >
+                          <Text style={[styles.commentUsername, { fontSize: USERNAME_FONT_SIZE }]} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
+                        </TouchableOpacity>
+                        {isUserAdmin(reply.user_id) ? (
+                          <Image 
+                            source={require('@/assets/images/favicon.png')} 
+                            style={{ width: USERNAME_FONT_SIZE * 1.2, height: USERNAME_FONT_SIZE * 1.2, marginLeft: 6 }}
+                            resizeMode="contain"
+                          />
+                        ) : reply.profiles?.favorite_team && TEAM_LOGOS[reply.profiles.favorite_team] && (
                           <Image 
                             source={TEAM_LOGOS[reply.profiles.favorite_team]} 
                             style={{ width: USERNAME_FONT_SIZE * 1.2, height: USERNAME_FONT_SIZE * 1.2, marginLeft: 6 }}
@@ -408,7 +463,7 @@ export function ThreadView({ thread, onClose, session }: ThreadViewProps) {
                           <Heart size={16} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
                           {reply.likeCount > 0 && <Text style={styles.actionText} selectable={false}>{reply.likeCount}</Text>}
                         </TouchableOpacity>
-                        {session && reply.user_id === session.user.id && (
+                        {session && (reply.user_id === session.user.id || isCurrentUserAdmin()) && (
                         <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
                           <Trash2 size={16} color="#505050" />
                         </TouchableOpacity>

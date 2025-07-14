@@ -23,6 +23,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal.android';
 import { styles } from './community.styles.android';
 
+const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
+
 const CommunityScreen: FC = () => {
   const [threads, setThreads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,41 @@ const CommunityScreen: FC = () => {
   const [image, setImage] = useState<string | null>(null);
   const [isViewingThread, setIsViewingThread] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const [adminUserId, setAdminUserId] = useState<string>('');
   const router = useRouter();
+
+  // Helper function to check if current user is admin
+  const isCurrentUserAdmin = () => {
+    return currentUserEmail === ADMIN_EMAIL;
+  };
+
+  // Helper function to check if a user ID is admin
+  const isUserAdmin = (userId: string) => {
+    return userId === adminUserId;
+  };
+
+  // Function to check and load admin users from database
+  const loadAdminUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('is_admin', true);
+      
+      if (error) {
+        console.error('Error loading admin users:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Set the first admin user ID found (there should only be one)
+        setAdminUserId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error in loadAdminUsers:', error);
+    }
+  };
 
   const fetchThreads = useCallback(async (currentSession: any) => {
     try {
@@ -82,12 +118,30 @@ const CommunityScreen: FC = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user?.email) {
+        setCurrentUserEmail(session.user.email);
+        // Set admin user ID if current user is admin
+        if (session.user.email === ADMIN_EMAIL) {
+          setAdminUserId(session.user.id);
+        }
+      }
       fetchThreads(session);
+      // Load admin users from database
+      loadAdminUsers();
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user?.email) {
+        setCurrentUserEmail(session.user.email);
+        // Set admin user ID if current user is admin
+        if (session.user.email === ADMIN_EMAIL) {
+          setAdminUserId(session.user.id);
+        }
+      }
       fetchThreads(session);
+      // Load admin users from database
+      loadAdminUsers();
     });
 
     return () => {
@@ -270,10 +324,13 @@ const CommunityScreen: FC = () => {
               comments={item.replyCount || 0}
               isLiked={item.isLiked}
               favoriteTeam={item.profiles?.favorite_team}
+              userId={item.user_id}
               onCommentPress={() => handleThreadPress(item)}
               onLikePress={() => handleLikeToggle(item.id, item.isLiked)}
               onDeletePress={() => handleDeleteThread(item.id)}
               canDelete={session && item.user_id === session.user.id}
+              canAdminDelete={isCurrentUserAdmin()}
+              isAdmin={isUserAdmin(item.user_id)}
             />
           </TouchableOpacity>
         )}

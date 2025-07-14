@@ -9,7 +9,7 @@ const TABS = [
   { name: 'Screenings', path: '/screenings', icon: '🎬' },
   { name: 'Shop', path: '/shop', icon: '🛍️' },
   { name: 'Drivers', path: '/drivers', icon: '🏆' },
-  { name: 'Home', path: '/', icon: '🏠' },
+  { name: 'Home', path: '/home', icon: '🏠' },
 ];
 
 export default function CustomBottomNav() {

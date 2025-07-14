@@ -22,6 +22,7 @@ import { ThreadView } from '@/components/community/ThreadView';
 import { Home, Users, Clapperboard, ShoppingBag, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
+import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
 
@@ -42,6 +43,7 @@ const NAV_ITEMS = [
 ];
 
 const RSS_TO_JSON_URL = 'https://feedtojson.vercel.app/https%3A%2F%2Fwww.formula1.com%2Fen%2Flatest%2Fall.xml';
+const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
 // Function to shuffle array and get random items
 const getRandomNews = (newsArray: any[], count: number = 5) => {
@@ -69,7 +71,15 @@ export default function CommunityScreen() {
   const [image, setImage] = useState<string | null>(null);
   const [isViewingThread, setIsViewingThread] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showOtherUserProfileModal, setShowOtherUserProfileModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
+  const [followingThreads, setFollowingThreads] = useState<any[]>([]);
+  const [followingLoading, setFollowingLoading] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const [adminUserId, setAdminUserId] = useState<string>('');
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(null);
   const colorScheme = useColorScheme();
   const router = useRouter();
   const sidebarTranslateX = useSharedValue(-256);
@@ -123,6 +133,38 @@ export default function CommunityScreen() {
     }
   };
 
+  // Helper function to check if current user is admin
+  const isCurrentUserAdmin = () => {
+    return currentUserEmail === ADMIN_EMAIL;
+  };
+
+  // Helper function to check if a user ID is admin
+  const isUserAdmin = (userId: string) => {
+    return userId === adminUserId;
+  };
+
+  // Function to check and load admin users from database
+  const loadAdminUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('is_admin', true);
+      
+      if (error) {
+        console.error('Error loading admin users:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Set the first admin user ID found (there should only be one)
+        setAdminUserId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error in loadAdminUsers:', error);
+    }
+  };
+
   const handleDeleteThread = async (threadId: string) => {
     try {
       const { error } = await supabase.from('threads').delete().eq('id', threadId);
@@ -147,6 +189,8 @@ export default function CommunityScreen() {
         .order('created_at', { ascending: false });
 
       if (threadsError) throw threadsError;
+
+
 
       if (currentSession) {
         const { data: userLikesData, error: userLikesError } = await supabase
@@ -267,12 +311,30 @@ export default function CommunityScreen() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user?.email) {
+        setCurrentUserEmail(session.user.email);
+        // Set admin user ID if current user is admin
+        if (session.user.email === ADMIN_EMAIL) {
+          setAdminUserId(session.user.id);
+        }
+      }
       fetchThreads(session);
+      // Load admin users from database
+      loadAdminUsers();
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user?.email) {
+        setCurrentUserEmail(session.user.email);
+        // Set admin user ID if current user is admin
+        if (session.user.email === ADMIN_EMAIL) {
+          setAdminUserId(session.user.id);
+        }
+      }
       fetchThreads(session);
+      // Load admin users from database
+      loadAdminUsers();
     });
 
     // Fetch news from RSS feed
@@ -416,6 +478,99 @@ export default function CommunityScreen() {
     window.history.pushState({}, '', '/community');
   };
 
+  const handleProfilePress = (userId: string) => {
+    console.log('Profile icon clicked for user:', userId, 'Current user:', session?.user?.id);
+    if (userId !== session?.user?.id) {
+      setSelectedUserId(userId);
+      setShowOtherUserProfileModal(true);
+      console.log('Opening OtherUserProfileModal for user:', userId);
+    } else {
+      console.log('Clicked on own profile, modal will not open.');
+    }
+  };
+
+  const fetchFollowingThreads = useCallback(async (currentSession: any) => {
+    if (!currentSession) {
+      setFollowingThreads([]);
+      setFollowingLoading(false);
+      return;
+    }
+
+    setFollowingLoading(true);
+    try {
+      // First, get the list of users the current user is following
+      const { data: followsData, error: followsError } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', currentSession.user.id);
+
+      if (followsError) throw followsError;
+
+      // If no follows, return empty array
+      if (!followsData || followsData.length === 0) {
+        setFollowingThreads([]);
+        setFollowingLoading(false);
+        return;
+      }
+
+      // Extract the user IDs and filter out any null/undefined values just in case
+      const followingUserIds = followsData.map(follow => follow.following_id).filter(Boolean);
+
+      // Bail out early if there are no valid user IDs to query
+      if (followingUserIds.length === 0) {
+        setFollowingThreads([]);
+        setFollowingLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('threads')
+        .select(`
+          id,
+          content,
+          image_url,
+          created_at,
+          user_id,
+          profiles:user_id (
+            username,
+            favorite_team,
+            avatar_url
+          )
+        `)
+        .in('user_id', followingUserIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform the data to match the expected format
+      const transformedThreads = data.map((item: any) => ({
+        id: item.id,
+        content: item.content,
+        image_url: item.image_url,
+        created_at: item.created_at,
+        user_id: item.user_id,
+        profiles: item.profiles,
+        likeCount: 0, // We'll need to fetch this separately if needed
+        replyCount: 0, // We'll need to fetch this separately if needed
+        isLiked: false, // We'll need to fetch this separately if needed
+      }));
+
+      setFollowingThreads(transformedThreads);
+    } catch (error) {
+      console.error('Error fetching following threads:', error);
+      setFollowingThreads([]);
+    } finally {
+      setFollowingLoading(false);
+    }
+  }, []);
+
+  const handleTabPress = (tab: 'foryou' | 'following') => {
+    setActiveTab(tab);
+    if (tab === 'following' && session) {
+      fetchFollowingThreads(session);
+    }
+  };
+
   const SidebarContent = () => (
     <>
         <View>
@@ -451,33 +606,59 @@ export default function CommunityScreen() {
         </View>
         <View className="flex-1" />
         {session ? (
-          <TouchableOpacity onPress={() => setShowProfileModal(true)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, borderRadius: 8 }} className="hover:bg-muted/50">
+          <TouchableOpacity onPress={() => setShowProfileModal(true)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, borderRadius: 8, marginBottom: 80 }} className="hover:bg-muted/50">
             <View className="flex-row items-center space-x-2 flex-1">
-              <Image
-                source={{ uri: session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${session.user.email}` }}
-                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#f5f5f5' }}
-              />
-              <View className="flex-1 min-w-0">
-                <Text style={{ fontWeight: '600', color: '#000000', fontSize: 14 }} numberOfLines={1} selectable={false}>
-                  {session.user.user_metadata.full_name || session.user.email}
-                </Text>
-                <Text style={{ color: '#505050', fontSize: 12 }} numberOfLines={1} selectable={false}>
-                  @{session.user.user_metadata.username || session.user.email?.split('@')[0]}
-                </Text>
-              </View>
+              {(() => {
+                const displayUsername = session.user.user_metadata.username || session.user.email?.split('@')[0] || 'user';
+                return (
+                  <>
+                    <Image
+                      source={{ uri: currentAvatarUrl || session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${displayUsername.charAt(0)}` }}
+                      style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#f5f5f5' }}
+                    />
+                    <View className="flex-1 min-w-0">
+                      <Text style={{ fontWeight: '600', color: '#000000', fontSize: 14 }} numberOfLines={1} selectable={false}>
+                        {displayUsername}
+                      </Text>
+                    </View>
+                  </>
+                );
+              })()}
             </View>
             <MoreHorizontal size={16} color="#000000" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             onPress={() => setShowAuth(true)}
-            style={{ backgroundColor: '#dc2626', width: '100%', paddingVertical: 12, borderRadius: 9999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+            style={{ backgroundColor: '#dc2626', width: '100%', paddingVertical: 12, borderRadius: 9999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 80 }}
           >
             <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 18 }} selectable={false}>Log in</Text>
           </TouchableOpacity>
         )}
     </>
   );
+
+  // Fetch current user's avatar URL
+  const fetchCurrentUserAvatar = useCallback(async () => {
+    if (!session?.user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', session.user.id)
+        .single();
+      if (!error && data?.avatar_url) {
+        setCurrentAvatarUrl(data.avatar_url);
+      }
+    } catch (err) {
+      console.error('Error fetching avatar_url:', err);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    // Fetch avatar once on mount and whenever ProfileModal closes
+    fetchCurrentUserAvatar();
+  }, [fetchCurrentUserAvatar, showProfileModal]);
 
   return (
     <View style={{ width: '100%', height: '100vh', backgroundColor: '#ffffff' }}>
@@ -516,13 +697,25 @@ export default function CommunityScreen() {
             <View className="flex-col lg:flex-row justify-center p-0 md:p-4">
               <View className="w-full lg:max-w-2xl">
           {isViewingThread && selectedThread ? (
-            <ThreadView thread={selectedThread} onClose={handleCloseThread} session={session} />
+            <ThreadView thread={selectedThread} onClose={handleCloseThread} session={session} onProfilePress={handleProfilePress} />
           ) : (
                   <>
               {/* Header for "For you" / "Following" */}
                     <View style={{ flexDirection: 'row', justifyContent: 'space-around', borderBottomWidth: 1, borderBottomColor: '#9ca3af', padding: 16, backgroundColor: '#ffffff' }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000000' }} selectable={false}>For you</Text>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#505050' }} selectable={false}>Following</Text>
+                <TouchableOpacity onPress={() => handleTabPress('foryou')} style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ 
+                    fontSize: 18, 
+                    fontWeight: 'bold', 
+                    color: activeTab === 'foryou' ? '#000000' : '#505050' 
+                  }} selectable={false}>For you</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleTabPress('following')} style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ 
+                    fontSize: 18, 
+                    fontWeight: 'bold', 
+                    color: activeTab === 'following' ? '#000000' : '#505050' 
+                  }} selectable={false}>Following</Text>
+                </TouchableOpacity>
               </View>
 
                     {/* Create a new thread */}
@@ -541,7 +734,6 @@ export default function CommunityScreen() {
                           cursor: 'text',
                           pointerEvents: 'auto',
                           caretColor: 'auto',
-                          outline: 'none',
                           backgroundColor: 'transparent',
                           borderWidth: 0,
                         }}
@@ -576,28 +768,75 @@ export default function CommunityScreen() {
                 </View>
                 
                     {/* Threads Feed */}
-                {loading ? (
-                  <ActivityIndicator className="mt-8" />
+                {activeTab === 'foryou' ? (
+                  loading ? (
+                    <ActivityIndicator className="mt-8" />
+                  ) : (
+                    threads.map((thread) => (
+                      <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
+                        <PostCard
+                          username={thread.profiles?.username || 'Anonymous'}
+                          avatarUrl={thread.profiles?.avatar_url}
+                          content={thread.content}
+                          imageUrl={thread.image_url}
+                          timestamp={thread.created_at}
+                          likes={thread.likeCount || 0}
+                          comments={thread.replyCount || 0}
+                          isLiked={thread.isLiked}
+                          favoriteTeam={thread.profiles?.favorite_team}
+                          userId={thread.user_id}
+                          onCommentPress={() => handleThreadPress(thread)}
+                          onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
+                          onDeletePress={() => handleDeleteThread(thread.id)}
+                          onProfilePress={(userId) => {
+                            console.log('PostCard onProfilePress called with userId:', userId);
+                            handleProfilePress(userId);
+                          }}
+                          canDelete={session && thread.user_id === session.user.id}
+                          canAdminDelete={isCurrentUserAdmin()}
+                          isAdmin={isUserAdmin(thread.user_id)}
+                        />
+                      </TouchableOpacity>
+                    ))
+                  )
                 ) : (
-                  threads.map((thread) => (
-                        <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
-                      <PostCard
-                        username={thread.profiles?.username || 'Anonymous'}
-                        avatarUrl={thread.profiles?.avatar_url}
-                        content={thread.content}
-                        imageUrl={thread.image_url}
-                        timestamp={thread.created_at}
-                        likes={thread.likeCount || 0}
-                        comments={thread.replyCount || 0}
-                        isLiked={thread.isLiked}
-                        favoriteTeam={thread.profiles?.favorite_team}
-                        onCommentPress={() => handleThreadPress(thread)}
-                        onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
-                        onDeletePress={() => handleDeleteThread(thread.id)}
-                            canDelete={session && thread.user_id === session.user.id}
-                      />
-                    </TouchableOpacity>
-                  ))
+                  // Following tab
+                  followingLoading ? (
+                    <ActivityIndicator className="mt-8" />
+                  ) : followingThreads.length > 0 ? (
+                    followingThreads.map((thread) => (
+                      <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
+                        <PostCard
+                          username={thread.profiles?.username || 'Anonymous'}
+                          avatarUrl={thread.profiles?.avatar_url}
+                          content={thread.content}
+                          imageUrl={thread.image_url}
+                          timestamp={thread.created_at}
+                          likes={thread.likeCount || 0}
+                          comments={thread.replyCount || 0}
+                          isLiked={thread.isLiked}
+                          favoriteTeam={thread.profiles?.favorite_team}
+                          userId={thread.user_id}
+                          onCommentPress={() => handleThreadPress(thread)}
+                          onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
+                          onDeletePress={() => handleDeleteThread(thread.id)}
+                          onProfilePress={(userId) => {
+                            console.log('PostCard onProfilePress called with userId (Following tab):', userId);
+                            handleProfilePress(userId);
+                          }}
+                          canDelete={session && thread.user_id === session.user.id}
+                          canAdminDelete={isCurrentUserAdmin()}
+                          isAdmin={isUserAdmin(thread.user_id)}
+                        />
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <View style={{ padding: 20, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, color: '#505050', textAlign: 'center' }} selectable={false}>
+                        No posts from people you follow yet.{'\n'}Follow some users to see their posts here!
+                      </Text>
+                    </View>
+                  )
                 )}
                   </>
           )}
@@ -656,6 +895,18 @@ export default function CommunityScreen() {
             setShowProfileModal(false);
             setShowAuth(true);
           }}
+        />
+      )}
+
+      {session && selectedUserId && (
+        <OtherUserProfileModal
+          isVisible={showOtherUserProfileModal}
+          onClose={() => {
+            setShowOtherUserProfileModal(false);
+            setSelectedUserId('');
+          }}
+          userId={selectedUserId}
+          currentUserId={session.user.id}
         />
       )}
     </View>

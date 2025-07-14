@@ -18,6 +18,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { ThreadViewProps } from './ThreadView.types.android';
 import { styles } from './ThreadView.styles.android';
 
+const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
+
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
   'Scuderia Ferrari': require('@/team-logos/ferrari.png'),
@@ -37,7 +39,40 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [threadData, setThreadData] = useState(thread);
+  const [adminUserId, setAdminUserId] = useState<string>('');
   const replyInputRef = useRef<TextInput>(null);
+
+  // Helper function to check if current user is admin
+  const isCurrentUserAdmin = () => {
+    return session?.user?.email === ADMIN_EMAIL;
+  };
+
+  // Helper function to check if a user ID is admin
+  const isUserAdmin = (userId: string) => {
+    return userId === adminUserId;
+  };
+
+  // Function to check and load admin users from database
+  const loadAdminUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('is_admin', true);
+      
+      if (error) {
+        console.error('Error loading admin users:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        // Set the first admin user ID found (there should only be one)
+        setAdminUserId(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error in loadAdminUsers:', error);
+    }
+  };
 
   const fetchReplies = useCallback(async () => {
     if (!thread) return;
@@ -102,6 +137,11 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
     fetchReplies();
     setThreadData(thread);
   }, [fetchReplies, thread]);
+
+  useEffect(() => {
+    // Load admin users from database
+    loadAdminUsers();
+  }, []);
 
   const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
     if (!session) return;
@@ -233,6 +273,8 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
           onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
           onDeletePress={() => handleDeleteThread(threadData.id)}
           canDelete={session && threadData.user_id === session.user.id}
+          canAdminDelete={isCurrentUserAdmin()}
+          isAdmin={isUserAdmin(threadData.user_id)}
         />
       </View>
       <View style={styles.replyBoxInline}>
@@ -273,7 +315,13 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
       <View style={styles.commentContent}>
         <View style={styles.commentUsernameRow}>
           <Text style={styles.commentUsername}>{reply.profiles?.username || 'Anonymous'}</Text>
-          {reply.profiles?.favorite_team && TEAM_LOGOS[reply.profiles.favorite_team] && (
+          {isUserAdmin(reply.user_id) ? (
+            <Image 
+              source={require('@/assets/images/favicon.png')} 
+              style={styles.commentTeamLogo}
+              resizeMode="contain"
+            />
+          ) : reply.profiles?.favorite_team && TEAM_LOGOS[reply.profiles.favorite_team] && (
             <Image 
               source={TEAM_LOGOS[reply.profiles.favorite_team]} 
               style={styles.commentTeamLogo}
@@ -290,7 +338,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
             <Heart size={16} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
             {reply.likeCount > 0 && <Text style={styles.actionText}>{reply.likeCount}</Text>}
           </TouchableOpacity>
-          {session && reply.user_id === session.user.id && (
+          {session && (reply.user_id === session.user.id || isCurrentUserAdmin()) && (
             <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
               <Trash2 size={16} color="#505050" />
             </TouchableOpacity>

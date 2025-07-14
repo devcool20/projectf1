@@ -17,6 +17,9 @@ const TEAM_LOGOS: { [key: string]: any } = {
   'RB': require('@/team-logos/racingbulls.png'),
 };
 
+// Admin logo
+const ADMIN_LOGO = require('@/assets/images/favicon.png');
+
 const PostCard: FC<PostCardProps> = ({
   username,
   avatarUrl,
@@ -27,54 +30,82 @@ const PostCard: FC<PostCardProps> = ({
   comments,
   isLiked,
   favoriteTeam,
+  userId,
+  userEmail,
   onCommentPress,
   onLikePress,
   onDeletePress,
+  onProfilePress,
   canDelete = false,
+  isAdmin = false,
+  canAdminDelete = false,
 }) => {
+  
+  // Determine which logo to show
+  const getLogoToShow = () => {
+    if (isAdmin) {
+      return ADMIN_LOGO;
+    }
+    if (favoriteTeam && TEAM_LOGOS[favoriteTeam]) {
+      return TEAM_LOGOS[favoriteTeam];
+    }
+    return null;
+  };
+
+  const logoToShow = getLogoToShow();
+  const showDeleteButton = canDelete || canAdminDelete;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Image
-          source={{ uri: avatarUrl || `https://ui-avatars.com/api/?name=${username.charAt(0)}&background=random` }}
-          style={styles.avatar}
-        />
-        <View style={styles.headerTextContainer}>
-          <View style={styles.usernameRow}>
-            <Text style={styles.username} selectable={false}>{username}</Text>
-            {favoriteTeam && TEAM_LOGOS[favoriteTeam] && (
+        <TouchableOpacity 
+          onPress={() => {
+            console.log('Avatar clicked (Android) - userId:', userId, 'onProfilePress:', !!onProfilePress);
+            if (userId && onProfilePress) {
+              onProfilePress(userId);
+            } else {
+              console.log('Avatar click blocked (Android) - userId missing or onProfilePress not provided');
+            }
+          }}
+          disabled={!userId || !onProfilePress}
+        >
+          <Image
+            source={{ uri: avatarUrl || `https://ui-avatars.com/api/?name=${username.charAt(0)}&background=random` }}
+            style={styles.avatar}
+          />
+        </TouchableOpacity>
+        <View style={styles.userInfo}>
+          <View style={styles.userNameRow}>
+            <Text style={styles.username}>{username}</Text>
+            {logoToShow && (
               <Image 
-                source={TEAM_LOGOS[favoriteTeam]} 
+                source={logoToShow} 
                 style={styles.teamLogo}
                 resizeMode="contain"
               />
             )}
           </View>
-          <Text style={styles.timestamp} selectable={false}>{new Date(timestamp).toLocaleString()}</Text>
+          <Text style={styles.timestamp}>{new Date(timestamp).toLocaleString()}</Text>
         </View>
       </View>
-      <Text style={styles.content} selectable={false}>{content}</Text>
+      <Text style={styles.content}>{content}</Text>
       {imageUrl && (
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: imageUrl }}
-            resizeMode="cover"
-            style={styles.postImage}
-          />
+          <Image source={{ uri: imageUrl }} style={styles.postImage} resizeMode="cover" />
         </View>
       )}
-      <View style={styles.actionsContainer}>
-        <View style={styles.leftActions}>
+      <View style={styles.actions}>
+        <View style={styles.actionButtons}>
           <TouchableOpacity onPress={onLikePress} style={styles.actionButton}>
             <Heart size={20} color={isLiked ? '#dc2626' : '#505050'} fill={isLiked ? '#dc2626' : 'none'} />
-            {likes > 0 && <Text style={styles.actionText} selectable={false}>{likes}</Text>}
+            {likes > 0 && <Text style={styles.actionText}>{likes}</Text>}
           </TouchableOpacity>
           <TouchableOpacity onPress={onCommentPress} style={styles.actionButton}>
             <MessageCircle size={20} color="#505050" />
-            {comments > 0 && <Text style={styles.actionText} selectable={false}>{comments}</Text>}
+            {comments > 0 && <Text style={styles.actionText}>{comments}</Text>}
           </TouchableOpacity>
         </View>
-        {canDelete && (
+        {showDeleteButton && (
           <TouchableOpacity onPress={onDeletePress}>
             <Trash2 size={18} color="#505050" />
           </TouchableOpacity>

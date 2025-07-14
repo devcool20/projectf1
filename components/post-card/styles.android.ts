@@ -31,8 +31,8 @@ export const styles = StyleSheet.create({
     fontFamily: 'Architects Daughter',
   },
   teamLogo: {
-    width: 20,
-    height: 20,
+    width: 24, // Changed from 20 to 24
+    height: 24, // Changed from 20 to 24
     marginLeft: 8,
   },
   timestamp: {
