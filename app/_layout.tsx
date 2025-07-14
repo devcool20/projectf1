@@ -47,7 +47,7 @@ export default function RootLayout() {
       <Stack.Screen
         name="thread/[id]"
         options={{
-          title: 'Thread',
+          headerShown: false,
         }}
       />
     </Stack>

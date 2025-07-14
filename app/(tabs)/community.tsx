@@ -19,7 +19,7 @@ import { AuthModal, AuthModalProps } from '@/components/auth/AuthModal';
 import { useRouter } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { ThreadView } from '@/components/community/ThreadView';
-import { Home, Users, Clapperboard, ShoppingBag, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu } from 'lucide-react-native';
+import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
 import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
@@ -34,7 +34,6 @@ function useColorScheme(): ColorSchemeName {
 
 const NAV_ITEMS = [
   { href: '/', icon: Home, name: 'Home' },
-  { href: '/community', icon: Users, name: 'Community' },
   { href: '/screenings', icon: Clapperboard, name: 'Screenings' },
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
   { href: '/drivers', icon: Trophy, name: 'Drivers' },
@@ -73,6 +72,7 @@ export default function CommunityScreen() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showOtherUserProfileModal, setShowOtherUserProfileModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [showPostModal, setShowPostModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
   const [followingThreads, setFollowingThreads] = useState<any[]>([]);
@@ -601,12 +601,12 @@ export default function CommunityScreen() {
 
   const SidebarContent = () => (
     <>
-        <View>
-          <View className="px-3 mb-4">
-            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }} selectable={false}>projectF1</Text>
-          </View>
-          <View className="space-y-1">
-            {NAV_ITEMS.map((item) => (
+      <View>
+        <View className="px-3 mb-4">
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }} selectable={false}>projectF1</Text>
+        </View>
+        <View className="space-y-1">
+          {NAV_ITEMS.map((item) => (
               <TouchableOpacity
                 key={item.href}
                 onPress={() => {
@@ -633,37 +633,26 @@ export default function CommunityScreen() {
           </View>
         </View>
         <View className="flex-1" />
-        {session ? (
-          <TouchableOpacity onPress={() => setShowProfileModal(true)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, borderRadius: 8, marginBottom: 80 }} className="hover:bg-muted/50">
-            <View className="flex-row items-center space-x-2 flex-1">
-              {(() => {
-                const displayUsername = session.user.user_metadata.username || session.user.email?.split('@')[0] || 'user';
-                return (
-                  <>
-                    <Image
-                      key={avatarCacheBust}
-                      source={{ uri: currentAvatarUrl ? `${currentAvatarUrl}?t=${avatarCacheBust}` : (session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${displayUsername.charAt(0)}`) }}
-                      style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#f5f5f5' }}
-                    />
-                    <View className="flex-1 min-w-0">
-                      <Text style={{ fontWeight: '600', color: '#000000', fontSize: 14 }} numberOfLines={1} selectable={false}>
-                        {displayUsername}
-                      </Text>
-                    </View>
-                  </>
-                );
-              })()}
-            </View>
-            <MoreHorizontal size={16} color="#000000" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={() => setShowAuth(true)}
-            style={{ backgroundColor: '#dc2626', width: '100%', paddingVertical: 12, borderRadius: 9999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 80 }}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 18 }} selectable={false}>Log in</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#dc2626',
+            borderRadius: 9999,
+            paddingVertical: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            marginBottom: 32,
+            shadowColor: '#dc2626',
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            shadowOffset: { width: 0, height: 2 },
+          }}
+          activeOpacity={0.85}
+          onPress={() => setShowPostModal(true)}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Post</Text>
+        </TouchableOpacity>
     </>
   );
 
@@ -755,21 +744,26 @@ export default function CommunityScreen() {
                       <TextInput
                         placeholder="What's happening?"
                         placeholderTextColor="gray"
-                        style={{
-                          fontSize: 18,
-                          color: '#000000',
-                          userSelect: 'text',
-                          WebkitUserSelect: 'text',
-                          cursor: 'text',
-                          pointerEvents: 'auto',
-                          caretColor: 'auto',
-                          backgroundColor: 'transparent',
-                          borderWidth: 0,
-                        }}
+                        style={
+                          {
+                            fontSize: 18,
+                            color: '#000000',
+                            userSelect: 'text',
+                            WebkitUserSelect: 'text',
+                            cursor: 'text',
+                            pointerEvents: 'auto',
+                            caretColor: 'auto',
+                            backgroundColor: 'transparent',
+                            borderWidth: 0,
+                            outlineStyle: 'none',
+                            outlineWidth: 0,
+                            outlineColor: 'transparent',
+                            borderColor: 'transparent',
+                          } as any
+                        }
                         value={content}
                         onChangeText={setContent}
                         multiline
-                        selectable={true}
                       />
                       {image && (
                         <View className="relative mt-2">
@@ -939,6 +933,81 @@ export default function CommunityScreen() {
           currentUserId={session.user.id}
         />
       )}
+
+      {/* Post Modal */}
+      <Modal
+        visible={showPostModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowPostModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
+          <View style={{ width: '90%', maxWidth: 420, backgroundColor: '#fff', borderRadius: 20, padding: 24, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, alignItems: 'stretch', position: 'relative' }}>
+            {/* Close Button */}
+            <TouchableOpacity onPress={() => setShowPostModal(false)} style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
+              <X size={28} color="#dc2626" />
+            </TouchableOpacity>
+            {/* Post Input */}
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626', marginBottom: 16, textAlign: 'center' }}>Create Post</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
+              <User size={40} color="gray" />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <TextInput
+                  placeholder="What's happening?"
+                  placeholderTextColor="gray"
+                  style={{
+                    fontSize: 18,
+                    color: '#000000',
+                    userSelect: 'text',
+                    WebkitUserSelect: 'text',
+                    cursor: 'text',
+                    pointerEvents: 'auto',
+                    caretColor: 'auto',
+                    backgroundColor: 'transparent',
+                    borderWidth: 0,
+                    outlineStyle: 'none',
+                    outlineWidth: 0,
+                    outlineColor: 'transparent',
+                    borderColor: 'transparent',
+                    minHeight: 40,
+                    maxHeight: 120,
+                  } as any}
+                  value={content}
+                  onChangeText={setContent}
+                  multiline
+                />
+                {image && (
+                  <View style={{ position: 'relative', marginTop: 8 }}>
+                    <Image
+                      source={{ uri: image }}
+                      style={{ width: '100%', height: 180, borderRadius: 12, backgroundColor: '#f3f4f6' }}
+                      resizeMode="contain"
+                    />
+                    <TouchableOpacity onPress={() => setImage(null)} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#000', opacity: 0.7, borderRadius: 16, padding: 4 }}>
+                      <X size={20} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+              <TouchableOpacity onPress={pickImage}>
+                <Camera size={24} color="#1DA1F2" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  await handleCreateThread();
+                  setShowPostModal(false);
+                }}
+                style={{ backgroundColor: '#dc2626', borderRadius: 9999, paddingVertical: 10, paddingHorizontal: 32, alignItems: 'center', justifyContent: 'center', shadowColor: '#dc2626', shadowOpacity: 0.15, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
+                disabled={!content.trim() && !image}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, opacity: (!content.trim() && !image) ? 0.5 : 1 }}>Post</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

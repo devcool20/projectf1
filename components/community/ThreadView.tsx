@@ -404,7 +404,6 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
                 onChangeText={setNewReply}
                 multiline={false}
                 numberOfLines={1}
-                selectable={true}
               />
               <TouchableOpacity onPress={pickReplyImage} style={styles.imagePickerButton}>
                 <Camera size={20} color="#505050" />
@@ -562,12 +561,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     minHeight: 36,
     maxHeight: 36,
+    pointerEvents: 'auto',
+    caretColor: 'auto',
     userSelect: 'text',
     WebkitUserSelect: 'text',
     cursor: 'text',
-    pointerEvents: 'auto',
-    caretColor: 'auto',
-    outline: 'none',
+    outlineStyle: 'none',
+    outlineWidth: 0,
+    outlineColor: 'transparent',
+    borderColor: 'transparent',
   },
   imagePickerButton: {
     padding: 6,
