@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     width: '100%',
     padding: 16,
@@ -17,18 +17,17 @@ export const styles = StyleSheet.create({
     marginRight: 12,
     backgroundColor: '#e3e3e3', // --muted
   },
-  headerTextContainer: {
+  userInfo: {
     justifyContent: 'center',
     flex: 1,
   },
-  usernameRow: {
+  userNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   username: {
     fontWeight: 'bold',
-    color: '#3a3a3a', // --foreground
-    fontFamily: 'Architects Daughter',
+    color: '#000000',
   },
   teamLogo: {
     width: 24, // Changed from 20 to 24
@@ -37,14 +36,13 @@ export const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 12,
-    color: '#505050', // --muted-foreground
-    fontFamily: 'Architects Daughter',
+    color: '#505050',
   },
   content: {
-    color: '#3a3a3a', // --foreground
+    color: '#000000',
     marginVertical: 8,
-    fontFamily: 'Architects Daughter',
     lineHeight: 20,
+    fontSize: 16,
   },
   imageContainer: {
     marginTop: 12,
@@ -56,13 +54,13 @@ export const styles = StyleSheet.create({
     width: 300,
     maxWidth: '100%',
   },
-  actionsContainer: {
+  actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 12,
   },
-  leftActions: {
+  actionButtons: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -73,8 +71,9 @@ export const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 14,
-    color: '#505050', // --muted-foreground
+    color: '#505050',
     marginLeft: 4,
-    fontFamily: 'Architects Daughter',
   },
-}); 
+});
+
+export default styles;

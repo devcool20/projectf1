@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Heart, MessageCircle, Trash2 } from 'lucide-react-native';
 import { PostCardProps } from './types.android';
-import { styles } from './styles.android';
+import styles from './styles.android';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),

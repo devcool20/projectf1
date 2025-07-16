@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.projectf1.app"
+    },
+    "android": {
+      "package": "com.projectf1.app"
     },
     "web": {
       "bundler": "metro",

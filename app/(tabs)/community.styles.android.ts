@@ -1,10 +1,10 @@
 import { StyleSheet } from 'react-native';
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   // Main container
   container: {
     flex: 1,
-    backgroundColor: '#ffffff', // --card
+    backgroundColor: '#ffffff',
   },
   // Header
   header: {
@@ -13,14 +13,18 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#747272', // --border
-    backgroundColor: '#ffffff', // --card
+    borderBottomColor: '#e5e5e5',
+    backgroundColor: '#ffffff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#3a3a3a', // --foreground
-    fontFamily: 'Architects Daughter',
+    color: '#000000',
   },
   // Main content area
   contentRow: {
@@ -68,7 +72,9 @@ export const styles = StyleSheet.create({
   // Create thread section
   createThreadContainer: {
     padding: 16,
-    backgroundColor: '#f9f9f9', // --background
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
   },
   createThreadRow: {
     flexDirection: 'row',
@@ -79,12 +85,12 @@ export const styles = StyleSheet.create({
   },
   textInput: {
     fontSize: 18,
-    color: '#3a3a3a', // --foreground
+    color: '#000000',
     backgroundColor: 'transparent',
     borderWidth: 0,
     padding: 0,
-    fontFamily: 'Architects Daughter',
     lineHeight: 24,
+    minHeight: 40,
   },
   imagePreviewContainer: {
     position: 'relative',
@@ -113,17 +119,18 @@ export const styles = StyleSheet.create({
   postButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#505050', // --muted-foreground
-    fontFamily: 'Architects Daughter',
+    color: '#dc2626', // F1 red theme
   },
   // Thread feed item
   threadTouchable: {
     borderBottomWidth: 1,
-    borderColor: '#747272', // --border
-    backgroundColor: '#ffffff', // --card
+    borderColor: '#9ca3af',
+    backgroundColor: '#ffffff',
   },
   // Activity Indicator
   loadingIndicator: {
     marginTop: 32,
   },
-}); 
+});
+
+export default styles;

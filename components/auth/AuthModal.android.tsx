@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { AuthModalProps, AuthMode } from './AuthModal.types.android';
-import { styles } from './AuthModal.styles.android';
+import styles from './AuthModal.styles.android';
 
 export const AuthModal: FC<AuthModalProps> = ({ visible, onClose, onSuccess }) => {
   const [email, setEmail] = useState<string>('');

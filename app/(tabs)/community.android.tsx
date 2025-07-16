@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, FC } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,24 +8,24 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Modal,
   SafeAreaView,
-  FlatList,
   Alert,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { AuthModal } from '@/components/auth/AuthModal.android';
-import { useRouter } from 'expo-router';
 import PostCard from '@/components/post-card/index.android';
 import { ThreadView } from '@/components/community/ThreadView.android';
 import { User, Camera, X, Menu } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal.android';
-import { styles } from './community.styles.android';
+import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
+import styles from './community.styles.android';
 
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
-const CommunityScreen: FC = () => {
+export default function CommunityScreen() {
   const [threads, setThreads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -38,35 +38,15 @@ const CommunityScreen: FC = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   const [adminUserId, setAdminUserId] = useState<string>('');
-  const router = useRouter();
 
-  // Helper function to check if current user is admin
-  const isCurrentUserAdmin = () => {
-    return currentUserEmail === ADMIN_EMAIL;
-  };
+  const isCurrentUserAdmin = () => currentUserEmail === ADMIN_EMAIL;
+  const isUserAdmin = (userId: string) => userId === adminUserId;
 
-  // Helper function to check if a user ID is admin
-  const isUserAdmin = (userId: string) => {
-    return userId === adminUserId;
-  };
-
-  // Function to check and load admin users from database
   const loadAdminUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('is_admin', true);
-      
-      if (error) {
-        console.error('Error loading admin users:', error);
-        return;
-      }
-      
-      if (data && data.length > 0) {
-        // Set the first admin user ID found (there should only be one)
-        setAdminUserId(data[0].id);
-      }
+      const { data, error } = await supabase.from('profiles').select('id').eq('is_admin', true);
+      if (error) console.error('Error loading admin users:', error);
+      if (data && data.length > 0) setAdminUserId(data[0].id);
     } catch (error) {
       console.error('Error in loadAdminUsers:', error);
     }
@@ -81,6 +61,12 @@ const CommunityScreen: FC = () => {
 
       if (threadsError) throw threadsError;
 
+      let processedThreads = threadsData.map(t => ({
+        ...t,
+        likeCount: t.likes[0]?.count || 0,
+        replyCount: t.replies[0]?.count || 0,
+      }));
+
       if (currentSession) {
         const { data: userLikesData, error: userLikesError } = await supabase
           .from('likes')
@@ -91,22 +77,10 @@ const CommunityScreen: FC = () => {
         if (userLikesError) throw userLikesError;
 
         const likedThreadIds = new Set(userLikesData.map(l => l.thread_id));
-        
-        const threadsWithStatus = threadsData.map(t => ({
-          ...t,
-          isLiked: likedThreadIds.has(t.id),
-          likeCount: t.likes[0]?.count || 0,
-          replyCount: t.replies[0]?.count || 0,
-        }));
-        setThreads(threadsWithStatus);
-      } else {
-        const threadsWithCounts = threadsData.map(t => ({
-          ...t,
-          likeCount: t.likes[0]?.count || 0,
-          replyCount: t.replies[0]?.count || 0,
-        }));
-        setThreads(threadsWithCounts);
+        processedThreads = processedThreads.map(t => ({ ...t, isLiked: likedThreadIds.has(t.id) }));
       }
+      
+      setThreads(processedThreads);
     } catch (error) {
       console.error('Error fetching threads:', error);
     } finally {
@@ -116,37 +90,31 @@ const CommunityScreen: FC = () => {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const setupSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (session?.user?.email) {
         setCurrentUserEmail(session.user.email);
-        // Set admin user ID if current user is admin
-        if (session.user.email === ADMIN_EMAIL) {
-          setAdminUserId(session.user.id);
-        }
+        if (session.user.email === ADMIN_EMAIL) setAdminUserId(session.user.id);
       }
       fetchThreads(session);
-      // Load admin users from database
       loadAdminUsers();
-    });
+    };
+    setupSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user?.email) {
         setCurrentUserEmail(session.user.email);
-        // Set admin user ID if current user is admin
-        if (session.user.email === ADMIN_EMAIL) {
-          setAdminUserId(session.user.id);
-        }
+        if (session.user.email === ADMIN_EMAIL) setAdminUserId(session.user.id);
+      } else {
+        setCurrentUserEmail('');
       }
       fetchThreads(session);
-      // Load admin users from database
       loadAdminUsers();
     });
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    return () => authListener.subscription.unsubscribe();
   }, [fetchThreads]);
 
   const onRefresh = useCallback(() => {
@@ -155,10 +123,7 @@ const CommunityScreen: FC = () => {
   }, [session, fetchThreads]);
 
   const handleCreateThread = async () => {
-    if (!session) {
-      setShowAuth(true);
-      return;
-    }
+    if (!session) return setShowAuth(true);
     if (!content.trim() && !image) return;
 
     try {
@@ -166,16 +131,15 @@ const CommunityScreen: FC = () => {
       if (image) {
         const response = await fetch(image);
         const blob = await response.blob();
-        const fileName = image.split('/').pop();
-        const fileExt = fileName?.split('.').pop();
-        const filePath = `${session.user.id}/${Math.random()}.${fileExt}`;
+        const fileName = image.split('/').pop() || 'image.jpg';
+        const fileExt = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+        const filePath = `${session.user.id}/${Date.now()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage.from('thread-images').upload(filePath, blob, {
-            contentType: blob.type,
+            contentType: `image/${fileExt}`,
             cacheControl: '3600',
             upsert: false
-          });
-
+        });
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage.from('thread-images').getPublicUrl(filePath);
@@ -187,10 +151,10 @@ const CommunityScreen: FC = () => {
 
       setContent('');
       setImage(null);
-      await fetchThreads(session);
+      fetchThreads(session);
     } catch (error) {
       console.error('Error creating thread:', error);
-      alert('Failed to create thread');
+      Alert.alert('Error', 'Failed to create thread.');
     }
   };
 
@@ -201,36 +165,24 @@ const CommunityScreen: FC = () => {
       aspect: [4, 3],
       quality: 1,
     });
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
+    if (!result.canceled) setImage(result.assets[0].uri);
   };
 
   const handleThreadPress = (thread: any) => {
     setSelectedThread(thread);
     setIsViewingThread(true);
-    router.push(`/thread/${thread.id}`);
   };
 
   const handleCloseThread = () => {
     setSelectedThread(null);
     setIsViewingThread(false);
-    router.back();
+    fetchThreads(session);
   };
   
   const handleLikeToggle = async (threadId: string, isLiked: boolean) => {
-    if (!session) {
-      setShowAuth(true);
-      return;
-    }
+    if (!session) return setShowAuth(true);
 
-    setThreads(prevThreads => prevThreads.map(t => {
-      if (t.id === threadId) {
-        return { ...t, isLiked: !isLiked, likeCount: t.likeCount + (isLiked ? -1 : 1) };
-      }
-      return t;
-    }));
+    setThreads(prev => prev.map(t => t.id === threadId ? { ...t, isLiked: !isLiked, likeCount: t.likeCount + (isLiked ? -1 : 1) } : t));
 
     try {
       if (isLiked) {
@@ -240,12 +192,12 @@ const CommunityScreen: FC = () => {
       }
     } catch (error) {
       console.error("Error toggling like:", error);
-      fetchThreads(session); // Re-fetch to correct state
+      fetchThreads(session);
     }
   };
 
   const handleDeleteThread = async (threadId: string) => {
-    Alert.alert("Delete Thread", "Are you sure you want to delete this thread?", [
+    Alert.alert("Delete Thread", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete", style: "destructive", onPress: async () => {
@@ -259,6 +211,12 @@ const CommunityScreen: FC = () => {
         }
       }
     ]);
+  };
+
+  const handleProfilePress = (userId: string) => {
+    // This is where you would navigate to a user's profile
+    // For now, we just log it.
+    console.log("Profile pressed for user:", userId);
   };
 
   const renderCreateThread = () => (
@@ -302,7 +260,7 @@ const CommunityScreen: FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => { /* Open Drawer */ }}>
+        <TouchableOpacity onPress={() => {}}>
           <Menu size={24} color="#3a3a3a" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Community</Text>
@@ -328,6 +286,7 @@ const CommunityScreen: FC = () => {
               onCommentPress={() => handleThreadPress(item)}
               onLikePress={() => handleLikeToggle(item.id, item.isLiked)}
               onDeletePress={() => handleDeleteThread(item.id)}
+              onProfilePress={handleProfilePress}
               canDelete={session && item.user_id === session.user.id}
               canAdminDelete={isCurrentUserAdmin()}
               isAdmin={isUserAdmin(item.user_id)}
@@ -361,6 +320,4 @@ const CommunityScreen: FC = () => {
       />
     </SafeAreaView>
   );
-};
-
-export default CommunityScreen; 
+}

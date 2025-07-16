@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -68,4 +68,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Architects Daughter',
   },
-}); 
+});
+
+export default styles;

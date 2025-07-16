@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, Modal, ScrollView, Image } from 'react-na
 import { supabase } from '@/lib/supabase';
 import { X, User, Mail, Trophy, Calendar, Star } from 'lucide-react-native';
 import { ProfileModalProps, F1Team } from './ProfileModal.types.android';
-import { styles } from './ProfileModal.styles.android';
+import styles from './ProfileModal.styles.android';
 
 const F1_TEAMS: F1Team[] = [
   { name: 'Red Bull Racing', color: '#1E3A8A', logo: require('@/team-logos/redbull.png') },

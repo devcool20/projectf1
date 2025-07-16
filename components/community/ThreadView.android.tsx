@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
 import PostCard from '@/components/post-card/index.android';
 import * as ImagePicker from 'expo-image-picker';
-import { ThreadViewProps } from './ThreadView.types.android';
+import { ThreadViewProps, Thread, Reply, Profile } from './ThreadView.types.android';
 import { styles } from './ThreadView.styles.android';
 
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
@@ -35,13 +35,39 @@ const TEAM_LOGOS: { [key: string]: any } = {
 };
 
 const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
-  const [replies, setReplies] = useState<any[]>([]);
+  const [replies, setReplies] = useState<Reply[]>([]);
   const [newReply, setNewReply] = useState('');
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replyImage, setReplyImage] = useState<string | null>(null);
-  const [threadData, setThreadData] = useState(thread);
+  const [threadData, setThreadData] = useState<Thread | null>(thread);
   const [adminUserId, setAdminUserId] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
   const replyInputRef = useRef<TextInput>(null);
+
+  // Helper function to safely get user display name
+  const getUserDisplayName = (profile: Profile | null | undefined): string => {
+    if (!profile) return 'Anonymous';
+    return profile.displayName || profile.display_name || profile.username || 'Anonymous';
+  };
+
+  // Helper function to safely get user data
+  const getUserData = (profile: Profile | null | undefined) => {
+    if (!profile) {
+      return {
+        username: 'Anonymous',
+        displayName: 'Anonymous',
+        avatarUrl: null,
+        favoriteTeam: null
+      };
+    }
+    
+    return {
+      username: profile.username || 'Anonymous',
+      displayName: profile.displayName || profile.display_name || profile.username || 'Anonymous',
+      avatarUrl: profile.avatar_url || null,
+      favoriteTeam: profile.favorite_team || null
+    };
+  };
 
   // Helper function to check if current user is admin
   const isCurrentUserAdmin = () => {
@@ -76,52 +102,78 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
   };
 
   const fetchReplies = useCallback(async () => {
-    if (!thread) return;
+    if (!thread) {
+      setError('Thread data is missing');
+      setLoadingReplies(false);
+      return;
+    }
+    
     setLoadingReplies(true);
+    setError(null);
+    
     try {
       const { data, error } = await supabase
         .from('replies')
-        .select(`*, profiles:user_id (username, avatar_url, favorite_team)`)
+        .select(`*, profiles:user_id (username, avatar_url, favorite_team, display_name)`)
         .eq('thread_id', thread.id)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching replies:', error);
+        setError('Failed to fetch replies');
+        throw error;
+      }
+      
       if (!data) {
         setReplies([]);
         return;
       }
 
+      // Ensure all replies have valid profile data
+      const validatedReplies = data.map(reply => ({
+        ...reply,
+        profiles: reply.profiles || null
+      }));
+
       const { data: likesData, error: likesError } = await supabase
         .from('likes')
         .select('reply_id')
-        .in('reply_id', data.map(r => r.id));
+        .in('reply_id', validatedReplies.map(r => r.id));
       
-      if (likesError) throw likesError;
+      if (likesError) {
+        console.error('Error fetching likes:', likesError);
+        // Don't throw here, just continue without likes data
+      }
 
       const likeCountMap = (likesData || []).reduce((acc: any, like: any) => {
-        acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
+        if (like && like.reply_id) {
+          acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
+        }
         return acc;
       }, {});
 
-      if (session) {
+      if (session && session.user) {
         const { data: userLikesData, error: userLikesError } = await supabase
           .from('likes')
           .select('reply_id')
-          .in('reply_id', data.map(r => r.id))
+          .in('reply_id', validatedReplies.map(r => r.id))
           .eq('user_id', session.user.id);
         
-        if (userLikesError) throw userLikesError;
+        if (userLikesError) {
+          console.error('Error fetching user likes:', userLikesError);
+          // Don't throw here, just continue without user likes data
+        }
 
-        const likedReplyIds = new Set((userLikesData || []).map(l => l.reply_id));
+        const likedReplyIds = new Set((userLikesData || []).map(l => l && l.reply_id).filter(Boolean));
         
-        const repliesWithStatus = data.map(r => ({
+        const repliesWithStatus = validatedReplies.map(r => ({
           ...r,
           isLiked: likedReplyIds.has(r.id),
           likeCount: likeCountMap[r.id] || 0,
         }));
         setReplies(repliesWithStatus);
       } else {
-        const repliesWithCounts = data.map(r => ({
+        const repliesWithCounts = validatedReplies.map(r => ({
           ...r,
           likeCount: likeCountMap[r.id] || 0,
         }));
@@ -129,6 +181,8 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
       }
     } catch (error) {
       console.error('Error fetching replies:', error);
+      setError('Failed to load replies. Please try again.');
+      setReplies([]);
     } finally {
       setLoadingReplies(false);
     }
@@ -145,8 +199,13 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
   }, []);
 
   const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
-    if (!session) return;
-    setReplies(prev => prev.map(r => r.id === replyId ? { ...r, isLiked: !isLiked, likeCount: r.likeCount + (isLiked ? -1 : 1) } : r));
+    if (!session || !session.user) {
+      Alert.alert('Error', 'You must be logged in to like replies.');
+      return;
+    }
+    
+    setReplies(prev => prev.map(r => r.id === replyId ? { ...r, isLiked: !isLiked, likeCount: Math.max(0, (r.likeCount || 0) + (isLiked ? -1 : 1)) } : r));
+    
     try {
       if (isLiked) {
         await supabase.from('likes').delete().match({ reply_id: replyId, user_id: session.user.id });
@@ -155,13 +214,26 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
       }
     } catch (error) {
       console.error('Error toggling like:', error);
+      Alert.alert('Error', 'Failed to update like status.');
       fetchReplies(); // Re-fetch to correct state on error
     }
   };
 
   const handleThreadLikeToggle = async (threadId: string, isLiked: boolean) => {
-    if (!session) return;
-    setThreadData((prev: any) => ({ ...prev, isLiked: !isLiked, likeCount: prev.likeCount + (isLiked ? -1 : 1) }));
+    if (!session || !session.user) {
+      Alert.alert('Error', 'You must be logged in to like threads.');
+      return;
+    }
+    
+    setThreadData((prev: Thread | null) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        isLiked: !isLiked,
+        likeCount: Math.max(0, (prev.likeCount || 0) + (isLiked ? -1 : 1))
+      };
+    });
+    
     try {
       if (isLiked) {
         await supabase.from('likes').delete().match({ thread_id: threadId, user_id: session.user.id });
@@ -170,35 +242,64 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
       }
     } catch (error) {
       console.error('Error toggling thread like:', error);
+      Alert.alert('Error', 'Failed to update thread like status.');
       // Revert on error
       setThreadData(thread);
     }
   };
 
   const handlePostReply = async () => {
-    if (!thread || (!newReply.trim() && !replyImage)) return;
+    if (!thread || (!newReply.trim() && !replyImage)) {
+      Alert.alert('Error', 'Please enter a reply or select an image.');
+      return;
+    }
+    
+    if (!session || !session.user) {
+      Alert.alert('Error', 'You must be logged in to post replies.');
+      return;
+    }
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        Alert.alert('Error', 'Authentication failed. Please try logging in again.');
+        return;
+      }
 
       let imageUrl: string | null = null;
       if (replyImage) {
-        const response = await fetch(replyImage);
-        const blob = await response.blob();
-        const filePath = `${user.id}/${Math.random()}`;
-        const { error: uploadError } = await supabase.storage.from('reply-images').upload(filePath, blob);
-        if (uploadError) throw uploadError;
-        const { data: { publicUrl } } = supabase.storage.from('reply-images').getPublicUrl(filePath);
-        imageUrl = publicUrl;
+        try {
+          const response = await fetch(replyImage);
+          const blob = await response.blob();
+          const filePath = `${user.id}/${Date.now()}_${Math.random()}`;
+          const { error: uploadError } = await supabase.storage.from('reply-images').upload(filePath, blob);
+          if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage.from('reply-images').getPublicUrl(filePath);
+          imageUrl = publicUrl;
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          Alert.alert('Error', 'Failed to upload image. Please try again.');
+          return;
+        }
       }
 
-      await supabase.from('replies').insert({ content: newReply.trim(), thread_id: thread.id, user_id: user.id, image_url: imageUrl });
+      const { error: insertError } = await supabase
+        .from('replies')
+        .insert({ 
+          content: newReply.trim(), 
+          thread_id: thread.id, 
+          user_id: user.id, 
+          image_url: imageUrl 
+        });
+        
+      if (insertError) throw insertError;
+      
       setNewReply('');
       setReplyImage(null);
-      fetchReplies();
+      await fetchReplies();
     } catch (error) {
       console.error('Error posting reply:', error);
-      Alert.alert('Error', 'Failed to post reply.');
+      Alert.alert('Error', 'Failed to post reply. Please try again.');
     }
   };
 
@@ -252,32 +353,71 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
   if (!threadData) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" style={{ marginTop: 50 }} />
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <ArrowLeft size={28} color="#3a3a3a" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Thread</Text>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" />
+          <Text style={{ marginTop: 10, color: '#505050' }}>Loading thread...</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
-  const renderHeader = () => (
-    <>
-      <View style={styles.postContainer}>
-        <PostCard
-          username={threadData.profiles?.username || 'Anonymous'}
-          avatarUrl={threadData.profiles?.avatar_url}
-          content={threadData.content}
-          imageUrl={threadData.image_url}
-          timestamp={threadData.created_at}
-          likes={threadData.likeCount || 0}
-          comments={threadData.replyCount || 0}
-          isLiked={threadData.isLiked}
-          favoriteTeam={threadData.profiles?.favorite_team}
-          onCommentPress={() => {}}
-          onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
-          onDeletePress={() => handleDeleteThread(threadData.id)}
-          canDelete={session && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
-          canAdminDelete={isCurrentUserAdmin()}
-          isAdmin={isUserAdmin(threadData.user_id)}
-        />
-      </View>
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onClose} style={styles.backButton}>
+            <ArrowLeft size={28} color="#3a3a3a" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Thread</Text>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ color: '#dc2626', fontSize: 16, textAlign: 'center', marginBottom: 20 }}>
+            {error}
+          </Text>
+          <TouchableOpacity 
+            style={{ backgroundColor: '#dc2626', padding: 12, borderRadius: 8 }}
+            onPress={() => {
+              setError(null);
+              fetchReplies();
+            }}
+          >
+            <Text style={{ color: 'white', fontSize: 14 }}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const renderHeader = () => {
+    const userData = getUserData(threadData.profiles);
+    
+    return (
+      <>
+        <View style={styles.postContainer}>
+          <PostCard
+            username={userData.username}
+            avatarUrl={userData.avatarUrl}
+            content={threadData.content || ''}
+            imageUrl={threadData.image_url}
+            timestamp={threadData.created_at}
+            likes={threadData.likeCount || 0}
+            comments={threadData.replyCount || 0}
+            isLiked={threadData.isLiked || false}
+            favoriteTeam={userData.favoriteTeam}
+            onCommentPress={() => {}}
+            onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
+            onDeletePress={() => handleDeleteThread(threadData.id)}
+            canDelete={session && session.user && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
+            canAdminDelete={isCurrentUserAdmin()}
+            isAdmin={isUserAdmin(threadData.user_id)}
+          />
+        </View>
       <View style={styles.replyBoxInline}>
         {replyImage && (
           <View style={styles.imagePreview}>
@@ -307,31 +447,35 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
             <Text style={styles.replyButtonText}>Reply</Text>
           </TouchableOpacity>
         </View>
-      </View>
-      <View style={{ borderBottomWidth: 1, borderBottomColor: '#747272', marginBottom: 8 }} />
-    </>
-  );
-
-  const renderReply = ({ item: reply }: { item: any }) => (
-    <View style={styles.comment}>
-      <View style={styles.commentContent}>
-        <View style={styles.commentUsernameRow}>
-          <Text style={styles.commentUsername}>{reply.profiles?.username || 'Anonymous'}</Text>
-          {isUserAdmin(reply.user_id) ? (
-            <Image 
-              source={require('@/assets/images/favicon.png')} 
-              style={styles.commentTeamLogo}
-              resizeMode="contain"
-            />
-          ) : reply.profiles?.favorite_team && TEAM_LOGOS[reply.profiles.favorite_team] && (
-            <Image 
-              source={TEAM_LOGOS[reply.profiles.favorite_team]} 
-              style={styles.commentTeamLogo}
-              resizeMode="contain"
-            />
-          )}
         </View>
-        <Text style={styles.commentText}>{reply.content}</Text>
+        <View style={{ borderBottomWidth: 1, borderBottomColor: '#747272', marginBottom: 8 }} />
+      </>
+    );
+  };
+
+  const renderReply = ({ item: reply }: { item: Reply }) => {
+    const userData = getUserData(reply.profiles);
+    
+    return (
+      <View style={styles.comment}>
+        <View style={styles.commentContent}>
+          <View style={styles.commentUsernameRow}>
+            <Text style={styles.commentUsername}>{userData.username}</Text>
+            {isUserAdmin(reply.user_id) ? (
+              <Image 
+                source={require('@/assets/images/favicon.png')} 
+                style={styles.commentTeamLogo}
+                resizeMode="contain"
+              />
+            ) : userData.favoriteTeam && TEAM_LOGOS[userData.favoriteTeam] && (
+              <Image 
+                source={TEAM_LOGOS[userData.favoriteTeam]} 
+                style={styles.commentTeamLogo}
+                resizeMode="contain"
+              />
+            )}
+          </View>
+          <Text style={styles.commentText}>{reply.content || ''}</Text>
         {reply.image_url && (
           <Image 
             source={{ uri: reply.image_url }} 
@@ -344,20 +488,21 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
             resizeMode="cover"
           />
         )}
-        <View style={styles.commentActions}>
-          <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={styles.actionButton}>
-            <Heart size={16} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
-            {reply.likeCount > 0 && <Text style={styles.actionText}>{reply.likeCount}</Text>}
-          </TouchableOpacity>
-          {session && (reply.user_id === session.user.id || isCurrentUserAdmin()) && (
-            <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
-              <Trash2 size={16} color="#505050" />
+          <View style={styles.commentActions}>
+            <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked || false)} style={styles.actionButton}>
+              <Heart size={16} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
+              {(reply.likeCount || 0) > 0 && <Text style={styles.actionText}>{reply.likeCount || 0}</Text>}
             </TouchableOpacity>
-          )}
+            {session && session.user && (reply.user_id === session.user.id || isCurrentUserAdmin()) && (
+              <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
+                <Trash2 size={16} color="#505050" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -372,9 +517,39 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
         renderItem={renderReply}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={renderHeader}
-        ListEmptyComponent={() => (
-          loadingReplies ? <ActivityIndicator style={{marginTop: 20}}/> : <Text style={{textAlign: 'center', marginTop: 20, color: '#505050'}}>No replies yet.</Text>
-        )}
+        ListEmptyComponent={() => {
+          if (loadingReplies) {
+            return (
+              <View style={{ alignItems: 'center', marginTop: 20 }}>
+                <ActivityIndicator size="small" />
+                <Text style={{ marginTop: 10, color: '#505050' }}>Loading replies...</Text>
+              </View>
+            );
+          }
+          
+          if (error) {
+            return (
+              <View style={{ alignItems: 'center', marginTop: 20 }}>
+                <Text style={{ color: '#dc2626', marginBottom: 10 }}>Failed to load replies</Text>
+                <TouchableOpacity 
+                  style={{ backgroundColor: '#dc2626', padding: 8, borderRadius: 6 }}
+                  onPress={() => {
+                    setError(null);
+                    fetchReplies();
+                  }}
+                >
+                  <Text style={{ color: 'white', fontSize: 12 }}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }
+          
+          return (
+            <Text style={{ textAlign: 'center', marginTop: 20, color: '#505050' }}>
+              No replies yet. Be the first to reply!
+            </Text>
+          );
+        }}
         contentContainerStyle={styles.scrollContentContainer}
       />
       <View style={{ height: 40 }} />
