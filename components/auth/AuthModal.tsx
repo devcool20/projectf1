@@ -82,7 +82,7 @@ export function AuthModal({ visible, onClose, onSuccess }: AuthModalProps) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'http://localhost:8081/community',
+          redirectTo: 'https://projectfone.vercel.app/community',
         },
       });
       if (error) throw error;
