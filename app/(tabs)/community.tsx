@@ -95,10 +95,37 @@ export default function CommunityScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const pathname = usePathname();
 
+  // Fetch current user's avatar URL
+  const fetchCurrentUserAvatar = useCallback(async () => {
+    if (!session?.user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', session.user.id)
+        .single();
+      if (!error && data) {
+        setCurrentAvatarUrl(data.avatar_url || null);
+      } else {
+        setCurrentAvatarUrl(null);
+      }
+    } catch (err) {
+      setCurrentAvatarUrl(null);
+      console.error('Error fetching avatar_url:', err);
+    }
+  }, [session]);
+
+  // Always fetch avatar on mount and when session changes
+  useEffect(() => {
+    fetchCurrentUserAvatar();
+  }, [session, fetchCurrentUserAvatar]);
+
+  // Update avatar when changed in ProfileModal
   const handleAvatarUpdated = useCallback((url: string) => {
     setCurrentAvatarUrl(url);
     setAvatarCacheBust(Date.now());
-  }, []);
+    fetchCurrentUserAvatar(); // Refetch to ensure sync
+  }, [fetchCurrentUserAvatar]);
 
   const fetchBookmarkedThreads = useCallback(async (userSession: any) => {
     if (!userSession) {
@@ -374,9 +401,12 @@ export default function CommunityScreen() {
     if (!session) {
       setShowAuth(true);
       return;
-        }
+    }
 
     setThreads(prev => prev.map(t => 
+      t.id === threadId ? { ...t, isBookmarked: !isBookmarked } : t
+    ));
+    setFollowingThreads(prev => prev.map(t => 
       t.id === threadId ? { ...t, isBookmarked: !isBookmarked } : t
     ));
 
@@ -531,11 +561,21 @@ export default function CommunityScreen() {
       if (userLikesError) throw userLikesError;
 
       const likedThreadIds = new Set(userLikesData.map(l => l.thread_id));
-      
+
+      // Get user's bookmarks for these threads
+      const { data: userBookmarksData, error: userBookmarksError } = await supabase
+        .from('bookmarks')
+        .select('thread_id')
+        .in('thread_id', threadsData.map(t => t.id))
+        .eq('user_id', currentSession.user.id);
+      if (userBookmarksError) throw userBookmarksError;
+      const bookmarkedThreadIds = new Set(userBookmarksData.map(b => b.thread_id));
+
       // Transform the data to match the expected format with correct counts
       const transformedThreads = threadsData.map((item: any) => ({
         ...item,
         isLiked: likedThreadIds.has(item.id),
+        isBookmarked: bookmarkedThreadIds.has(item.id),
         likeCount: item.likes[0]?.count || 0,
         replyCount: item.replies[0]?.count || 0,
         view_count: viewCountMap[item.id] || 0, // Use actual view count from thread_views table
@@ -625,23 +665,6 @@ export default function CommunityScreen() {
       </View>
     </View>
   );
-
-  // Fetch current user's avatar URL
-  const fetchCurrentUserAvatar = useCallback(async () => {
-    if (!session?.user?.id) return;
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('avatar_url')
-        .eq('id', session.user.id)
-        .single();
-      if (!error && data?.avatar_url) {
-        setCurrentAvatarUrl(data.avatar_url);
-      }
-    } catch (err) {
-      console.error('Error fetching avatar_url:', err);
-    }
-  }, [session]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -936,7 +959,22 @@ export default function CommunityScreen() {
                     {/* Create a new thread */}
                     <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
                   <View className="flex-row space-x-4">
-                    <User size={40} color="gray" />
+                    <Image
+                      source={{
+                        uri:
+                          currentAvatarUrl ||
+                          `https://ui-avatars.com/api/?name=${session?.user?.user_metadata?.username?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}&background=f5f5f5&color=666`
+                      }}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: '#f5f5f5',
+                        borderWidth: 1,
+                        borderColor: '#e5e5e5',
+                      }}
+                      alt="Your avatar"
+                    />
                     <View className="flex-1">
                       <TextInput
                         placeholder="What's happening?"
@@ -1156,7 +1194,37 @@ export default function CommunityScreen() {
             {/* Post Input */}
             <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626', marginBottom: 16, textAlign: 'center' }}>Create Post</Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
-              <User size={40} color="gray" />
+              {currentAvatarUrl || session?.user?.user_metadata?.avatar_url ? (
+                <Image
+                  source={{
+                    uri: currentAvatarUrl || session?.user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${session?.user?.user_metadata?.username?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}&background=f5f5f5&color=666`
+                  }}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#f5f5f5',
+                    borderWidth: 1,
+                    borderColor: '#e5e5e5',
+                  }}
+                  alt="Your avatar"
+                />
+              ) : (
+                <Image
+                  source={{
+                    uri: `https://ui-avatars.com/api/?name=${session?.user?.user_metadata?.username?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}&background=f5f5f5&color=666`
+                  }}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: '#f5f5f5',
+                    borderWidth: 1,
+                    borderColor: '#e5e5e5',
+                  }}
+                  alt="Your avatar"
+                />
+              )}
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <TextInput
                   placeholder="What's happening?"
