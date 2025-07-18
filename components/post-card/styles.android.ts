@@ -3,6 +3,7 @@ import { StyleSheet, Platform, Dimensions } from 'react-native';
 const { width: screenWidth } = Dimensions.get('window');
 
 const isSmallWeb = Platform.OS === 'web' && screenWidth < 450;
+const isVerySmallWeb = Platform.OS === 'web' && screenWidth < 400;
 
 const styles = StyleSheet.create({
   container: {
@@ -54,7 +55,8 @@ const styles = StyleSheet.create({
   imageContainer: {
     marginTop: 12,
     alignSelf: isSmallWeb ? 'flex-start' : 'center',
-    marginLeft: isSmallWeb ? 0 : undefined,
+    marginLeft: isVerySmallWeb ? 8 : isSmallWeb ? 0 : undefined,
+    marginRight: isVerySmallWeb ? 8 : undefined,
     width: isSmallWeb ? '95vw' : undefined,
     maxWidth: isSmallWeb ? '95vw' : undefined,
     backgroundColor: '#ffe5e5', // soft reddish background
@@ -66,7 +68,10 @@ const styles = StyleSheet.create({
     width: isSmallWeb ? '95vw' : 300,
     maxWidth: isSmallWeb ? '95vw' : '100%',
     minWidth: isSmallWeb ? 0 : undefined,
-    marginLeft: isSmallWeb ? 0 : undefined,
+    marginLeft: isVerySmallWeb ? 0 : isSmallWeb ? 0 : undefined,
+    marginRight: isVerySmallWeb ? 0 : undefined,
+    paddingLeft: isVerySmallWeb ? 0 : undefined,
+    paddingRight: isVerySmallWeb ? 0 : undefined,
   },
   actions: {
     flexDirection: 'row',

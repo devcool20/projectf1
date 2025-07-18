@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: #ffd6d6;
+    --background: #f9f9f9;
     --foreground: #3a3a3a;
     --card: #ffffff;
     --card-foreground: #3a3a3a;
@@ -170,7 +170,7 @@
     @apply bg-background text-foreground;
     font-family: 'Architects Daughter', sans-serif;
     letter-spacing: var(--tracking-normal);
-    background: #ffd6d6;
+    background: #f9f9f9;
   }
 
   h1, h2, h3, h4, h5, h6 {

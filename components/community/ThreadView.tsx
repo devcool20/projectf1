@@ -10,6 +10,7 @@ import {
   Image,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
@@ -48,6 +49,18 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
   const [adminUserId, setAdminUserId] = useState<string>('');
   const replyInputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const { width: screenWidth } = Dimensions.get('window');
+  // Helper to detect mobile web
+  function isMobileWeb() {
+    if (Platform.OS !== 'web') return false;
+    if (typeof navigator !== 'undefined') {
+      return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    }
+    return false;
+  }
+
+  const isVerySmallMobileWeb = isMobileWeb() && screenWidth < 400;
 
   // Helper function to check if current user is admin
   const isCurrentUserAdmin = () => {
@@ -446,7 +459,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
           contentInset={{ top: 0, left: 0, bottom: 0, right: 0 }}
         >
           {/* Main Post */}
-          <View style={styles.postContainer}>
+          <View style={[styles.postContainer, isVerySmallMobileWeb && { alignItems: 'flex-start', paddingLeft: 0, paddingRight: 0, marginLeft: -8 }]}> {/* <-- left shift only for mobile web */}
              <PostCard
               username={threadData.profiles?.username || 'Anonymous'}
               avatarUrl={threadData.profiles?.avatar_url}
