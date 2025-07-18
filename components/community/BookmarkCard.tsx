@@ -55,6 +55,10 @@ export default function BookmarkCard({
   };
 
   const logoToShow = getLogoToShow();
+  const [expanded, setExpanded] = React.useState(false);
+  const contentLines = content.split('\n');
+  const shouldTruncate = contentLines.length > 4 && !expanded;
+  const displayedContent = shouldTruncate ? contentLines.slice(0, 4).join('\n') : content;
 
   return (
     <TouchableOpacity 
@@ -67,20 +71,15 @@ export default function BookmarkCard({
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-        {/* Avatar */}
+        {/* Avatar Column */}
         <Image
           source={{ uri: avatarUrl || `https://ui-avatars.com/api/?name=${username.charAt(0)}&background=random` }}
-          style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }}
+          style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12, backgroundColor: '#f3f4f6' }}
         />
-        
-        {/* Content Area */}
-        <View style={{ flex: 1 }}>
-          {/* Header Row with Username, Logo, and Image Preview */}
+        {/* Content Column */}
+        <View style={{ flex: 1, paddingLeft: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000000', marginRight: 8 }}>
-              {username}
-            </Text>
-            
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000000', marginRight: 8 }}>{username}</Text>
             {logoToShow && (
               <Image 
                 source={logoToShow} 
@@ -88,8 +87,6 @@ export default function BookmarkCard({
                 resizeMode="contain"
               />
             )}
-            
-            {/* Image Preview */}
             {imageUrl && (
               <Image 
                 source={{ uri: imageUrl }} 
@@ -98,22 +95,19 @@ export default function BookmarkCard({
               />
             )}
           </View>
-          
-          {/* Timestamp */}
-          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-            {formatThreadTimestamp(timestamp)}
-          </Text>
-          
+          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{formatThreadTimestamp(timestamp)}</Text>
           {/* Content */}
-          <Text style={{ fontSize: 16, color: '#000000', lineHeight: 22, marginBottom: 12 }}>
-            {content}
+          <Text style={{ fontSize: 14, color: '#000000', lineHeight: 20, marginBottom: 8 }}>
+            {displayedContent}
           </Text>
-          
-          {/* Action Buttons */}
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
-            {/* Bookmark Button */}
-            <TouchableOpacity onPress={onBookmarkPress}>
-              <Bookmark size={20} color="#dc2626" fill="#dc2626" />
+          {shouldTruncate && (
+            <TouchableOpacity onPress={() => setExpanded(true)}>
+              <Text style={{ color: '#dc2626', fontWeight: 'bold', fontSize: 13, marginBottom: 4 }}>Read more</Text>
+            </TouchableOpacity>
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={onBookmarkPress} style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <Bookmark size={14} color="#dc2626" fill="#dc2626" />
             </TouchableOpacity>
           </View>
         </View>

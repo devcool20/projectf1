@@ -286,7 +286,7 @@ export default function CommunityScreen() {
       const threadIds = data.map((thread: any) => thread.id);
       const { data: viewCountsData, error: viewCountsError } = await supabase
         .from('thread_views')
-        .select('thread_id')
+          .select('thread_id')
         .in('thread_id', threadIds);
 
       if (viewCountsError) {
@@ -298,7 +298,7 @@ export default function CommunityScreen() {
         acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
         return acc;
       }, {});
-
+        
       const processedThreads = data.map((thread: any) => ({
         ...thread,
         likeCount: thread.likes[0]?.count || 0,
@@ -306,7 +306,7 @@ export default function CommunityScreen() {
         view_count: viewCountMap[thread.id] || 0, // Use actual view count from thread_views table
         isLiked: userLikes.some(like => like.thread_id === thread.id),
         isBookmarked: userBookmarks.some(bookmark => bookmark.thread_id === thread.id),
-      }));
+        }));
 
       setThreads(processedThreads);
     } catch (error) {
@@ -374,7 +374,7 @@ export default function CommunityScreen() {
     if (!session) {
       setShowAuth(true);
       return;
-    }
+        }
 
     setThreads(prev => prev.map(t => 
       t.id === threadId ? { ...t, isBookmarked: !isBookmarked } : t
@@ -406,7 +406,7 @@ export default function CommunityScreen() {
     try {
       if (isBookmarked) {
         const { error } = await supabase.from('bookmarks').delete().match({ thread_id: threadId, user_id: session.user.id });
-        if (error) throw error;
+      if (error) throw error;
       } else {
         const { error } = await supabase.from('bookmarks').insert({ thread_id: threadId, user_id: session.user.id });
         if (error) throw error;
@@ -572,6 +572,8 @@ export default function CommunityScreen() {
                 onPress={() => {
                   if (item.href === '/bookmarks') {
                     setShowBookmarks(true);
+                    setIsViewingThread(false);
+                    setSelectedThread(null);
                     fetchBookmarkedThreads(session);
                   } else if (item.href === '/profile') {
                     if (session) {
@@ -598,7 +600,7 @@ export default function CommunityScreen() {
               </TouchableOpacity>
             );
           })}
-        </View>
+          </View>
         <TouchableOpacity
           style={{
             backgroundColor: '#dc2626',
@@ -843,8 +845,8 @@ export default function CommunityScreen() {
           <ScrollView ref={scrollViewRef}>
             <View className="flex-col lg:flex-row justify-center p-0 md:p-4">
               <View className="w-full lg:max-w-2xl">
-                {isViewingThread && selectedThread ? (
-                  <ThreadView thread={selectedThread} onClose={handleCloseThread} session={session} onProfilePress={handleProfilePress} />
+          {isViewingThread && selectedThread ? (
+            <ThreadView thread={selectedThread} onClose={handleCloseThread} session={session} onProfilePress={handleProfilePress} />
                 ) : showBookmarks ? (
                   // Bookmarks Container
                   <View style={{ backgroundColor: '#ffffff' }}>
@@ -913,41 +915,41 @@ export default function CommunityScreen() {
                 ) : (
                   // Regular Threads Container
                   <>
-                    {/* Header for "For you" / "Following" */}
+              {/* Header for "For you" / "Following" */}
                     <View style={{ flexDirection: 'row', justifyContent: 'space-around', borderBottomWidth: 1, borderBottomColor: '#9ca3af', padding: 16, backgroundColor: '#ffffff' }}>
-                      <TouchableOpacity onPress={() => handleTabPress('foryou')} style={{ flex: 1, alignItems: 'center' }}>
-                        <Text style={{ 
-                          fontSize: 18, 
-                          fontWeight: 'bold', 
-                          color: activeTab === 'foryou' ? '#000000' : '#505050' 
-                        }} selectable={false}>For you</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleTabPress('following')} style={{ flex: 1, alignItems: 'center' }}>
-                        <Text style={{ 
-                          fontSize: 18, 
-                          fontWeight: 'bold', 
-                          color: activeTab === 'following' ? '#000000' : '#505050' 
-                        }} selectable={false}>Following</Text>
-                      </TouchableOpacity>
-                    </View>
+                <TouchableOpacity onPress={() => handleTabPress('foryou')} style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ 
+                    fontSize: 18, 
+                    fontWeight: 'bold', 
+                    color: activeTab === 'foryou' ? '#000000' : '#505050' 
+                  }} selectable={false}>For you</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleTabPress('following')} style={{ flex: 1, alignItems: 'center' }}>
+                  <Text style={{ 
+                    fontSize: 18, 
+                    fontWeight: 'bold', 
+                    color: activeTab === 'following' ? '#000000' : '#505050' 
+                  }} selectable={false}>Following</Text>
+                </TouchableOpacity>
+              </View>
 
                     {/* Create a new thread */}
                     <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
-                      <View className="flex-row space-x-4">
-                        <User size={40} color="gray" />
-                        <View className="flex-1">
-                          <TextInput
-                            placeholder="What's happening?"
-                            placeholderTextColor="gray"
+                  <View className="flex-row space-x-4">
+                    <User size={40} color="gray" />
+                    <View className="flex-1">
+                      <TextInput
+                        placeholder="What's happening?"
+                        placeholderTextColor="gray"
                             style={{
-                              fontSize: 18,
-                              color: '#000000',
-                              userSelect: 'text',
-                              WebkitUserSelect: 'text',
-                              cursor: 'text',
-                              pointerEvents: 'auto',
-                              caretColor: 'auto',
-                              backgroundColor: 'transparent',
+                            fontSize: 18,
+                            color: '#000000',
+                            userSelect: 'text',
+                            WebkitUserSelect: 'text',
+                            cursor: 'text',
+                            pointerEvents: 'auto',
+                            caretColor: 'auto',
+                            backgroundColor: 'transparent',
                               borderWidth: 1,
                               borderColor: '#e5e5e5',
                               borderRadius: 8,
@@ -957,115 +959,117 @@ export default function CommunityScreen() {
                               maxHeight: 120,
                               padding: 8,
                             } as any}
-                            value={content}
-                            onChangeText={setContent}
-                            multiline
-                          />
-                          {image && (
-                            <View className="relative mt-2">
-                              <Image 
-                                source={{ uri: image }} 
-                                className="w-full h-48 rounded-xl" 
-                                resizeMode="contain"
+                        value={content}
+                        onChangeText={setContent}
+                        multiline
+                      />
+                      {image && (
+                        <View className="relative mt-2">
+                          <Image 
+                            source={{ uri: image }} 
+                            className="w-full h-48 rounded-xl" 
+                            resizeMode="contain"
                                 style={{ backgroundColor: 'transparent' }}
-                              />
-                              <TouchableOpacity onPress={() => setImage(null)} className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
-                                <X size={20} color="white" />
-                              </TouchableOpacity>
-                            </View>
-                          )}
-                          <View className="flex-row justify-between items-center mt-4">
-                            <TouchableOpacity onPress={pickImage}>
-                              <Camera size={24} color="#1DA1F2" />
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={handleCreateThread}>
-                              <Text style={{ fontSize: 18, color: '#dc2626', fontWeight: 'bold' }} selectable={false}>Post</Text>
-                            </TouchableOpacity>
-                          </View>
+                          />
+                          <TouchableOpacity onPress={() => setImage(null)} className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
+                            <X size={20} color="white" />
+                          </TouchableOpacity>
                         </View>
+                      )}
+                      <View className="flex-row justify-between items-center mt-4">
+                        <TouchableOpacity onPress={pickImage}>
+                          <Camera size={24} color="#1DA1F2" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleCreateThread}>
+                          <Text style={{ fontSize: 18, color: '#dc2626', fontWeight: 'bold' }} selectable={false}>Post</Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
-                    
+                  </View>
+                </View>
+                
                     {/* Threads Feed */}
-                    {activeTab === 'foryou' ? (
-                      loading ? (
-                        <ActivityIndicator className="mt-8" />
-                      ) : (
-                        threads.map((thread) => (
-                          <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
-                            <PostCard
-                              username={thread.profiles?.username || 'Anonymous'}
-                              avatarUrl={thread.profiles?.avatar_url}
-                              content={thread.content}
-                              imageUrl={thread.image_url}
-                              timestamp={thread.created_at}
-                              likes={thread.likeCount || 0}
-                              comments={thread.replyCount || 0}
-                              views={thread.view_count || 0}
-                              isLiked={thread.isLiked}
-                              isBookmarked={thread.isBookmarked}
-                              favoriteTeam={thread.profiles?.favorite_team}
-                              userId={thread.user_id}
-                              onCommentPress={() => handleThreadPress(thread)}
-                              onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
-                              onBookmarkPress={() => handleBookmarkToggle(thread.id, thread.isBookmarked)}
-                              onDeletePress={() => handleDeleteThread(thread.id)}
-                              onProfilePress={(userId) => {
-                                console.log('PostCard onProfilePress called with userId:', userId);
-                                handleProfilePress(userId);
-                              }}
-                              canDelete={session && thread.user_id === session.user.id}
-                              canAdminDelete={isCurrentUserAdmin()}
-                              isAdmin={isUserAdmin(thread.user_id)}
-                            />
-                          </TouchableOpacity>
-                        ))
-                      )
-                    ) : (
-                      // Following tab
-                      followingLoading ? (
-                        <ActivityIndicator className="mt-8" />
-                      ) : followingThreads.length > 0 ? (
-                        followingThreads.map((thread) => (
-                          <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
-                            <PostCard
-                              username={thread.profiles?.username || 'Anonymous'}
-                              avatarUrl={thread.profiles?.avatar_url}
-                              content={thread.content}
-                              imageUrl={thread.image_url}
-                              timestamp={thread.created_at}
-                              likes={thread.likeCount || 0}
-                              comments={thread.replyCount || 0}
-                              views={thread.view_count || 0}
-                              isLiked={thread.isLiked}
-                              isBookmarked={thread.isBookmarked}
-                              favoriteTeam={thread.profiles?.favorite_team}
-                              userId={thread.user_id}
-                              onCommentPress={() => handleThreadPress(thread)}
-                              onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
-                              onBookmarkPress={() => handleBookmarkToggle(thread.id, thread.isBookmarked)}
-                              onDeletePress={() => handleDeleteThread(thread.id)}
-                              onProfilePress={(userId) => {
-                                console.log('PostCard onProfilePress called with userId (Following tab):', userId);
-                                handleProfilePress(userId);
-                              }}
-                              canDelete={session && thread.user_id === session.user.id}
-                              canAdminDelete={isCurrentUserAdmin()}
-                              isAdmin={isUserAdmin(thread.user_id)}
-                            />
-                          </TouchableOpacity>
-                        ))
-                      ) : (
-                        <View style={{ padding: 20, alignItems: 'center' }}>
-                          <Text style={{ fontSize: 16, color: '#505050', textAlign: 'center' }} selectable={false}>
-                            No posts from people you follow yet.{'\n'}Follow some users to see their posts here!
-                          </Text>
-                        </View>
-                      )
-                    )}
-                  </>
+                {activeTab === 'foryou' ? (
+                  loading ? (
+                    <ActivityIndicator className="mt-8" />
+                  ) : (
+                    threads.map((thread) => (
+                      <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
+                        <PostCard
+                          username={thread.profiles?.username || 'Anonymous'}
+                          avatarUrl={thread.profiles?.avatar_url}
+                          content={thread.content}
+                          imageUrl={thread.image_url}
+                          timestamp={thread.created_at}
+                          likes={thread.likeCount || 0}
+                          comments={thread.replyCount || 0}
+                          views={thread.view_count || 0}
+                          isLiked={thread.isLiked}
+                          isBookmarked={thread.isBookmarked}
+                          favoriteTeam={thread.profiles?.favorite_team}
+                          userId={thread.user_id}
+                          onCommentPress={() => handleThreadPress(thread)}
+                          onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
+                          onBookmarkPress={() => handleBookmarkToggle(thread.id, thread.isBookmarked)}
+                          onDeletePress={() => handleDeleteThread(thread.id)}
+                          onProfilePress={(userId) => {
+                            console.log('PostCard onProfilePress called with userId:', userId);
+                            handleProfilePress(userId);
+                          }}
+                          canDelete={session && thread.user_id === session.user.id}
+                          canAdminDelete={isCurrentUserAdmin()}
+                          isAdmin={isUserAdmin(thread.user_id)}
+                          showReadMore={true}
+                        />
+                      </TouchableOpacity>
+                    ))
+                  )
+                ) : (
+                  // Following tab
+                  followingLoading ? (
+                    <ActivityIndicator className="mt-8" />
+                  ) : followingThreads.length > 0 ? (
+                    followingThreads.map((thread) => (
+                      <TouchableOpacity key={thread.id} onPress={() => handleThreadPress(thread)} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
+                        <PostCard
+                          username={thread.profiles?.username || 'Anonymous'}
+                          avatarUrl={thread.profiles?.avatar_url}
+                          content={thread.content}
+                          imageUrl={thread.image_url}
+                          timestamp={thread.created_at}
+                          likes={thread.likeCount || 0}
+                          comments={thread.replyCount || 0}
+                          views={thread.view_count || 0}
+                          isLiked={thread.isLiked}
+                          isBookmarked={thread.isBookmarked}
+                          favoriteTeam={thread.profiles?.favorite_team}
+                          userId={thread.user_id}
+                          onCommentPress={() => handleThreadPress(thread)}
+                          onLikePress={() => handleLikeToggle(thread.id, thread.isLiked)}
+                          onBookmarkPress={() => handleBookmarkToggle(thread.id, thread.isBookmarked)}
+                          onDeletePress={() => handleDeleteThread(thread.id)}
+                          onProfilePress={(userId) => {
+                            console.log('PostCard onProfilePress called with userId (Following tab):', userId);
+                            handleProfilePress(userId);
+                          }}
+                          canDelete={session && thread.user_id === session.user.id}
+                          canAdminDelete={isCurrentUserAdmin()}
+                          isAdmin={isUserAdmin(thread.user_id)}
+                          showReadMore={true}
+                        />
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <View style={{ padding: 20, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, color: '#505050', textAlign: 'center' }} selectable={false}>
+                        No posts from people you follow yet.{'\n'}Follow some users to see their posts here!
+                      </Text>
+                    </View>
+                  )
                 )}
-              </View>
+                  </>
+          )}
+      </View>
 
               {/* Right Sidebar for News (now inside the main scroll) */}
               <View className="hidden lg:block w-80 ml-12 space-y-4 shrink-0">

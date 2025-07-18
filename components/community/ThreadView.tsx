@@ -274,6 +274,36 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
     }
   };
 
+  // Bookmark toggle logic
+  const handleBookmarkToggle = async () => {
+    if (!session?.user) {
+      Alert.alert('Please log in to bookmark threads.');
+      return;
+    }
+    try {
+      if (threadData.isBookmarked) {
+        // Remove bookmark
+        const { error } = await supabase
+          .from('bookmarks')
+          .delete()
+          .eq('thread_id', threadData.id)
+          .eq('user_id', session.user.id);
+        if (error) throw error;
+        setThreadData((prev) => ({ ...prev, isBookmarked: false }));
+      } else {
+        // Add bookmark
+        const { error } = await supabase
+          .from('bookmarks')
+          .insert({ thread_id: threadData.id, user_id: session.user.id });
+        if (error) throw error;
+        setThreadData((prev) => ({ ...prev, isBookmarked: true }));
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      Alert.alert('Failed to update bookmark');
+    }
+  };
+
   const pickReplyImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -432,7 +462,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
               userId={threadData.user_id}
               onCommentPress={() => {}} // No action needed in thread view
               onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
-              onBookmarkPress={() => {}} // No action needed in thread view
+              onBookmarkPress={handleBookmarkToggle}
               onDeletePress={() => handleDeleteThread(threadData.id)}
               onProfilePress={onProfilePress}
               canDelete={session && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
@@ -493,35 +523,35 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
             <View style={styles.commentsContainer}>
               {replies.map((reply) => (
                 <TouchableOpacity key={reply.id} onLongPress={() => handleReplyTo(reply.profiles?.username || 'Anonymous')}>
-                  <View style={styles.comment}>
-                    {/* Profile Avatar */}
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 }}>
+                    {/* Avatar Column */}
                     <TouchableOpacity 
                       onPress={() => reply.user_id && onProfilePress && onProfilePress(reply.user_id)}
                       disabled={!reply.user_id || !onProfilePress}
-                      style={styles.avatarContainer}
+                      style={{ marginRight: 12, marginTop: 2 }}
                     >
                       {reply.profiles?.avatar_url ? (
                         <Image 
                           source={{ uri: reply.profiles.avatar_url }} 
-                          style={styles.avatar}
+                          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
                           resizeMode="cover"
                         />
                       ) : (
-                        <View style={styles.defaultAvatar}>
-                          <Text style={styles.defaultAvatarText}>
+                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#dc2626', justifyContent: 'center', alignItems: 'center' }}>
+                          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
                             {(reply.profiles?.username || 'A').charAt(0).toUpperCase()}
                           </Text>
                         </View>
                       )}
                     </TouchableOpacity>
-                    
-                    <View style={styles.commentContent}>
-                      <View style={styles.commentUsernameRow}>
+                    {/* Content Column */}
+                    <View style={{ flex: 1, paddingLeft: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
                         <TouchableOpacity 
                           onPress={() => reply.user_id && onProfilePress && onProfilePress(reply.user_id)}
                           disabled={!reply.user_id || !onProfilePress}
                         >
-                          <Text style={[styles.commentUsername, { fontSize: USERNAME_FONT_SIZE }]} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
+                          <Text style={{ fontWeight: 'bold', color: '#000', fontSize: USERNAME_FONT_SIZE }} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
                         </TouchableOpacity>
                         {isUserAdmin(reply.user_id) ? (
                           <Image 
@@ -537,29 +567,24 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
                           />
                         )}
                       </View>
-                      <Text style={styles.replyTimestamp}>{formatThreadTimestamp(reply.created_at)}</Text>
-                      <Text style={styles.commentText} selectable={false}>{reply.content}</Text>
+                      <Text style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{formatThreadTimestamp(reply.created_at)}</Text>
+                      <Text style={{ color: '#000', marginBottom: 8 }} selectable={false}>{reply.content}</Text>
                       {reply.image_url && (
                         <Image 
                           source={{ uri: reply.image_url }} 
-                          style={[
-                            styles.replyImage,
-                            Platform.OS === 'web'
-                              ? { alignSelf: 'flex-start', width: 220, height: 180, maxWidth: 220, borderRadius: 12, marginLeft: 0, marginRight: 0, objectFit: 'cover' }
-                              : { alignSelf: 'flex-start', width: 220, height: 180, maxWidth: 220, borderRadius: 12, marginLeft: 0, marginRight: 0 }
-                          ]} 
+                          style={{ alignSelf: 'flex-start', width: 220, height: 180, maxWidth: 220, borderRadius: 12, marginLeft: 0, marginRight: 0, objectFit: 'cover' }}
                           resizeMode="cover"
                         />
                       )}
-                      <View style={styles.commentActions}>
-                        <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={styles.actionButton}>
-                          <Heart size={16} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
-                          {reply.likeCount > 0 && <Text style={styles.actionText} selectable={false}>{reply.likeCount}</Text>}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                        <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+                          <Heart size={14} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
+                          {reply.likeCount > 0 && <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12 }}>{reply.likeCount}</Text>}
                         </TouchableOpacity>
                         {session && (reply.user_id === session.user.id || isCurrentUserAdmin()) && (
-                        <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
-                          <Trash2 size={16} color="#505050" />
-                        </TouchableOpacity>
+                          <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+                            <Trash2 size={14} color="#505050" />
+                          </TouchableOpacity>
                         )}
                       </View>
                     </View>
