@@ -128,7 +128,7 @@ export function CreateThread({ onSuccess }: CreateThreadProps) {
         <View style={styles.imagePreview}>
           <Image
             source={{ uri: image }}
-            style={[styles.previewImage, { backgroundColor: '#f3f4f6' }]}
+            style={[styles.previewImage, { backgroundColor: 'transparent' }]}
             resizeMode="contain"
           />
           <TouchableOpacity

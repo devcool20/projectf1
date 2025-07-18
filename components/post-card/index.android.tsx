@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { Heart, MessageCircle, Trash2 } from 'lucide-react-native';
+import { Heart, MessageCircle, Trash2, BarChart3 } from 'lucide-react-native';
 import { PostCardProps } from './types.android';
 import styles from './styles.android';
 
@@ -28,6 +28,7 @@ const PostCard: FC<PostCardProps> = ({
   timestamp,
   likes,
   comments,
+  views,
   isLiked,
   favoriteTeam,
   userId,
@@ -104,6 +105,10 @@ const PostCard: FC<PostCardProps> = ({
             <MessageCircle size={20} color="#505050" />
             {comments > 0 && <Text style={styles.actionText}>{comments}</Text>}
           </TouchableOpacity>
+          <View style={styles.actionButton}>
+            <BarChart3 size={20} color="#505050" />
+            {views > 0 && <Text style={styles.actionText}>{views}</Text>}
+          </View>
         </View>
         {showDeleteButton && (
           <TouchableOpacity onPress={onDeletePress}>

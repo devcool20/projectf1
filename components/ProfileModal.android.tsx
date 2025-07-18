@@ -27,6 +27,11 @@ export const ProfileModal: FC<ProfileModalProps> = ({
   session, 
   onLogin 
 }) => {
+  // Don't render if no session
+  if (!session) {
+    return null;
+  }
+
   const [selectedTeam, setSelectedTeam] = useState<F1Team>(F1_TEAMS[0]);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -104,9 +109,9 @@ export const ProfileModal: FC<ProfileModalProps> = ({
     }
   };
 
-  const username = session?.user.user_metadata.username || session?.user.email?.split('@')[0];
-  const email = session?.user.email;
-  const fullName = session?.user.user_metadata.full_name || email;
+  const username = session?.user?.user_metadata?.username || session?.user?.email?.split('@')[0];
+  const email = session?.user?.email;
+  const fullName = session?.user?.user_metadata?.full_name || email;
 
   const renderLoggedInContent = (): JSX.Element => (
     <View style={styles.content}>
@@ -128,11 +133,11 @@ export const ProfileModal: FC<ProfileModalProps> = ({
             <Text style={styles.infoLabel}>Joined</Text>
           </View>
           <Text style={styles.infoValue}>
-            {new Date(session.user.created_at).toLocaleDateString('en-US', { 
+            {session?.user?.created_at ? new Date(session.user.created_at).toLocaleDateString('en-US', { 
               year: 'numeric', 
               month: 'long', 
               day: 'numeric' 
-            })}
+            }) : 'Unknown'}
           </Text>
         </View>
       </View>

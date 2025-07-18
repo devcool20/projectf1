@@ -18,6 +18,7 @@ import PostCard from '@/components/post-card/index.android';
 import * as ImagePicker from 'expo-image-picker';
 import { ThreadViewProps, Thread, Reply, Profile } from './ThreadView.types.android';
 import { styles } from './ThreadView.styles.android';
+import { formatThreadTimestamp } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
@@ -197,6 +198,8 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
     // Load admin users from database
     loadAdminUsers();
   }, []);
+
+
 
   const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
     if (!session || !session.user) {
@@ -408,6 +411,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
             timestamp={threadData.created_at}
             likes={threadData.likeCount || 0}
             comments={threadData.replyCount || 0}
+            views={threadData.view_count || 0}
             isLiked={threadData.isLiked || false}
             favoriteTeam={userData.favoriteTeam}
             onCommentPress={() => {}}
@@ -476,6 +480,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
             )}
           </View>
           <Text style={styles.commentText}>{reply.content || ''}</Text>
+          <Text style={styles.replyTimestamp}>{formatThreadTimestamp(reply.created_at)}</Text>
         {reply.image_url && (
           <Image 
             source={{ uri: reply.image_url }} 

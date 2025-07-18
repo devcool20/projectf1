@@ -24,7 +24,7 @@ export default function ThreadScreen() {
           .from('threads')
           .select(`
             *,
-            profiles:user_id (username, avatar_url),
+            profiles:user_id (username, avatar_url, favorite_team),
             likes:likes!thread_id(count),
             replies:replies!thread_id(count)
           `)
@@ -48,9 +48,25 @@ export default function ThreadScreen() {
           }
         }
 
+        // Check if user bookmarked this thread
+        let isBookmarked = false;
+        if (currentSession) {
+          const { data: bookmarkData, error: bookmarkError } = await supabase
+            .from('bookmarks')
+            .select('thread_id')
+            .eq('thread_id', id)
+            .eq('user_id', currentSession.user.id)
+            .single();
+
+          if (!bookmarkError && bookmarkData) {
+            isBookmarked = true;
+          }
+        }
+
         const threadWithStatus = {
           ...threadData,
           isLiked,
+          isBookmarked,
           likeCount: threadData.likes[0]?.count || 0,
           replyCount: threadData.replies[0]?.count || 0,
         };
@@ -69,7 +85,13 @@ export default function ThreadScreen() {
   }, [id]);
 
   const handleClose = () => {
-    router.push('/community');
+    // Navigate back to community with thread overlay
+    router.push('/community?thread=' + id);
+  };
+
+  const handleProfilePress = (userId: string) => {
+    // Navigate to profile modal or handle profile press
+    console.log('Profile pressed for user:', userId);
   };
 
   if (loading) {
@@ -88,11 +110,17 @@ export default function ThreadScreen() {
     );
   }
 
+  // Redirect to community with thread overlay
+  useEffect(() => {
+    if (thread) {
+      router.replace(`/community?thread=${id}`);
+    }
+  }, [thread, id, router]);
+
   return (
-    <View className="flex-1 bg-background items-center">
-      <View style={{ width: '100%', maxWidth: 720, flex: 1 }}>
-        <ThreadView thread={thread} onClose={handleClose} session={session} />
-      </View>
+    <View className="flex-1 bg-background items-center justify-center">
+      <ActivityIndicator size="large" />
+      <Text className="text-foreground mt-4">Redirecting to thread...</Text>
     </View>
   );
 } 

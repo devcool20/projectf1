@@ -27,7 +27,7 @@ export default function TabLayout() {
     return null;
   }
 
-  const showNav = !['/community'].includes(pathname);
+  const showNav = !['/community', '/bookmarks'].includes(pathname);
 
   return (
     <>

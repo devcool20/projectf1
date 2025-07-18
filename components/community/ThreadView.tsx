@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
 import PostCard from '../PostCard';
 import * as ImagePicker from 'expo-image-picker';
+import { formatThreadTimestamp } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
@@ -46,6 +47,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
   const [threadData, setThreadData] = useState(thread);
   const [adminUserId, setAdminUserId] = useState<string>('');
   const replyInputRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Helper function to check if current user is admin
   const isCurrentUserAdmin = () => {
@@ -145,18 +147,66 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
     fetchReplies();
   }, [fetchReplies]);
 
+  // Fetch current view count when component mounts
+  useEffect(() => {
+    const fetchViewCount = async () => {
+      if (thread) {
+        try {
+          const { count, error } = await supabase
+            .from('thread_views')
+            .select('*', { count: 'exact', head: true })
+            .eq('thread_id', thread.id);
+          
+          if (!error && count !== null) {
+            setThreadData(prev => prev ? { ...prev, view_count: count } : prev);
+          }
+        } catch (error) {
+          console.error('Error fetching view count:', error);
+        }
+      }
+    };
+    
+    fetchViewCount();
+  }, [thread]);
+
   useEffect(() => {
     setThreadData(thread);
+    // Scroll to top when thread changes
+    if (thread && scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      }, 300);
+    }
   }, [thread]);
+
+  // Additional effect to ensure scroll to top on mount
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      }, 100);
+    }
+  }, []);
+
+  // Force scroll to top when thread data is set
+  useEffect(() => {
+    if (threadData && scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      }, 200);
+    }
+  }, [threadData]);
 
   useEffect(() => {
     // Load admin users from database
     loadAdminUsers();
   }, []);
 
+
+
   const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
-    if (!session) {
-      // or show auth modal
+    if (!session?.user) {
+      console.log('No session, cannot like reply');
       return;
     }
 
@@ -187,12 +237,13 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
         }
         return r;
       }));
+      Alert.alert('Failed to update like');
     }
   };
 
   const handleThreadLikeToggle = async (threadId: string, isLiked: boolean) => {
-    if (!session) {
-      // or show auth modal
+    if (!session?.user) {
+      console.log('No session, cannot like thread');
       return;
     }
 
@@ -219,6 +270,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
         isLiked: isLiked,
         likeCount: isLiked ? prevThread.likeCount + 1 : prevThread.likeCount - 1
       }));
+      Alert.alert('Failed to update like');
     }
   };
 
@@ -262,11 +314,12 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
 
   const handlePostReply = async () => {
     if (!thread || (!newReply.trim() && !replyImage)) return;
+    if (!session?.user) {
+      console.log('No session, cannot post reply');
+      return;
+    }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       let imageUrl: string | null = null;
       if (replyImage) {
         imageUrl = await uploadReplyImage(replyImage);
@@ -275,7 +328,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
       const { error } = await supabase.from('replies').insert({
         content: newReply.trim(),
         thread_id: thread.id,
-        user_id: user.id,
+        user_id: session.user.id,
         image_url: imageUrl,
       });
 
@@ -286,6 +339,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
       fetchReplies();
     } catch (error) {
       console.error('Error posting reply:', error);
+      Alert.alert('Failed to post reply');
     }
   };
 
@@ -320,6 +374,10 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
     }, 100);
   };
 
+  const handleClose = () => {
+    onClose();
+  };
+
   if (!thread) {
     return (
       <View style={styles.container}>
@@ -334,7 +392,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
     <View style={styles.container}>
       {/* Fixed Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onClose} style={styles.backButton}>
+        <TouchableOpacity onPress={handleClose} style={styles.backButton}>
           <ArrowLeft size={28} color="#3a3a3a" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} selectable={false}>Thread</Text>
@@ -343,6 +401,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
       {/* Scrollable Content Wrapper */}
       <View style={styles.scrollWrapper}>
         <ScrollView 
+          ref={scrollViewRef}
           style={styles.scrollContent}
           contentContainerStyle={styles.scrollContentContainer}
           showsVerticalScrollIndicator={true}
@@ -353,6 +412,8 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
           scrollIndicatorInsets={{ right: 1 }}
           nestedScrollEnabled={true}
           alwaysBounceVertical={true}
+          automaticallyAdjustContentInsets={false}
+          contentInset={{ top: 0, left: 0, bottom: 0, right: 0 }}
         >
           {/* Main Post */}
           <View style={styles.postContainer}>
@@ -364,12 +425,16 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
               timestamp={threadData.created_at}
               likes={threadData.likeCount || 0}
               comments={threadData.replyCount || 0}
+              views={threadData.view_count || 0}
               isLiked={threadData.isLiked}
+              isBookmarked={threadData.isBookmarked || false}
               favoriteTeam={threadData.profiles?.favorite_team}
               userId={threadData.user_id}
-              onCommentPress={() => {}}
+              onCommentPress={() => {}} // No action needed in thread view
               onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
+              onBookmarkPress={() => {}} // No action needed in thread view
               onDeletePress={() => handleDeleteThread(threadData.id)}
+              onProfilePress={onProfilePress}
               canDelete={session && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
               canAdminDelete={isCurrentUserAdmin()}
               isAdmin={isUserAdmin(threadData.user_id)}
@@ -382,7 +447,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
               <View style={styles.imagePreview}>
                 <Image 
                   source={{ uri: replyImage }} 
-                  style={[styles.previewImage, { backgroundColor: '#f3f4f6' }]} 
+                  style={[styles.previewImage, { backgroundColor: 'transparent' }]} 
                   resizeMode="contain"
                 />
                 <TouchableOpacity 
@@ -417,7 +482,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
               </TouchableOpacity>
             </View>
           </View>
-          <View style={{ borderBottomWidth: 1.5, borderBottomColor: '#bdbdbd', marginBottom: 8 }} />
+          <View style={{ borderBottomWidth: 1, borderBottomColor: '#e5e5e5', marginBottom: 8 }} />
 
           {/* Comments Section */}
           {loadingReplies ? (
@@ -429,6 +494,27 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
               {replies.map((reply) => (
                 <TouchableOpacity key={reply.id} onLongPress={() => handleReplyTo(reply.profiles?.username || 'Anonymous')}>
                   <View style={styles.comment}>
+                    {/* Profile Avatar */}
+                    <TouchableOpacity 
+                      onPress={() => reply.user_id && onProfilePress && onProfilePress(reply.user_id)}
+                      disabled={!reply.user_id || !onProfilePress}
+                      style={styles.avatarContainer}
+                    >
+                      {reply.profiles?.avatar_url ? (
+                        <Image 
+                          source={{ uri: reply.profiles.avatar_url }} 
+                          style={styles.avatar}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View style={styles.defaultAvatar}>
+                          <Text style={styles.defaultAvatarText}>
+                            {(reply.profiles?.username || 'A').charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                    
                     <View style={styles.commentContent}>
                       <View style={styles.commentUsernameRow}>
                         <TouchableOpacity 
@@ -451,6 +537,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
                           />
                         )}
                       </View>
+                      <Text style={styles.replyTimestamp}>{formatThreadTimestamp(reply.created_at)}</Text>
                       <Text style={styles.commentText} selectable={false}>{reply.content}</Text>
                       {reply.image_url && (
                         <Image 
@@ -492,7 +579,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
-    backgroundColor: 'hsl(var(--background))',
+    backgroundColor: '#ffffff',
     position: 'relative',
   },
   header: {
@@ -501,8 +588,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 18,
     borderBottomWidth: 1,
-    borderBottomColor: 'hsl(var(--border))',
-    backgroundColor: 'hsl(var(--card))'
+    borderBottomColor: '#e5e5e5',
+    backgroundColor: '#ffffff'
   },
   backButton: {
     marginRight: 16,
@@ -510,23 +597,22 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: 'hsl(var(--foreground))',
+    color: '#3a3a3a',
   },
   scrollWrapper: {
     flex: 1,
   },
   scrollContent: {
     flex: 1,
-    backgroundColor: 'hsl(var(--background))',
+    backgroundColor: '#ffffff',
   },
   scrollContentContainer: {
     paddingBottom: 20,
-    flexGrow: 1,
   },
   postContainer: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'hsl(var(--border))',
+    borderBottomColor: '#e5e5e5',
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -550,7 +636,7 @@ const styles = StyleSheet.create({
   },
   replyInput: {
     flex: 1,
-    color: 'hsl(var(--foreground))',
+    color: '#000000',
     paddingVertical: 8,
     paddingHorizontal: 8,
     marginRight: 8,
@@ -596,7 +682,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   replyButton: {
-    backgroundColor: 'hsl(var(--primary))',
+    backgroundColor: '#dc2626',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 18,
@@ -606,10 +692,10 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
   replyButtonDisabled: {
-    backgroundColor: 'hsl(var(--muted))',
+    backgroundColor: '#9ca3af',
   },
   replyButtonText: {
-    color: 'hsl(var(--primary-foreground))',
+    color: '#ffffff',
     fontWeight: 'bold',
   },
   replyImage: {
@@ -631,6 +717,29 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 16,
   },
+  avatarContainer: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+  },
+  defaultAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#dc2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  defaultAvatarText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   commentContent: {
     flex: 1,
   },
@@ -641,7 +750,7 @@ const styles = StyleSheet.create({
   },
   commentUsername: {
     fontWeight: 'bold',
-    color: 'hsl(var(--foreground))',
+    color: '#000000',
   },
   commentTeamLogo: {
     width: 12,
@@ -649,8 +758,13 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   commentText: {
-    color: 'hsl(var(--foreground))',
+    color: '#000000',
     marginBottom: 8,
+  },
+  replyTimestamp: {
+    fontSize: 12,
+    color: '#888888',
+    marginBottom: 4,
   },
   commentActions: {
     flexDirection: 'row',
@@ -664,7 +778,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     marginLeft: 4,
-    color: 'hsl(var(--muted-foreground))',
+    color: '#6b7280',
     fontSize: 12,
   },
 }); 

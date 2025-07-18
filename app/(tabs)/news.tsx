@@ -64,7 +64,7 @@ export default function NewsScreen() {
       >
         <View className="max-w-md mx-auto">
           <View className="p-4 border-b border-border bg-card">
-            <Text className="text-xl font-semibold text-foreground">F1 News</Text>
+            <Text className="text-xl font-semibold text-foreground">What's happening right now</Text>
             <Text className="text-sm text-muted-foreground">
               Latest Formula 1 news and updates • {news.length} articles
             </Text>

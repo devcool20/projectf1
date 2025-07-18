@@ -33,6 +33,11 @@ const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const { height: screenHeight } = Dimensions.get('window');
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, session, onLogin, onAvatarChange }) => {
+  // Don't render if no session
+  if (!session) {
+    return null;
+  }
+
   const [selectedTeam, setSelectedTeam] = useState(F1_TEAMS[0]);
   const [username, setUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -142,6 +147,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
   }, [session]);
 
   const handleUnfollow = async (userId: string) => {
+    if (!session?.user?.id) return;
+    
     try {
       const { error } = await supabase
         .from('follows')
@@ -216,6 +223,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
   };
 
   const uploadAvatar = async () => {
+    if (!session?.user?.id) {
+      alert('You must be logged in to upload an avatar');
+      return;
+    }
+
     try {
       setUploading(true);
       
@@ -264,13 +276,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
         // Determine MIME type from file extension
         const extension = processedUri.split('.').pop()?.toLowerCase();
         let mimeType = 'image/jpeg'; // default
+        let fileExtension = 'jpg'; // default
         if (extension === 'png') {
           mimeType = 'image/png';
+          fileExtension = 'png';
         } else if (extension === 'jpg' || extension === 'jpeg') {
           mimeType = 'image/jpeg';
+          fileExtension = 'jpg';
         }
         
-        const fileName = `${session.user.id}-${Date.now()}.${extension || 'jpg'}`;
+        const fileName = `${session.user.id}-${Date.now()}.${fileExtension}`;
 
         // Convert to blob for upload
         const uploadResponse = await fetch(processedUri);
@@ -278,8 +293,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
 
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage
-          .from('thread-images')
-          .upload(`avatars/${fileName}`, uploadBlob, {
+          .from('avatars')
+          .upload(`${session.user.id}/${fileName}`, uploadBlob, {
             contentType: mimeType,
             upsert: true,
           });
@@ -292,8 +307,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
-          .from('thread-images')
-          .getPublicUrl(`avatars/${fileName}`);
+          .from('avatars')
+          .getPublicUrl(`${session.user.id}/${fileName}`);
 
         // Update profile in database
         const { error: updateError } = await supabase
@@ -313,6 +328,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
         }
         
         console.log('Avatar uploaded successfully');
+        
+        // Refresh the page to show the new avatar immediately
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
       }
     } catch (error) {
       console.error('Avatar upload error:', error);
@@ -322,9 +342,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
     }
   };
 
-  const email = session?.user.email;
-  const fullName = session?.user.user_metadata.full_name || email;
-  const displayUsername = username || session?.user.user_metadata.username || session?.user.email?.split('@')[0];
+  const email = session?.user?.email;
+  const fullName = session?.user?.user_metadata?.full_name || email;
+  const displayUsername = username || session?.user?.user_metadata?.username || session?.user?.email?.split('@')[0];
 
   return (
     <Modal
@@ -388,7 +408,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
                 ) : (
                   <Image
                     source={{ 
-                      uri: avatarUrl || session.user.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${displayUsername.charAt(0)}&background=f5f5f5&color=666`
+                      uri: avatarUrl || session?.user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${displayUsername.charAt(0)}&background=f5f5f5&color=666`
                     }}
                     style={{ 
                       width: 80, 
@@ -545,21 +565,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
                     <Text style={{ color: '#505050', marginLeft: 12, fontSize: 14 }}>Joined</Text>
                   </View>
                   <Text style={{ color: '#000000', fontWeight: '500' }}>
-                    {new Date(session.user.created_at).toLocaleDateString('en-US', { 
+                    {session?.user?.created_at ? new Date(session.user.created_at).toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'long', 
                       day: 'numeric' 
-                    })}
+                    }) : 'Unknown'}
                   </Text>
                 </View>
 
-                {/* Team Selection - Hidden for Admin */}
-                {!isCurrentUserAdmin() && (
+                {/* Team/Admin Section */}
+                {isCurrentUserAdmin() ? (
+                  <View style={{ backgroundColor: '#f5f5f5', borderRadius: 12, padding: 16, marginTop: 16, flexDirection: 'row', alignItems: 'center' }}>
+                    <Image
+                      source={ADMIN_LOGO}
+                      style={{ width: 20, height: 20, marginRight: 12 }}
+                      resizeMode="contain"
+                    />
+                    <Text style={{ color: '#000000', fontWeight: 'bold', fontSize: 16 }}>Admin</Text>
+                  </View>
+                ) : (
                   <View style={{ marginTop: 16 }}>
                     <Text style={{ color: '#000000', fontSize: 18, fontWeight: '600', marginBottom: 16 }}>
                       Favorite Team
                     </Text>
-                    
                     <View style={{ backgroundColor: '#f5f5f5', borderRadius: 12, padding: 16 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
                         <Trophy size={20} color="#505050" />
@@ -573,7 +601,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
                           {selectedTeam.name}
                         </Text>
                       </View>
-
                       <ScrollView horizontal showsHorizontalScrollIndicator={true}>
                         <View style={{ flexDirection: 'row', gap: 12 }}>
                           {F1_TEAMS.map((team) => (

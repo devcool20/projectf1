@@ -6,6 +6,7 @@ export interface PostCardProps {
   imageUrl?: string;
   likes: number;
   comments: number;
+  views?: number;
   isLiked: boolean;
   canDelete: boolean;
   favoriteTeam?: string;
