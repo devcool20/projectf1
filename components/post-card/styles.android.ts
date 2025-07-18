@@ -1,9 +1,16 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+
+const { width: screenWidth } = Dimensions.get('window');
+
+const isSmallWeb = Platform.OS === 'web' && screenWidth < 450;
 
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    padding: 16,
+    padding: isSmallWeb ? 8 : 16,
+    paddingLeft: isSmallWeb ? 4 : 16,
+    alignItems: isSmallWeb ? 'flex-start' : 'stretch',
+    backgroundColor: '#ffe5e5', // soft reddish background
   },
   header: {
     flexDirection: 'row',
@@ -46,13 +53,20 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     marginTop: 12,
-    alignSelf: 'flex-start',
+    alignSelf: isSmallWeb ? 'flex-start' : 'center',
+    marginLeft: isSmallWeb ? 0 : undefined,
+    width: isSmallWeb ? '95vw' : undefined,
+    maxWidth: isSmallWeb ? '95vw' : undefined,
+    backgroundColor: '#ffe5e5', // soft reddish background
+    borderRadius: 10,
   },
   postImage: {
-    height: 320,
+    height: isSmallWeb ? 180 : 320,
     borderRadius: 10, // Using --radius: 0.625rem = 10px
-    width: 300,
-    maxWidth: '100%',
+    width: isSmallWeb ? '95vw' : 300,
+    maxWidth: isSmallWeb ? '95vw' : '100%',
+    minWidth: isSmallWeb ? 0 : undefined,
+    marginLeft: isSmallWeb ? 0 : undefined,
   },
   actions: {
     flexDirection: 'row',
