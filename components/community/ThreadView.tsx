@@ -11,9 +11,11 @@ import {
   Alert,
   Platform,
   Dimensions,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Heart, Camera, X, MessageCircle, Repeat2, BarChart3, MoreHorizontal } from 'lucide-react-native';
 import PostCard from '../PostCard';
 import * as ImagePicker from 'expo-image-picker';
 import { formatThreadTimestamp } from '@/lib/utils';
@@ -31,6 +33,7 @@ const TEAM_LOGOS: { [key: string]: any } = {
   'Haas': require('@/team-logos/haas.png'),
   'Stake F1': require('@/team-logos/stake.png'),
   'RB': require('@/team-logos/racingbulls.png'),
+  'FIA': require('@/team-logos/fia.png'), // Admin-only team
 };
 
 type ThreadViewProps = {
@@ -38,17 +41,25 @@ type ThreadViewProps = {
   onClose: () => void;
   session: any;
   onProfilePress?: (userId: string) => void;
+  onRepostPress?: (thread: any) => void;
+  onThreadPress?: (threadId: string) => void;
+  onThreadIdPress?: (threadId: string) => void;
+  onDeleteRepost?: (repostId: string) => void;
 };
 
-export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadViewProps) {
+export function ThreadView({ thread, onClose, session, onProfilePress, onRepostPress, onThreadPress, onThreadIdPress, onDeleteRepost }: ThreadViewProps) {
   const [replies, setReplies] = useState<any[]>([]);
   const [newReply, setNewReply] = useState('');
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [threadData, setThreadData] = useState(thread);
   const [adminUserId, setAdminUserId] = useState<string>('');
+  const [deleteMenuVisible, setDeleteMenuVisible] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const [repostReplyCount, setRepostReplyCount] = useState(0);
   const replyInputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const menuAnchorRef = useRef<any>(null);
 
   const { width: screenWidth } = Dimensions.get('window');
   // Helper to detect mobile web
@@ -98,53 +109,146 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
     if (!thread) return;
     setLoadingReplies(true);
     try {
-      const { data, error } = await supabase
-        .from('replies')
-        .select(`
-          *,
-          profiles:user_id (username, avatar_url, favorite_team)
-        `)
-        .eq('thread_id', thread.id)
-        .order('created_at', { ascending: true });
+      let data;
+      let error;
+
+      if (threadData?.type === 'repost') {
+        // For reposts, fetch from repost_replies table
+        const { data: repostRepliesData, error: repostRepliesError } = await supabase
+          .from('repost_replies')
+          .select('*')
+          .eq('repost_id', thread.id)
+          .order('created_at', { ascending: true });
+        
+        if (repostRepliesError) throw repostRepliesError;
+        
+        // Fetch profiles data separately for repost replies
+        if (repostRepliesData && repostRepliesData.length > 0) {
+          const userIds = repostRepliesData.map(reply => reply.user_id);
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username, avatar_url, favorite_team')
+            .in('id', userIds);
+          
+          if (profilesError) throw profilesError;
+          
+          // Combine the data
+          const profilesMap = profilesData.reduce((acc, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          }, {});
+          
+          data = repostRepliesData.map(reply => ({
+            ...reply,
+            profiles: profilesMap[reply.user_id]
+          }));
+        } else {
+          data = [];
+        }
+        
+        // Update the repost reply count
+        setRepostReplyCount(repostRepliesData?.length || 0);
+        
+        error = null;
+      } else {
+        // For regular threads, fetch from replies table
+        const { data: threadRepliesData, error: threadRepliesError } = await supabase
+          .from('replies')
+          .select(`
+            *,
+            profiles:user_id (username, avatar_url, favorite_team)
+          `)
+          .eq('thread_id', thread.id)
+          .order('created_at', { ascending: true });
+        
+        data = threadRepliesData;
+        error = threadRepliesError;
+      }
 
       if (error) throw error;
 
       if (data && data.length > 0) {
-      const { data: likesData, error: likesError } = await supabase
-        .from('likes')
-        .select('reply_id')
-          .in('reply_id', data.map(r => r.id));
-      
-      if (likesError) throw likesError;
+        // For repost replies, we need to handle likes differently since they're in a different table
+        if (threadData?.type === 'repost') {
+          // Fetch likes for repost replies from repost_reply_likes table
+          if (data && data.length > 0) {
+            const { data: likesData, error: likesError } = await supabase
+              .from('repost_reply_likes')
+              .select('repost_reply_id')
+              .in('repost_reply_id', data.map(r => r.id));
+            
+            if (likesError) throw likesError;
 
-        const likeCountMap = likesData.reduce((acc: any, like: any) => {
-        acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
-        return acc;
-        }, {});
+            const likeCountMap = likesData.reduce((acc: any, like: any) => {
+              acc[like.repost_reply_id] = (acc[like.repost_reply_id] || 0) + 1;
+              return acc;
+            }, {});
 
-      if (session) {
-        const { data: userLikesData, error: userLikesError } = await supabase
-          .from('likes')
-          .select('reply_id')
-            .in('reply_id', data.map(r => r.id))
-          .eq('user_id', session.user.id);
-        
-        if (userLikesError) throw userLikesError;
+            if (session) {
+              const { data: userLikesData, error: userLikesError } = await supabase
+                .from('repost_reply_likes')
+                .select('repost_reply_id')
+                .in('repost_reply_id', data.map(r => r.id))
+                .eq('user_id', session.user.id);
+              
+              if (userLikesError) throw userLikesError;
 
-        const likedReplyIds = new Set(userLikesData.map(l => l.reply_id));
-        
-        const repliesWithStatus = data.map(r => ({
-          ...r,
-          isLiked: likedReplyIds.has(r.id),
-          likeCount: likeCountMap[r.id] || 0,
-        }));
-        setReplies(repliesWithStatus);
-      } else {
-        const repliesWithCounts = data.map(r => ({
-          ...r,
-          likeCount: likeCountMap[r.id] || 0,
-        }));
-        setReplies(repliesWithCounts);
+              const likedReplyIds = new Set(userLikesData.map(l => l.repost_reply_id));
+              
+              const repliesWithStatus = data.map(r => ({
+                ...r,
+                isLiked: likedReplyIds.has(r.id),
+                likeCount: likeCountMap[r.id] || 0,
+              }));
+              setReplies(repliesWithStatus);
+            } else {
+              const repliesWithCounts = data.map(r => ({
+                ...r,
+                likeCount: likeCountMap[r.id] || 0,
+              }));
+              setReplies(repliesWithCounts);
+            }
+          } else {
+            setReplies([]);
+          }
+        } else {
+          // For regular thread replies, use the existing likes system
+          const { data: likesData, error: likesError } = await supabase
+            .from('likes')
+            .select('reply_id')
+            .in('reply_id', data.map(r => r.id));
+          
+          if (likesError) throw likesError;
+
+          const likeCountMap = likesData.reduce((acc: any, like: any) => {
+            acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
+            return acc;
+          }, {});
+
+          if (session) {
+            const { data: userLikesData, error: userLikesError } = await supabase
+              .from('likes')
+              .select('reply_id')
+              .in('reply_id', data.map(r => r.id))
+              .eq('user_id', session.user.id);
+            
+            if (userLikesError) throw userLikesError;
+
+            const likedReplyIds = new Set(userLikesData.map(l => l.reply_id));
+            
+            const repliesWithStatus = data.map(r => ({
+              ...r,
+              isLiked: likedReplyIds.has(r.id),
+              likeCount: likeCountMap[r.id] || 0,
+            }));
+            setReplies(repliesWithStatus);
+          } else {
+            const repliesWithCounts = data.map(r => ({
+              ...r,
+              likeCount: likeCountMap[r.id] || 0,
+            }));
+            setReplies(repliesWithCounts);
+          }
         }
       } else {
         setReplies([]);
@@ -154,7 +258,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
     } finally {
       setLoadingReplies(false);
     }
-  }, [thread, session]);
+  }, [thread]);
 
   useEffect(() => {
     fetchReplies();
@@ -233,12 +337,24 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
     }));
 
     try {
-      if (isLiked) {
-        const { error } = await supabase.from('likes').delete().match({ reply_id: replyId, user_id: session.user.id });
-        if (error) throw error;
+      if (threadData?.type === 'repost') {
+        // Handle likes for repost replies
+        if (isLiked) {
+          const { error } = await supabase.from('repost_reply_likes').delete().match({ repost_reply_id: replyId, user_id: session.user.id });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('repost_reply_likes').insert({ repost_reply_id: replyId, user_id: session.user.id });
+          if (error) throw error;
+        }
       } else {
-        const { error } = await supabase.from('likes').insert({ reply_id: replyId, user_id: session.user.id });
-        if (error) throw error;
+        // Handle likes for regular thread replies
+        if (isLiked) {
+          const { error } = await supabase.from('likes').delete().match({ reply_id: replyId, user_id: session.user.id });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('likes').insert({ reply_id: replyId, user_id: session.user.id });
+          if (error) throw error;
+        }
       }
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -260,6 +376,9 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
       return;
     }
 
+    // Check if this is a repost or regular thread
+    const isRepost = threadData?.type === 'repost';
+
     // Optimistic update
     setThreadData(prevThread => ({
       ...prevThread,
@@ -269,11 +388,21 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
 
     try {
       if (isLiked) {
-        const { error } = await supabase.from('likes').delete().match({ thread_id: threadId, user_id: session.user.id });
-        if (error) throw error;
+        if (isRepost) {
+          const { error } = await supabase.from('likes').delete().match({ repost_id: threadId, user_id: session.user.id });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('likes').delete().match({ thread_id: threadId, user_id: session.user.id });
+          if (error) throw error;
+        }
       } else {
-        const { error } = await supabase.from('likes').insert({ thread_id: threadId, user_id: session.user.id });
-        if (error) throw error;
+        if (isRepost) {
+          const { error } = await supabase.from('likes').insert({ repost_id: threadId, user_id: session.user.id });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('likes').insert({ thread_id: threadId, user_id: session.user.id });
+          if (error) throw error;
+        }
       }
     } catch (error) {
       console.error('Error toggling thread like:', error);
@@ -362,20 +491,33 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
       return;
     }
 
+
+
     try {
       let imageUrl: string | null = null;
       if (replyImage) {
         imageUrl = await uploadReplyImage(replyImage);
       }
 
-      const { error } = await supabase.from('replies').insert({
-        content: newReply.trim(),
-        thread_id: thread.id,
-        user_id: session.user.id,
-        image_url: imageUrl,
-      });
-
-      if (error) throw error;
+      // For reposts, use the repost_replies table
+      if (threadData.type === 'repost') {
+        const { error } = await supabase.from('repost_replies').insert({
+          content: newReply.trim(),
+          repost_id: thread.id,
+          user_id: session.user.id, // This should reference profiles.id
+          image_url: imageUrl,
+        });
+        if (error) throw error;
+      } else {
+        // For regular threads, use the replies table
+        const { error } = await supabase.from('replies').insert({
+          content: newReply.trim(),
+          thread_id: thread.id,
+          user_id: session.user.id,
+          image_url: imageUrl,
+        });
+        if (error) throw error;
+      }
 
       setNewReply('');
       setReplyImage(null);
@@ -388,8 +530,15 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
 
   const handleDeleteReply = async (replyId: string) => {
     try {
-      const { error } = await supabase.from('replies').delete().eq('id', replyId);
-      if (error) throw error;
+      if (threadData?.type === 'repost') {
+        // Delete from repost_replies table
+        const { error } = await supabase.from('repost_replies').delete().eq('id', replyId);
+        if (error) throw error;
+      } else {
+        // Delete from replies table
+        const { error } = await supabase.from('replies').delete().eq('id', replyId);
+        if (error) throw error;
+      }
       await fetchReplies();
     } catch (error) {
       console.error('Error deleting reply:', error);
@@ -398,15 +547,37 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
   };
 
   const handleDeleteThread = async (threadId: string) => {
-    try {
-      const { error } = await supabase.from('threads').delete().eq('id', threadId);
-      if (error) throw error;
-      // Navigate back to community after deleting thread
-      onClose();
-    } catch (error) {
-      console.error('Error deleting thread:', error);
-      Alert.alert('Failed to delete thread');
-    }
+    const isRepost = threadData?.type === 'repost';
+    const itemType = isRepost ? 'repost' : 'thread';
+    
+    Alert.alert(
+      `Delete ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`,
+      `Are you sure you want to delete this ${itemType}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (isRepost) {
+                // Delete repost
+                const { error } = await supabase.from('reposts').delete().eq('id', threadId);
+                if (error) throw error;
+              } else {
+                // Delete regular thread
+                const { error } = await supabase.from('threads').delete().eq('id', threadId);
+                if (error) throw error;
+              }
+              onClose();
+            } catch (error) {
+              console.error(`Error deleting ${itemType}:`, error);
+              Alert.alert('Error', `Failed to delete ${itemType}`);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleReplyTo = (username: string) => {
@@ -419,6 +590,12 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
 
   const handleClose = () => {
     onClose();
+  };
+
+  const openDeleteMenu = () => {
+    // Use a fixed position instead of measuring to avoid positioning issues
+    setMenuPos({ top: 100, left: 200 });
+    setDeleteMenuVisible(true);
   };
 
   if (!thread) {
@@ -460,31 +637,180 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
         >
           {/* Main Post */}
           <View style={[styles.postContainer, isVerySmallMobileWeb && { alignItems: 'flex-start', paddingLeft: 0, paddingRight: 0, marginLeft: -8 }]}> {/* <-- left shift only for mobile web */}
-             <PostCard
-              username={threadData.profiles?.username || 'Anonymous'}
-              avatarUrl={threadData.profiles?.avatar_url}
-              content={threadData.content}
-              imageUrl={threadData.image_url}
-              timestamp={threadData.created_at}
-              likes={threadData.likeCount || 0}
-              comments={threadData.replyCount || 0}
-              views={threadData.view_count || 0}
-              isLiked={threadData.isLiked}
-              isBookmarked={threadData.isBookmarked || false}
-              favoriteTeam={threadData.profiles?.favorite_team}
-              userId={threadData.user_id}
-              onCommentPress={() => {}} // No action needed in thread view
-              onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
-              onBookmarkPress={handleBookmarkToggle}
-              onDeletePress={() => handleDeleteThread(threadData.id)}
-              onProfilePress={onProfilePress}
-              canDelete={session && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
-              canAdminDelete={isCurrentUserAdmin()}
-              isAdmin={isUserAdmin(threadData.user_id)}
-            />
+            {threadData.type === 'repost' ? (
+              <View>
+                {/* Custom repost display without views and bookmarks icons */}
+                <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
+                  <View style={{ flexDirection: 'row' }}>
+                    <TouchableOpacity 
+                      onPress={() => onProfilePress?.(threadData.user_id)}
+                      style={{ marginRight: 12 }}
+                    >
+                      <Image
+                        source={{ 
+                          uri: threadData.profiles?.avatar_url || 
+                               `https://ui-avatars.com/api/?name=${threadData.profiles?.username?.charAt(0)}&background=random` 
+                        }}
+                        style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
+                      />
+                    </TouchableOpacity>
+
+                    <View style={{ flex: 1 }}>
+                      {/* Repost user info */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+                          {threadData.profiles?.username || 'Unknown User'}
+                        </Text>
+                        {threadData.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                          <Image 
+                            source={require('@/assets/images/favicon.png')} 
+                            style={{ width: 24, height: 22, marginLeft: 4 }}
+                            resizeMode="contain"
+                          />
+                        ) : threadData.profiles?.favorite_team && TEAM_LOGOS[threadData.profiles.favorite_team] && (
+                          <Image 
+                            source={TEAM_LOGOS[threadData.profiles.favorite_team]} 
+                            style={{ width: 24, height: 22, marginLeft: 4 }}
+                            resizeMode="contain"
+                          />
+                        )}
+                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
+                          {formatThreadTimestamp(threadData.created_at)}
+                        </Text>
+                      </View>
+
+                      {/* Repost content */}
+                      {threadData.content && (
+                        <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
+                          {threadData.content}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+                
+                {/* Original thread preview - embedded like Twitter */}
+                {threadData.original_thread && (
+                  <TouchableOpacity 
+                    onPress={() => {
+                      // Navigate to the original thread directly
+                      if (onThreadIdPress) {
+                        onThreadIdPress(threadData.original_thread_id);
+                      }
+                    }}
+                    style={{
+                      borderWidth: 1,
+                      borderColor: '#e5e5e5',
+                      borderRadius: 12,
+                      padding: 12,
+                      backgroundColor: '#f8f9fa',
+                      marginTop: 12,
+                      marginHorizontal: 16
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row' }}>
+                      <Image
+                        source={{ 
+                          uri: threadData.original_thread?.profiles?.avatar_url || 
+                               `https://ui-avatars.com/api/?name=${threadData.original_thread?.profiles?.username?.charAt(0)}&background=random` 
+                        }}
+                        style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                          <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
+                            {threadData.original_thread?.profiles?.username || 'Unknown User'}
+                          </Text>
+                        </View>
+                        <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
+                          {threadData.original_thread?.content}
+                        </Text>
+                        {threadData.original_thread?.image_url && (
+                          <Image
+                            source={{ uri: threadData.original_thread.image_url }}
+                            style={{ 
+                              width: '100%', 
+                              height: 200, 
+                              borderRadius: 6,
+                              marginTop: 4,
+                              backgroundColor: '#f3f4f6'
+                            }}
+                            resizeMode="contain"
+                          />
+                        )}
+                        {/* Show original thread views */}
+                        <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
+                          {threadData.original_thread?.view_count || 0} views
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )}
+
+                {/* Engagement bar - moved below preview for reposts */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginHorizontal: 16 }}>
+                  {/* Comments */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                    <MessageCircle size={14} color="#666666" />
+                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
+                    </Text>
+                  </View>
+
+                  {/* Reposts */}
+                  <TouchableOpacity 
+                    onPress={() => onRepostPress?.(threadData)}
+                    style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+                  >
+                    <Repeat2 size={14} color="#666666" />
+                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
+                  </TouchableOpacity>
+
+                  {/* Likes */}
+                  <TouchableOpacity 
+                    onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false)}
+                    style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+                  >
+                    <Heart 
+                      size={14} 
+                      color={threadData.isLiked ? '#dc2626' : '#666666'} 
+                      fill={threadData.isLiked ? '#dc2626' : 'none'} 
+                    />
+                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      {threadData.likeCount || 0}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              // Show regular thread
+              <PostCard
+                username={threadData.profiles?.username || 'Anonymous'}
+                avatarUrl={threadData.profiles?.avatar_url}
+                content={threadData.content}
+                imageUrl={threadData.image_url}
+                timestamp={threadData.created_at}
+                likes={threadData.likeCount || 0}
+                comments={threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
+                views={threadData.view_count || 0}
+                isLiked={threadData.isLiked}
+                isBookmarked={threadData.isBookmarked || false}
+                favoriteTeam={threadData.profiles?.favorite_team}
+                userId={threadData.user_id}
+                userEmail={threadData.profiles?.email}
+                onCommentPress={() => {}} // No action needed in thread view
+                onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
+                onBookmarkPress={handleBookmarkToggle}
+                onDeletePress={() => handleDeleteThread(threadData.id)}
+                onProfilePress={onProfilePress}
+                canDelete={session && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
+                canAdminDelete={isCurrentUserAdmin()}
+                isAdmin={isUserAdmin(threadData.user_id)}
+              />
+            )}
           </View>
 
-          {/* Reply Box - Right after the main post */}
+          {/* Reply Box - Show for all threads including reposts */}
           <View style={styles.replyBoxInline}>
             {replyImage && (
               <View style={styles.imagePreview}>
@@ -527,7 +853,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
           </View>
           <View style={{ borderBottomWidth: 1, borderBottomColor: '#e5e5e5', marginBottom: 8 }} />
 
-          {/* Comments Section */}
+          {/* Comments Section - Show for all threads including reposts */}
           {loadingReplies ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" />
@@ -566,7 +892,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
                         >
                           <Text style={{ fontWeight: 'bold', color: '#000', fontSize: USERNAME_FONT_SIZE }} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
                         </TouchableOpacity>
-                        {isUserAdmin(reply.user_id) ? (
+                        {reply.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
                           <Image 
                             source={require('@/assets/images/favicon.png')} 
                             style={{ width: USERNAME_FONT_SIZE * 1.2, height: USERNAME_FONT_SIZE * 1.2, marginLeft: 6 }}
@@ -609,6 +935,44 @@ export function ThreadView({ thread, onClose, session, onProfilePress }: ThreadV
           )}
         </ScrollView>
       </View>
+
+      {/* Delete menu modal */}
+      <Modal
+        visible={deleteMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteMenuVisible(false)}
+      >
+        <Pressable style={{ flex: 1 }} onPress={() => setDeleteMenuVisible(false)}>
+          <View style={{ 
+            position: 'absolute', 
+            top: menuPos.top, 
+            left: menuPos.left, 
+            backgroundColor: '#fff', 
+            borderRadius: 8, 
+            elevation: 4, 
+            shadowColor: '#000', 
+            shadowOpacity: 0.1, 
+            shadowRadius: 8, 
+            padding: 8, 
+            minWidth: 120 
+          }}>
+            <TouchableOpacity 
+              onPress={() => { 
+                setDeleteMenuVisible(false); 
+                if (threadData.type === 'repost' && onDeleteRepost) {
+                  onDeleteRepost(threadData.id);
+                } else {
+                  handleDeleteThread(threadData.id);
+                }
+              }} 
+              style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+            >
+              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

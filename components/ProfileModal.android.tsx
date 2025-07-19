@@ -16,6 +16,7 @@ const F1_TEAMS: F1Team[] = [
   { name: 'Haas', color: '#DC2626', logo: require('@/team-logos/haas.png') },
   { name: 'Stake F1', color: '#16A34A', logo: require('@/team-logos/stake.png') },
   { name: 'RB', color: '#6366F1', logo: require('@/team-logos/racingbulls.png') },
+  { name: 'FIA', color: '#000000', logo: require('@/team-logos/fia.png') }, // Admin-only team
 ];
 
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
@@ -38,6 +39,14 @@ export const ProfileModal: FC<ProfileModalProps> = ({
   // Helper function to check if current user is admin
   const isCurrentUserAdmin = () => {
     return session?.user?.email === ADMIN_EMAIL || isAdmin;
+  };
+
+  // Get teams to display (admin users see FIA team, regular users don't)
+  const getDisplayTeams = () => {
+    if (isCurrentUserAdmin()) {
+      return F1_TEAMS; // Admin sees all teams including FIA
+    }
+    return F1_TEAMS.filter(team => team.name !== 'FIA'); // Regular users don't see FIA
   };
 
   // Get the logo to display (admin logo overrides team logo)
@@ -168,7 +177,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
               style={styles.teamScrollView}
             >
               <View style={styles.teamOptionsRow}>
-                {F1_TEAMS.map((team) => (
+                {getDisplayTeams().map((team) => (
                   <TouchableOpacity
                     key={team.name}
                     style={[

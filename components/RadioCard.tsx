@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image } from 'react-native';
 
-const teamLogos: { [key: string]: any } = {
+const teamLogos = {
   ferrari: require('../team-logos/ferrari.png'),
   mercedes: require('../team-logos/mercedes.png'),
   redbull: require('../team-logos/redbull.png'),
@@ -12,6 +12,7 @@ const teamLogos: { [key: string]: any } = {
   racingbulls: require('../team-logos/racingbulls.png'),
   williams: require('../team-logos/williams.png'),
   stake: require('../team-logos/stake.png'),
+  fia: require('../team-logos/fia.png'), // Admin-only team
 };
 
 /**

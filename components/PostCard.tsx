@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { Heart, MessageCircle, Bookmark, BarChart3, MoreHorizontal } from 'lucide-react-native';
+import { Heart, MessageCircle, Bookmark, BarChart3, MoreHorizontal, Repeat2 } from 'lucide-react-native';
 import { formatThreadTimestamp } from '@/lib/utils';
 import { Modal, Pressable } from 'react-native';
 
@@ -15,6 +15,7 @@ const TEAM_LOGOS: { [key: string]: any } = {
   'Haas': require('@/team-logos/haas.png'),
   'Stake F1': require('@/team-logos/stake.png'),
   'RB': require('@/team-logos/racingbulls.png'),
+  'FIA': require('@/team-logos/fia.png'), // Admin-only team
 };
 
 // Admin logo
@@ -32,6 +33,7 @@ export type PostCardProps = {
   likes: number;
   comments: number;
   views: number;
+  reposts?: number; // Add repost count
   isLiked?: boolean;
   isBookmarked?: boolean;
   favoriteTeam?: string;
@@ -41,6 +43,7 @@ export type PostCardProps = {
   onLikePress: () => void;
   onBookmarkPress: () => void;
   onDeletePress: () => void;
+  onRepostPress?: () => void; // Add repost press handler
   onProfilePress?: (userId: string) => void; // Add profile press handler
   canDelete?: boolean; // New prop to control delete button visibility
   isAdmin?: boolean; // Add isAdmin prop
@@ -56,6 +59,7 @@ export default function PostCard({
   likes,
   comments,
   views,
+  reposts = 0,
   isLiked,
   isBookmarked,
   favoriteTeam,
@@ -65,6 +69,7 @@ export default function PostCard({
   onLikePress,
   onBookmarkPress,
   onDeletePress,
+  onRepostPress,
   onProfilePress,
   canDelete = false,
   isAdmin = false,
@@ -74,8 +79,8 @@ export default function PostCard({
   
   // Determine which logo to show
   const getLogoToShow = () => {
-    if (isAdmin) {
-      return ADMIN_LOGO;
+    if (userEmail === 'sharmadivyanshu265@gmail.com') {
+      return require('@/assets/images/favicon.png');
     }
     if (favoriteTeam && TEAM_LOGOS[favoriteTeam]) {
       return TEAM_LOGOS[favoriteTeam];
@@ -208,6 +213,11 @@ export default function PostCard({
             <TouchableOpacity onPress={onCommentPress} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
               <MessageCircle size={14} color="#666666" />
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{comments}</Text>
+            </TouchableOpacity>
+            {/* Reposts */}
+            <TouchableOpacity onPress={onRepostPress} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+              <Repeat2 size={14} color="#666666" />
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{reposts}</Text>
             </TouchableOpacity>
             {/* Views */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>

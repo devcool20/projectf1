@@ -25,6 +25,7 @@ const F1_TEAMS = [
   { name: 'Haas', color: '#DC2626', logo: require('@/team-logos/haas.png') },
   { name: 'Stake F1', color: '#16A34A', logo: require('@/team-logos/stake.png') },
   { name: 'RB', color: '#6366F1', logo: require('@/team-logos/racingbulls.png') },
+  { name: 'FIA', color: '#000000', logo: require('@/team-logos/fia.png') }, // Admin-only team
 ];
 
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
@@ -51,6 +52,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
   // Helper function to check if current user is admin
   const isCurrentUserAdmin = () => {
     return session?.user?.email === ADMIN_EMAIL || isAdmin;
+  };
+
+  // Get teams to display (admin users see FIA team, regular users don't)
+  const getDisplayTeams = () => {
+    if (isCurrentUserAdmin()) {
+      return F1_TEAMS; // Admin sees all teams including FIA
+    }
+    return F1_TEAMS.filter(team => team.name !== 'FIA'); // Regular users don't see FIA
   };
 
   // Get the logo to display (admin logo overrides team logo)
@@ -373,7 +382,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
           padding: 24, 
           position: 'relative',
           borderTopLeftRadius: 24, 
-          borderTopRightRadius: 24
+          borderTopRightRadius: 24,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 4
         }}>
           <TouchableOpacity 
             style={{
@@ -386,6 +400,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
               zIndex: 50
             }}
             onPress={onClose}
+            activeOpacity={0.7}
           >
             <X size={20} color="white" />
           </TouchableOpacity>
@@ -603,7 +618,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
                       </View>
                       <ScrollView horizontal showsHorizontalScrollIndicator={true}>
                         <View style={{ flexDirection: 'row', gap: 12 }}>
-                          {F1_TEAMS.map((team) => (
+                          {getDisplayTeams().map((team) => (
                             <TouchableOpacity
                               key={team.name}
                               style={{

@@ -33,6 +33,7 @@ const TEAM_LOGOS: { [key: string]: any } = {
   'Haas': require('@/team-logos/haas.png'),
   'Stake F1': require('@/team-logos/stake.png'),
   'RB': require('@/team-logos/racingbulls.png'),
+  'FIA': require('@/team-logos/fia.png'), // Admin-only team
 };
 
 const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
