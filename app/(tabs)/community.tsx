@@ -909,11 +909,6 @@ export default function CommunityScreen() {
     setSelectedThread(null);
     setIsViewingThread(false);
     router.push('/community');
-    
-    // Refresh threads to get updated view counts after thread is closed
-    setTimeout(() => {
-      fetchThreads(session);
-    }, 500);
   };
 
   const handleCloseProfile = () => {
@@ -1428,7 +1423,10 @@ export default function CommunityScreen() {
           setAdminUserId(session.user.id);
         }
       }
-      fetchThreads(session);
+      // Only fetch threads on initial load, not on every auth change
+      if (!threads.length) {
+        fetchThreads(session);
+      }
       // Load admin users from database
       loadAdminUsers();
     });
@@ -1442,7 +1440,10 @@ export default function CommunityScreen() {
           setAdminUserId(session.user.id);
         }
       }
-      fetchThreads(session);
+      // Only fetch threads if we don't have any data yet
+      if (!threads.length) {
+        fetchThreads(session);
+      }
       // Load admin users from database
       loadAdminUsers();
     });
@@ -2000,6 +2001,7 @@ export default function CommunityScreen() {
                                               borderRadius: 12,
                                               padding: 12,
                                               backgroundColor: '#f8f9fa',
+                                              marginTop: 16,
                                               marginBottom: 12
                                             }}
                                           >
@@ -2231,6 +2233,7 @@ export default function CommunityScreen() {
                                               borderRadius: 12,
                                               padding: 12,
                                               backgroundColor: '#f8f9fa',
+                                              marginTop: 16,
                                               marginBottom: 12
                                             }}
                                           >

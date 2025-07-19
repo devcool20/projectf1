@@ -305,8 +305,10 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
   }, [thread]);
 
   useEffect(() => {
-    fetchReplies();
-  }, [fetchReplies]);
+    if (thread) {
+      fetchReplies();
+    }
+  }, [thread]);
 
   // Fetch current view count when component mounts
   useEffect(() => {
@@ -772,7 +774,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                             borderRadius: 12,
                             padding: 12,
                             backgroundColor: '#f8f9fa',
-                            marginTop: 12
+                            marginTop: 16
                           }}
                         >
                           <View style={{ flexDirection: 'row' }}>

@@ -180,6 +180,7 @@ export default function RepostCard({
               borderRadius: 12,
               padding: 12,
               backgroundColor: '#f8f9fa',
+              marginTop: 16,
               marginBottom: 12
             }}
           >

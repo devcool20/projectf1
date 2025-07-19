@@ -191,9 +191,11 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
   }, [thread, session]);
 
   useEffect(() => {
-    fetchReplies();
-    setThreadData(thread);
-  }, [fetchReplies, thread]);
+    if (thread) {
+      fetchReplies();
+      setThreadData(thread);
+    }
+  }, [thread]);
 
   useEffect(() => {
     // Load admin users from database

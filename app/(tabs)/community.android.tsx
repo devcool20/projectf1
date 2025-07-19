@@ -115,6 +115,7 @@ export default function CommunityScreen() {
         setCurrentUserEmail(session.user.email);
         if (session.user.email === ADMIN_EMAIL) setAdminUserId(session.user.id);
       }
+      // Only fetch threads on initial load
       fetchThreads(session);
       loadAdminUsers();
     };
@@ -128,7 +129,7 @@ export default function CommunityScreen() {
       } else {
         setCurrentUserEmail('');
       }
-      fetchThreads(session);
+      // Don't fetch threads on every auth change to prevent periodic refresh
       loadAdminUsers();
     });
 
@@ -194,11 +195,6 @@ export default function CommunityScreen() {
   const handleCloseThread = () => {
     setSelectedThread(null);
     setIsViewingThread(false);
-    
-    // Refresh threads to get updated view counts after thread is closed
-    setTimeout(() => {
-      fetchThreads(session);
-    }, 500);
   };
   
   const handleLikeToggle = async (threadId: string, isLiked: boolean) => {
