@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Heart, MessageCircle, Bookmark, BarChart3, MoreHorizontal, Repeat2 } from 'lucide-react-native';
 import { formatThreadTimestamp } from '@/lib/utils';
 import { Modal, Pressable } from 'react-native';
@@ -23,6 +23,27 @@ const ADMIN_LOGO = require('@/assets/images/favicon.png');
 
 const USERNAME_FONT_SIZE = 18;
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
+
+// Helper function to calculate responsive image dimensions
+const getResponsiveImageStyle = (screenWidth: number) => {
+  if (screenWidth < 400) {
+    // More aggressive margin for very narrow screens
+    const responsiveWidth = screenWidth - 120; // 60px margin each side
+    const responsiveHeight = (responsiveWidth * 200) / 280;
+    return {
+      width: responsiveWidth,
+      height: responsiveHeight,
+      borderRadius: 12,
+      backgroundColor: '#f3f4f6'
+    };
+  }
+  return {
+    width: 280,
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6'
+  };
+};
 
 export type PostCardProps = {
   username: string;
@@ -76,6 +97,8 @@ export default function PostCard({
   canAdminDelete = false,
   showReadMore = false, // NEW PROP: only true in community feed
 }: PostCardProps & { showReadMore?: boolean }) {
+  
+  const { width: screenWidth } = Dimensions.get('window');
   
   // Determine which logo to show
   const getLogoToShow = () => {
@@ -132,7 +155,7 @@ export default function PostCard({
   };
   
   return (
-    <View className="w-full p-4">
+    <View style={{ width: '100%', padding: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 2 }}>
         {/* Avatar Column */}
         <TouchableOpacity 
@@ -179,26 +202,27 @@ export default function PostCard({
             </TouchableOpacity>
           )}
           {imageUrl && (
-            <View style={{ marginTop: 8, alignSelf: 'flex-start', maxWidth: 300, maxHeight: 400, width: '100%' }}>
+            <View style={{ marginTop: 8, alignItems: 'center' }}>
               <Image
                 source={{ uri: imageUrl }}
                 style={(() => {
                   if (!imageDimensions) {
-                    return { borderRadius: 12, width: 300, height: 180 };
+                    return getResponsiveImageStyle(screenWidth);
                   }
-                  const maxW = 300;
-                  const maxH = 400;
                   const imgW = imageDimensions.width;
                   const imgH = imageDimensions.height;
-                  let width = maxW;
-                  let height = imgH * (maxW / imgW);
-                  if (height > maxH) {
-                    height = maxH;
-                    width = imgW * (maxH / imgH);
+                  const aspectRatio = imgW / imgH;
+                  const maxWidth = screenWidth < 400 ? screenWidth - 120 : 280;
+                  const maxHeight = 400;
+                  let width = maxWidth;
+                  let height = imgH * (maxWidth / imgW);
+                  if (height > maxHeight) {
+                    height = maxHeight;
+                    width = imgW * (maxHeight / imgH);
                   }
-                  return { borderRadius: 12, width, height };
+                  return { borderRadius: 12, width, height, backgroundColor: '#f3f4f6' };
                 })()}
-                resizeMode="contain"
+                resizeMode="cover"
               />
             </View>
           )}

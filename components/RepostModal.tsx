@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Image, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Image, Modal, Alert, Dimensions } from 'react-native';
 import { X, Camera } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
+import * as ImagePicker from 'expo-image-picker';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
@@ -20,6 +21,27 @@ const TEAM_LOGOS: { [key: string]: any } = {
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
+// Helper function to calculate responsive image dimensions
+const getResponsiveImageStyle = (screenWidth: number) => {
+  if (screenWidth < 400) {
+    // More aggressive margin for very narrow screens
+    const responsiveWidth = screenWidth - 120; // 60px margin each side
+    const responsiveHeight = (responsiveWidth * 200) / 280;
+    return {
+      width: responsiveWidth,
+      height: responsiveHeight,
+      borderRadius: 12,
+      backgroundColor: '#f3f4f6'
+    };
+  }
+  return {
+    width: 280,
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6'
+  };
+};
+
 interface RepostModalProps {
   visible: boolean;
   onClose: () => void;
@@ -35,8 +57,23 @@ export default function RepostModal({
   session,
   onRepostSuccess
 }: RepostModalProps) {
+  const { width: screenWidth } = Dimensions.get('window');
   const [content, setContent] = useState('');
+  const [image, setImage] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
 
   const handleRepost = async () => {
     if (!session?.user) {
@@ -49,30 +86,61 @@ export default function RepostModal({
       return;
     }
 
+    // If this is a repost, we need to use the original_thread_id
+    const actualThreadId = originalThread.original_thread_id || originalThread.id;
+
     setIsPosting(true);
 
     try {
+      let imageUrl: string | null = null;
+      if (image) {
+        const response = await fetch(image);
+        const blob = await response.blob();
+        const fileName = image.split('/').pop();
+        const fileExt = fileName?.split('.').pop();
+        const filePath = `${session.user.id}/reposts/${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('thread-images')
+          .upload(filePath, blob, {
+            contentType: blob.type,
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('thread-images')
+          .getPublicUrl(filePath);
+        
+        imageUrl = publicUrl;
+      }
+
+      const repostData = {
+        user_id: session.user.id,
+        original_thread_id: actualThreadId,
+        content: content.trim() || null,
+        image_url: imageUrl
+      };
+      
       const { data, error } = await supabase
         .from('reposts')
-        .insert({
-          user_id: session.user.id,
-          original_thread_id: originalThread.id,
-          content: content.trim() || null
-        })
+        .insert(repostData)
         .select();
 
       if (error) {
         throw error;
       }
-
-      console.log('Repost created successfully:', data);
-      Alert.alert('Success', 'Thread reposted successfully!');
       setContent('');
+      setImage(null);
       onRepostSuccess?.();
       onClose();
     } catch (error) {
       console.error('Error creating repost:', error);
-      Alert.alert('Error', 'Failed to repost. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error details:', errorMessage);
+      Alert.alert('Error', `Failed to repost: ${errorMessage}`);
     } finally {
       setIsPosting(false);
     }
@@ -141,6 +209,35 @@ export default function RepostModal({
                 onChangeText={setContent}
                 multiline
               />
+              
+              {/* Image Preview */}
+              {image && (
+                <View style={{ marginTop: 12, position: 'relative' }}>
+                  <Image
+                    source={{ uri: image }}
+                    style={{ 
+                      width: '100%', 
+                      height: 200, 
+                      borderRadius: 12,
+                      backgroundColor: '#f3f4f6'
+                    }}
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity 
+                    onPress={() => setImage(null)}
+                    style={{ 
+                      position: 'absolute', 
+                      top: 8, 
+                      right: 8, 
+                      backgroundColor: 'rgba(0,0,0,0.5)', 
+                      borderRadius: 12,
+                      padding: 4
+                    }}
+                  >
+                    <X size={16} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
 
@@ -189,16 +286,13 @@ export default function RepostModal({
                     {originalThread.content}
                   </Text>
                   {originalThread.image_url && (
-                    <Image
-                      source={{ uri: originalThread.image_url }}
-                      style={{ 
-                        width: '100%', 
-                        height: 150, 
-                        borderRadius: 8,
-                        backgroundColor: '#f3f4f6'
-                      }}
-                      resizeMode="cover"
-                    />
+                    <View style={{ alignItems: 'center', marginTop: 4 }}>
+                      <Image
+                        source={{ uri: originalThread.image_url }}
+                        style={getResponsiveImageStyle(screenWidth)}
+                        resizeMode="cover"
+                      />
+                    </View>
                   )}
                 </View>
               </View>
@@ -207,7 +301,7 @@ export default function RepostModal({
 
           {/* Action Buttons */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={pickImage}>
               <Camera size={24} color="#1DA1F2" />
             </TouchableOpacity>
             <TouchableOpacity

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal } from 'react-native';
-import { Pencil, ArrowLeft, AlertCircle, Heart, MessageCircle, Repeat2, Trash2, LogOut, LogIn, UserPlus, UserMinus } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, Dimensions } from 'react-native';
+import { Pencil, ArrowLeft, AlertCircle, Heart, MessageCircle, Repeat2, Trash2, LogOut, LogIn, UserPlus, UserMinus, BarChart3 } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { EditProfileModal } from './EditProfileModal';
 import PostCard from '../PostCard';  // Import PostCard
@@ -26,6 +26,27 @@ const TEAM_LOGOS: { [key: string]: any } = {
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
+// Helper function to calculate responsive image dimensions
+const getResponsiveImageStyle = (screenWidth: number) => {
+  if (screenWidth < 400) {
+    // More aggressive margin for very narrow screens
+    const responsiveWidth = screenWidth - 120; // 60px margin each side
+    const responsiveHeight = (responsiveWidth * 200) / 280;
+    return {
+      width: responsiveWidth,
+      height: responsiveHeight,
+      borderRadius: 12,
+      backgroundColor: '#f3f4f6'
+    };
+  }
+  return {
+    width: 280,
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6'
+  };
+};
+
 // Placeholder for favorite team/admin icon
 const AdminOrTeamIcon = ({ isAdmin, team }: { isAdmin: boolean; team?: string }) => (
   <View style={{ marginLeft: 8 }}>
@@ -42,12 +63,15 @@ export default function ProfileContainer({
   onBack,
   session,
   onLogin,
+  onProfilePress,
 }: {
   userId: string;
   onBack: () => void;
   session: any;
   onLogin?: () => void;
+  onProfilePress?: (userId: string) => void;
 }) {
+  const { width: screenWidth } = Dimensions.get('window');
   const [profile, setProfile] = useState<any>(null);
   const [threads, setThreads] = useState<any[]>([]);
   const [replies, setReplies] = useState<any[]>([]);
@@ -275,6 +299,23 @@ export default function ProfileContainer({
         return acc;
       }, {});
 
+      // Get view counts for original threads of reposts
+      const originalThreadIds = (repostsData || []).map(r => r.original_thread_id);
+      const { data: repostViewCountsData, error: repostViewCountsError } = await supabase
+        .from('thread_views')
+        .select('thread_id')
+        .in('thread_id', originalThreadIds);
+
+      if (repostViewCountsError) {
+        console.error('Error fetching view counts for repost original threads:', repostViewCountsError);
+      }
+
+      // Create a map of original thread_id to view count
+      const repostViewCountMap = (repostViewCountsData || []).reduce((acc: any, view: any) => {
+        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
+        return acc;
+      }, {});
+
       // Process reposts
       const processedReposts = (repostsData || []).map((repost: any) => {
         const isLiked = repostLikesData.some(like => like.repost_id === repost.id && like.user_id === session?.user?.id);
@@ -285,7 +326,7 @@ export default function ProfileContainer({
           original_thread: originalThreadsMap[repost.original_thread_id],
           likeCount: repostLikeCountMap[repost.id] || 0,
           replyCount: 0, // Will be fetched from original thread
-          view_count: Math.max(1, Math.floor(Math.random() * 50)), // Temporary view count
+          view_count: Math.max(repostViewCountMap[repost.original_thread_id] || 0, 1), // Views on original thread (minimum 1)
           repostCount: repostRepostCountMap[repost.id] || 0,
           isLiked: isLiked,
           isBookmarked: false, // Will be fetched separately if needed
@@ -428,38 +469,40 @@ export default function ProfileContainer({
     console.log('Navigate to profile:', userId);
   };
 
-  const handleRepostDeletePress = (repostId: string) => {
+  const handleRepostDeletePress = async (repostId: string) => {
     if (!session) {
       Alert.alert('Error', 'You must be logged in to delete reposts');
       return;
     }
     
-    Alert.alert(
-      'Delete Repost',
-      'Are you sure you want to delete this repost?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { data, error } = await supabase.from('reposts').delete().eq('id', repostId).select();
-              
-              if (error) {
-                console.error('Delete error details:', error);
-                throw error;
-              }
-              
-              await fetchAllData();
-            } catch (error) {
-              console.error('Error deleting repost:', error);
-              Alert.alert('Error', `Failed to delete repost: ${error.message || 'Unknown error'}`);
-            }
-          }
+    // Check if user has permission first
+    const repost = threads.find(t => t.id === repostId && t.type === 'repost');
+    if (!repost) {
+      Alert.alert('Error', 'Could not find repost');
+      return;
+    }
+    
+    // Check if user has permission to delete
+    if (repost.user_id !== session.user.id && !isUserAdmin(repost.profiles, session)) {
+      Alert.alert('Error', 'You do not have permission to delete this repost');
+      return;
+    }
+    
+    // Use confirm for web platform as it's more reliable
+    const confirmed = window.confirm('Are you sure you want to delete this repost?');
+    if (confirmed) {
+      try {
+        const { error } = await supabase.from('reposts').delete().eq('id', repostId);
+        if (error) {
+          throw error;
         }
-      ]
-    );
+        
+        await fetchAllData();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        alert(`Failed to delete repost: ${errorMessage}`);
+      }
+    }
   };
 
   const handleLikeToggle = async (threadId: string, isLiked: boolean) => {
@@ -666,18 +709,16 @@ export default function ProfileContainer({
       const followerUserIds = followersData.map(f => f.follower_id);
       console.log('Follower user IDs:', followerUserIds);
 
-      // Fetch profiles for these users
-      let profilesData: any[] = [];
-      for (const userId of followerUserIds) {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, avatar_url, favorite_team, email, is_admin')
-          .eq('id', userId)
-          .single();
-        
-        if (!profileError && profileData) {
-          profilesData.push(profileData);
-        }
+      // Fetch profiles for these users in a single query
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, favorite_team, is_admin')
+        .in('id', followerUserIds);
+
+      if (profilesError) {
+        console.error('Error fetching follower profiles:', profilesError);
+        setFollowers([]);
+        return;
       }
 
       console.log('Profiles query result:', { profilesData });
@@ -753,18 +794,16 @@ export default function ProfileContainer({
       const followingUserIds = followingData.map(f => f.following_id);
       console.log('Following user IDs:', followingUserIds);
 
-      // Fetch profiles for these users
-      let profilesData: any[] = [];
-      for (const userId of followingUserIds) {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, avatar_url, favorite_team, email, is_admin')
-          .eq('id', userId)
-          .single();
-        
-        if (!profileError && profileData) {
-          profilesData.push(profileData);
-        }
+      // Fetch profiles for these users in a single query
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, favorite_team, is_admin')
+        .in('id', followingUserIds);
+
+      if (profilesError) {
+        console.error('Error fetching following profiles:', profilesError);
+        setFollowing([]);
+        return;
       }
 
       console.log('Profiles query result:', { profilesData });
@@ -1361,6 +1400,17 @@ return (
                               </Text>
                             )}
 
+                            {/* Repost image */}
+                            {item.image_url && (
+                              <View style={{ alignItems: 'center', marginBottom: 12 }}>
+                                <Image
+                                  source={{ uri: item.image_url }}
+                                  style={getResponsiveImageStyle(screenWidth)}
+                                  resizeMode="cover"
+                                />
+                              </View>
+                            )}
+
                             {/* Original thread preview - embedded like Twitter */}
                             <TouchableOpacity 
                               onPress={() => handleThreadClick(item.original_thread?.id)}
@@ -1404,24 +1454,18 @@ return (
                                     {item.original_thread?.content || ''}
                                   </Text>
                                   {item.original_thread?.image_url && (
-                                    <View style={{
-                                      width: '100%',
-                                      aspectRatio: 16/9,
-                                      borderRadius: 6,
-                                      marginTop: 4,
-                                      backgroundColor: '#f3f4f6',
-                                      overflow: 'hidden'
-                                    }}>
+                                    <View style={{ alignItems: 'center', marginTop: 4 }}>
                                       <Image
                                         source={{ uri: item.original_thread.image_url }}
-                                        style={{ 
-                                          width: '100%', 
-                                          height: '100%'
-                                        }}
+                                        style={getResponsiveImageStyle(screenWidth)}
                                         resizeMode="cover"
                                       />
                                     </View>
                                   )}
+                                  {/* Views inside the preview */}
+                                  <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
+                                    {item.view_count || 0} views
+                                  </Text>
                                 </View>
                               </View>
                             </TouchableOpacity>
@@ -1461,7 +1505,22 @@ return (
                                 </Text>
                               </TouchableOpacity>
 
-
+                              {/* Delete button for reposts */}
+                              {session && (item.user_id === session.user.id || isUserAdmin(item.profiles, session)) && (
+                                <TouchableOpacity 
+                                  onPress={() => handleRepostDeletePress(item.id)}
+                                  style={{ 
+                                    flexDirection: 'row', 
+                                    alignItems: 'center', 
+                                    marginLeft: 'auto',
+                                    padding: 8,
+                                    backgroundColor: '#fef2f2',
+                                    borderRadius: 4
+                                  }}
+                                >
+                                  <Trash2 size={16} color="#dc2626" />
+                                </TouchableOpacity>
+                              )}
                             </View>
                           </View>
                         </View>
@@ -1573,7 +1632,7 @@ return (
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
               <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>
-                {isOwnProfile ? 'Your Followers' : `${profile?.username || 'User'}'s Followers`}
+                {isOwnProfile ? 'Your Followers' : (profile?.username || 'User') + "'s Followers"}
               </Text>
               <TouchableOpacity onPress={() => setShowFollowersModal(false)} style={{ padding: 8 }}>
                 <ArrowLeft size={24} color="#3a3a3a" />
@@ -1596,27 +1655,45 @@ return (
                     borderBottomColor: '#e5e5e5'
                   }}>
                     {/* Avatar */}
-                    <Image
-                      source={{ 
-                        uri: follower.profiles?.avatar_url || 
-                             `https://ui-avatars.com/api/?name=${follower.profiles?.username?.charAt(0)}&background=random` 
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowFollowersModal(false);
+                        if (follower.profiles?.id && onProfilePress) {
+                          onProfilePress(follower.profiles.id);
+                        }
                       }}
-                      style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12 }}
-                    />
+                      activeOpacity={0.7}
+                    >
+                      <Image
+                        source={{ 
+                          uri: follower.profiles?.avatar_url || 
+                               `https://ui-avatars.com/api/?name=${follower.profiles?.username?.charAt(0) || 'U'}&background=random` 
+                        }}
+                        style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12 }}
+                      />
+                    </TouchableOpacity>
                     
                     {/* User Info */}
-                    <View style={{ flex: 1 }}>
+                    <TouchableOpacity 
+                      style={{ flex: 1 }}
+                      onPress={() => {
+                        setShowFollowersModal(false);
+                        // Open the follower's profile in a new container
+                        if (follower.profiles?.id) {
+                          // Navigate to the follower's profile
+                          // This will be handled by the parent component
+                          if (onProfilePress) {
+                            onProfilePress(follower.profiles.id);
+                          }
+                        }
+                      }}
+                      activeOpacity={0.7}
+                    >
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
                         <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 16 }}>
                           {follower.profiles?.username || 'Unknown User'}
                         </Text>
-                        {follower.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
-                          <Image 
-                            source={require('@/assets/images/favicon.png')} 
-                            style={{ width: 20, height: 18, marginLeft: 4 }}
-                            resizeMode="contain"
-                          />
-                        ) : follower.profiles?.favorite_team && TEAM_LOGOS[follower.profiles.favorite_team] && (
+                        {follower.profiles?.favorite_team && TEAM_LOGOS[follower.profiles.favorite_team] && (
                           <Image 
                             source={TEAM_LOGOS[follower.profiles.favorite_team]} 
                             style={{ width: 20, height: 18, marginLeft: 4 }}
@@ -1624,7 +1701,7 @@ return (
                           />
                         )}
                       </View>
-                    </View>
+                    </TouchableOpacity>
 
                     {/* Follow/Unfollow Button */}
                     {session?.user && session.user.id !== follower.follower_id && (
@@ -1659,7 +1736,7 @@ return (
               ) : (
                 <View style={{ padding: 20, alignItems: 'center' }}>
                   <Text style={{ color: '#888', fontSize: 16 }}>
-                    {isOwnProfile ? 'No followers yet.' : `${profile?.username || 'User'} has no followers yet.`}
+                    {isOwnProfile ? 'No followers yet.' : (profile?.username || 'User') + ' has no followers yet.'}
                   </Text>
                 </View>
               )}
@@ -1694,7 +1771,7 @@ return (
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
               <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>
-                {isOwnProfile ? 'Your Following' : `${profile?.username || 'User'}'s Following`}
+                {isOwnProfile ? 'Your Following' : (profile?.username || 'User') + "'s Following"}
               </Text>
               <TouchableOpacity onPress={() => setShowFollowingModal(false)} style={{ padding: 8 }}>
                 <ArrowLeft size={24} color="#3a3a3a" />
@@ -1717,27 +1794,45 @@ return (
                     borderBottomColor: '#e5e5e5'
                   }}>
                     {/* Avatar */}
-                    <Image
-                      source={{ 
-                        uri: followingUser.profiles?.avatar_url || 
-                             `https://ui-avatars.com/api/?name=${followingUser.profiles?.username?.charAt(0)}&background=random` 
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowFollowingModal(false);
+                        if (followingUser.profiles?.id && onProfilePress) {
+                          onProfilePress(followingUser.profiles.id);
+                        }
                       }}
-                      style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12 }}
-                    />
+                      activeOpacity={0.7}
+                    >
+                      <Image
+                        source={{ 
+                          uri: followingUser.profiles?.avatar_url || 
+                               `https://ui-avatars.com/api/?name=${followingUser.profiles?.username?.charAt(0) || 'U'}&background=random` 
+                        }}
+                        style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12 }}
+                      />
+                    </TouchableOpacity>
                     
                     {/* User Info */}
-                    <View style={{ flex: 1 }}>
+                    <TouchableOpacity 
+                      style={{ flex: 1 }}
+                      onPress={() => {
+                        setShowFollowingModal(false);
+                        // Open the following user's profile in a new container
+                        if (followingUser.profiles?.id) {
+                          // Navigate to the following user's profile
+                          // This will be handled by the parent component
+                          if (onProfilePress) {
+                            onProfilePress(followingUser.profiles.id);
+                          }
+                        }
+                      }}
+                      activeOpacity={0.7}
+                    >
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
                         <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 16 }}>
                           {followingUser.profiles?.username || 'Unknown User'}
                         </Text>
-                        {followingUser.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
-                          <Image 
-                            source={require('@/assets/images/favicon.png')} 
-                            style={{ width: 20, height: 18, marginLeft: 4 }}
-                            resizeMode="contain"
-                          />
-                        ) : followingUser.profiles?.favorite_team && TEAM_LOGOS[followingUser.profiles.favorite_team] && (
+                        {followingUser.profiles?.favorite_team && TEAM_LOGOS[followingUser.profiles.favorite_team] && (
                           <Image 
                             source={TEAM_LOGOS[followingUser.profiles.favorite_team]} 
                             style={{ width: 20, height: 18, marginLeft: 4 }}
@@ -1745,7 +1840,7 @@ return (
                           />
                         )}
                       </View>
-                    </View>
+                    </TouchableOpacity>
 
                     {/* Follow/Unfollow Button */}
                     {session?.user && session.user.id !== followingUser.following_id && (
@@ -1780,7 +1875,7 @@ return (
               ) : (
                 <View style={{ padding: 20, alignItems: 'center' }}>
                   <Text style={{ color: '#888', fontSize: 16 }}>
-                    {isOwnProfile ? 'Not following anyone yet.' : `${profile?.username || 'User'} is not following anyone yet.`}
+                    {isOwnProfile ? 'Not following anyone yet.' : (profile?.username || 'User') + ' is not following anyone yet.'}
                   </Text>
                 </View>
               )}

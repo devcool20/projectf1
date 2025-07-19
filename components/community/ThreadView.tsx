@@ -62,6 +62,28 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
   const menuAnchorRef = useRef<any>(null);
 
   const { width: screenWidth } = Dimensions.get('window');
+  
+  // Helper function to calculate responsive image dimensions
+  const getResponsiveImageStyle = (screenWidth: number) => {
+    if (screenWidth < 400) {
+      // More aggressive margin for very narrow screens
+      const responsiveWidth = screenWidth - 120; // 60px margin each side
+      const responsiveHeight = (responsiveWidth * 200) / 280;
+      return {
+        width: responsiveWidth,
+        height: responsiveHeight,
+        borderRadius: 12,
+        backgroundColor: '#f3f4f6'
+      };
+    }
+    return {
+      width: 280,
+      height: 200,
+      borderRadius: 12,
+      backgroundColor: '#f3f4f6'
+    };
+  };
+  
   // Helper to detect mobile web
   function isMobileWeb() {
     if (Platform.OS !== 'web') return false;
@@ -288,6 +310,18 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
 
   useEffect(() => {
     setThreadData(thread);
+
+    // Debug: Log thread data for reposts
+    if (thread && thread.type === 'repost') {
+      console.log('DEBUG - ThreadView received repost:', {
+        id: thread.id,
+        original_thread_id: thread.original_thread_id,
+        original_thread_exists: !!thread.original_thread,
+        original_thread_image: thread.original_thread?.image_url,
+        original_thread_content: thread.original_thread?.content
+      });
+    }
+
     // Scroll to top when thread changes
     if (thread && scrollViewRef.current) {
       setTimeout(() => {
@@ -685,67 +719,81 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                           {threadData.content}
                         </Text>
                       )}
+
+                      {/* Repost's own image */}
+                      {threadData.image_url && (
+                        <Image
+                          source={{ uri: threadData.image_url }}
+                          style={{ 
+                            width: screenWidth < 400 ? screenWidth - 80 : 280, 
+                            height: screenWidth < 400 ? ((screenWidth - 80) * 200) / 280 : 200, 
+                            borderRadius: 12,
+                            marginBottom: 12,
+                            backgroundColor: '#f3f4f6'
+                          }}
+                          resizeMode="cover"
+                        />
+                      )}
+
+                      {/* Original thread preview - inline with repost */}
+                      {threadData.original_thread && (
+                        <TouchableOpacity 
+                          onPress={() => {
+                            // Navigate to the original thread directly
+                            if (onThreadIdPress) {
+                              onThreadIdPress(threadData.original_thread_id);
+                            }
+                          }}
+                          style={{
+                            borderWidth: 1,
+                            borderColor: '#e5e5e5',
+                            borderRadius: 12,
+                            padding: 12,
+                            backgroundColor: '#f8f9fa',
+                            marginTop: 12
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row' }}>
+                            <Image
+                              source={{ 
+                                uri: threadData.original_thread?.profiles?.avatar_url || 
+                                     `https://ui-avatars.com/api/?name=${threadData.original_thread?.profiles?.username?.charAt(0)}&background=random` 
+                              }}
+                              style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
+                            />
+                            <View style={{ flex: 1 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
+                                  {threadData.original_thread?.profiles?.username || 'Unknown User'}
+                                </Text>
+                              </View>
+                              <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
+                                {threadData.original_thread?.content}
+                              </Text>
+                              {threadData.original_thread?.image_url && (
+                                <Image
+                                  source={{ uri: threadData.original_thread.image_url }}
+                                  style={{ 
+                                    width: screenWidth < 400 ? screenWidth - 80 : 280, 
+                                    height: screenWidth < 400 ? ((screenWidth - 80) * 200) / 280 : 200, 
+                                    borderRadius: 12,
+                                    marginTop: 4,
+                                    backgroundColor: '#f3f4f6'
+                                  }}
+                                  resizeMode="cover"
+                                />
+                              )}
+                              {/* Show original thread views */}
+                              <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
+                                {threadData.original_thread?.view_count || 0} views
+                              </Text>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
                 </View>
-                
-                {/* Original thread preview - embedded like Twitter */}
-                {threadData.original_thread && (
-                  <TouchableOpacity 
-                    onPress={() => {
-                      // Navigate to the original thread directly
-                      if (onThreadIdPress) {
-                        onThreadIdPress(threadData.original_thread_id);
-                      }
-                    }}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#e5e5e5',
-                      borderRadius: 12,
-                      padding: 12,
-                      backgroundColor: '#f8f9fa',
-                      marginTop: 12,
-                      marginHorizontal: 16
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row' }}>
-                      <Image
-                        source={{ 
-                          uri: threadData.original_thread?.profiles?.avatar_url || 
-                               `https://ui-avatars.com/api/?name=${threadData.original_thread?.profiles?.username?.charAt(0)}&background=random` 
-                        }}
-                        style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
-                      />
-                      <View style={{ flex: 1 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                          <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
-                            {threadData.original_thread?.profiles?.username || 'Unknown User'}
-                          </Text>
-                        </View>
-                        <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
-                          {threadData.original_thread?.content}
-                        </Text>
-                        {threadData.original_thread?.image_url && (
-                          <Image
-                            source={{ uri: threadData.original_thread.image_url }}
-                            style={{ 
-                              width: '100%', 
-                              height: 200, 
-                              borderRadius: 6,
-                              marginTop: 4,
-                              backgroundColor: '#f3f4f6'
-                            }}
-                            resizeMode="contain"
-                          />
-                        )}
-                        {/* Show original thread views */}
-                        <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
-                          {threadData.original_thread?.view_count || 0} views
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                )}
 
                 {/* Engagement bar - moved below preview for reposts */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginHorizontal: 16 }}>
@@ -909,11 +957,13 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                       <Text style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{formatThreadTimestamp(reply.created_at)}</Text>
                       <Text style={{ color: '#000', marginBottom: 8 }} selectable={false}>{reply.content}</Text>
                       {reply.image_url && (
-                        <Image 
-                          source={{ uri: reply.image_url }} 
-                          style={{ alignSelf: 'flex-start', width: 220, height: 180, maxWidth: 220, borderRadius: 12, marginLeft: 0, marginRight: 0, objectFit: 'cover' }}
-                          resizeMode="cover"
-                        />
+                        <View style={{ alignItems: 'center', marginTop: 4 }}>
+                          <Image 
+                            source={{ uri: reply.image_url }} 
+                            style={getResponsiveImageStyle(screenWidth)}
+                            resizeMode="cover"
+                          />
+                        </View>
                       )}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                         <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>

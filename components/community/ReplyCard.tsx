@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Heart, MessageCircle, Bookmark, BarChart3, MoreHorizontal } from 'lucide-react-native';
 import { formatThreadTimestamp } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +21,27 @@ const TEAM_LOGOS: { [key: string]: any } = {
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
+// Helper function to calculate responsive image dimensions
+const getResponsiveImageStyle = (screenWidth: number) => {
+  if (screenWidth < 400) {
+    // More aggressive margin for very narrow screens
+    const responsiveWidth = screenWidth - 120; // 60px margin each side
+    const responsiveHeight = (responsiveWidth * 200) / 280;
+    return {
+      width: responsiveWidth,
+      height: responsiveHeight,
+      borderRadius: 12,
+      backgroundColor: '#f3f4f6'
+    };
+  }
+  return {
+    width: 280,
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6'
+  };
+};
+
 export type ReplyCardProps = {
   reply: any;
   onProfilePress?: (userId: string) => void;
@@ -36,6 +57,7 @@ export default function ReplyCard({
   onLikePress,
   session,
 }: ReplyCardProps) {
+  const { width: screenWidth } = Dimensions.get('window');
   const [replyLikeCount, setReplyLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -171,17 +193,13 @@ export default function ReplyCard({
             {reply.threads?.content || 'Original thread content'}
           </Text>
           {reply.threads?.image_url && (
-            <Image
-              source={{ uri: reply.threads.image_url }}
-              style={{ 
-                width: '100%', 
-                height: 120, 
-                borderRadius: 8, 
-                marginTop: 8,
-                backgroundColor: '#f3f4f6'
-              }}
-              resizeMode="cover"
-            />
+            <View style={{ alignItems: 'center', marginTop: 8 }}>
+              <Image
+                source={{ uri: reply.threads.image_url }}
+                style={getResponsiveImageStyle(screenWidth)}
+                resizeMode="cover"
+              />
+            </View>
           )}
         </TouchableOpacity>
       </View>

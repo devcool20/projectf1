@@ -14,6 +14,7 @@ import {
   Modal,
   Platform,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { formatThreadTimestamp } from '@/lib/utils';
@@ -78,9 +79,33 @@ const truncateToLines = (text: string, maxLength: number = 120) => {
   return text.substring(0, maxLength).trim() + '...';
 };
 
+// Helper function to calculate responsive image dimensions
+const getResponsiveImageStyle = (screenWidth: number) => {
+  if (screenWidth < 400) {
+    // More aggressive margin for very narrow screens
+    const responsiveWidth = screenWidth - 120; // 60px margin each side
+    const responsiveHeight = (responsiveWidth * 200) / 280;
+    return {
+      width: responsiveWidth,
+      height: responsiveHeight,
+      borderRadius: 12,
+      marginTop: 4,
+      backgroundColor: '#f3f4f6'
+    };
+  }
+  return {
+    width: 280,
+    height: 200,
+    borderRadius: 12,
+    marginTop: 4,
+    backgroundColor: '#f3f4f6'
+  };
+};
+
 export default function CommunityScreen() {
   const router = useRouter();
   const { thread: threadId, profile: profileId } = useLocalSearchParams();
+  const { width: screenWidth } = Dimensions.get('window');
   const [threads, setThreads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -437,7 +462,7 @@ export default function CommunityScreen() {
         .from('threads')
         .select(`
           *,
-          profiles (username, avatar_url, favorite_team)
+          profiles:user_id (username, avatar_url, favorite_team)
         `)
         .in('id', repostThreadIds);
 
@@ -461,6 +486,20 @@ export default function CommunityScreen() {
         profiles: repostProfilesMap[repost.user_id],
         original_thread: repostThreadsMap[repost.original_thread_id]
       }));
+
+      // Debug: Log repost data to see what's being fetched
+      if (combinedRepostsData.length > 0) {
+        const sampleRepost = combinedRepostsData[0];
+        console.log('DEBUG - Repost data:', {
+          id: sampleRepost.id,
+          original_thread_id: sampleRepost.original_thread_id,
+          original_thread_exists: !!sampleRepost.original_thread,
+          original_thread_image: sampleRepost.original_thread?.image_url,
+          original_thread_content: sampleRepost.original_thread?.content,
+          repostThreadsMap_keys: Object.keys(repostThreadsMap),
+          repostThreadsData_length: repostThreadsData?.length
+        });
+      }
 
       // Get user's likes and bookmarks if logged in
       let userLikes: any[] = [];
@@ -553,9 +592,9 @@ export default function CommunityScreen() {
         console.error('Error fetching repost view counts:', repostViewCountsError);
       }
 
-      // Create a map of repost_id to view count for reposts
+      // Create a map of thread_id to view count for reposts (using original thread IDs)
       const repostViewCountMap = (repostViewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.repost_id] = (acc[view.repost_id] || 0) + 1;
+        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
         return acc;
       }, {});
 
@@ -766,6 +805,8 @@ export default function CommunityScreen() {
   };
 
   const handleThreadPress = async (thread: any) => {
+
+    
     // Set thread for overlay and update URL directly to community with thread parameter
     setSelectedThread(thread);
     setIsViewingThread(true);
@@ -875,6 +916,7 @@ export default function CommunityScreen() {
   };
 
   const handleRepostSuccess = () => {
+    
     // Refresh both feeds to show new repost
     fetchThreads(session);
     fetchFollowingThreads(session);
@@ -960,31 +1002,48 @@ export default function CommunityScreen() {
   };
 
   const handleRepostDeleteDirect = async (repostId: string) => {
-    Alert.alert(
-      'Delete Repost',
-      'Are you sure you want to delete this repost?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase.from('reposts').delete().eq('id', repostId);
-              if (error) throw error;
-              // Refresh both feeds after deletion
-              if (session) {
-                fetchThreads(session);
-                fetchFollowingThreads(session);
-              }
-            } catch (error) {
-              console.error('Error deleting repost:', error);
-              Alert.alert('Error', 'Failed to delete repost');
-            }
+    // Check if user has permission first
+    try {
+      const { data: repostData, error: fetchError } = await supabase
+        .from('reposts')
+        .select('*')
+        .eq('id', repostId)
+        .single();
+      
+      if (fetchError) {
+        Alert.alert('Error', 'Could not find repost');
+        return;
+      }
+      
+      // Check if user has permission to delete
+      if (repostData.user_id !== session?.user?.id && !isCurrentUserAdmin()) {
+        Alert.alert('Error', 'You do not have permission to delete this repost');
+        return;
+      }
+      
+      // Use confirm for web platform as it's more reliable
+      const confirmed = window.confirm('Are you sure you want to delete this repost?');
+      if (confirmed) {
+        try {
+          const { error } = await supabase.from('reposts').delete().eq('id', repostId);
+          if (error) {
+            throw error;
           }
+          
+          // Refresh both feeds after deletion
+          if (session) {
+            fetchThreads(session);
+            fetchFollowingThreads(session);
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          alert(`Failed to delete repost: ${errorMessage}`);
         }
-      ]
-    );
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      Alert.alert('Error', `Error: ${errorMessage}`);
+    }
   };
 
   const handleRepostDeleteConfirm = () => {
@@ -1079,7 +1138,7 @@ export default function CommunityScreen() {
         .from('threads')
         .select(`
           *,
-          profiles (username, avatar_url, favorite_team)
+          profiles:user_id (username, avatar_url, favorite_team)
         `)
         .in('id', repostThreadIds);
 
@@ -1562,6 +1621,7 @@ export default function CommunityScreen() {
                         onBack={handleCloseProfile}
                         session={session}
                         onLogin={() => setShowAuth(true)}
+                        onProfilePress={handleProfilePress}
                       />
                     </View>
                   ) : isViewingThread && selectedThread ? (
@@ -1661,6 +1721,17 @@ export default function CommunityScreen() {
                                           </Text>
                                         )}
 
+                                        {/* Repost image */}
+                                        {item.image_url && (
+                                          <View style={{ alignItems: 'center', marginBottom: 12 }}>
+                                            <Image
+                                              source={{ uri: item.image_url }}
+                                              style={getResponsiveImageStyle(screenWidth)}
+                                              resizeMode="cover"
+                                            />
+                                          </View>
+                                        )}
+
                                         {/* Original thread preview - embedded like Twitter */}
                                         <TouchableOpacity 
                                           onPress={() => handleThreadPress(item.original_thread)}
@@ -1704,17 +1775,13 @@ export default function CommunityScreen() {
                                                 {item.original_thread?.content || ''}
                                               </Text>
                                               {item.original_thread?.image_url && (
-                                                <Image
-                                                  source={{ uri: item.original_thread.image_url }}
-                                                  style={{ 
-                                                    width: '100%', 
-                                                    height: 200, 
-                                                    borderRadius: 6,
-                                                    marginTop: 4,
-                                                    backgroundColor: '#f3f4f6'
-                                                  }}
-                                                  resizeMode="contain"
-                                                />
+                                                <View style={{ alignItems: 'center', marginTop: 4 }}>
+                                                  <Image
+                                                    source={{ uri: item.original_thread.image_url }}
+                                                    style={getResponsiveImageStyle(screenWidth)}
+                                                    resizeMode="cover"
+                                                  />
+                                                </View>
                                               )}
                                               {/* Original thread views */}
                                               <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
@@ -1894,6 +1961,17 @@ export default function CommunityScreen() {
                                             </Text>
                                           )}
 
+                                          {/* Repost image */}
+                                          {item.image_url && (
+                                            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+                                              <Image
+                                                source={{ uri: item.image_url }}
+                                                style={getResponsiveImageStyle(screenWidth)}
+                                                resizeMode="cover"
+                                              />
+                                            </View>
+                                          )}
+
                                           {/* Original thread preview - embedded like Twitter */}
                                           <TouchableOpacity 
                                             onPress={() => handleThreadPress(item.original_thread)}
@@ -1931,17 +2009,13 @@ export default function CommunityScreen() {
                                                   {item.original_thread?.content || ''}
                                                 </Text>
                                                 {item.original_thread?.image_url && (
-                                                  <Image
-                                                    source={{ uri: item.original_thread.image_url }}
-                                                    style={{ 
-                                                      width: '100%', 
-                                                      height: 200, 
-                                                      borderRadius: 6,
-                                                      marginTop: 4,
-                                                      backgroundColor: '#f3f4f6'
-                                                    }}
-                                                    resizeMode="contain"
-                                                  />
+                                                  <View style={{ alignItems: 'center', marginTop: 4 }}>
+                                                    <Image
+                                                      source={{ uri: item.original_thread.image_url }}
+                                                      style={getResponsiveImageStyle(screenWidth)}
+                                                      resizeMode="cover"
+                                                    />
+                                                  </View>
                                                 )}
                                                 {/* Original thread views */}
                                                 <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
@@ -2116,6 +2190,19 @@ export default function CommunityScreen() {
                                             </Text>
                                           )}
 
+                                          {/* Repost image */}
+                                          {item.image_url && (
+                                            <Image
+                                              source={{ uri: item.image_url }}
+                                              style={{ 
+                                                ...getResponsiveImageStyle(screenWidth),
+                                                borderRadius: 6,
+                                                marginBottom: 12
+                                              }}
+                                              resizeMode="contain"
+                                            />
+                                          )}
+
                                           {/* Original thread preview - embedded like Twitter */}
                                           <TouchableOpacity 
                                             onPress={() => handleThreadPress(item.original_thread)}
@@ -2153,17 +2240,13 @@ export default function CommunityScreen() {
                                                   {item.original_thread?.content || ''}
                                                 </Text>
                                                 {item.original_thread?.image_url && (
-                                                  <Image
-                                                    source={{ uri: item.original_thread.image_url }}
-                                                    style={{ 
-                                                      width: '100%', 
-                                                      height: 200, 
-                                                      borderRadius: 6,
-                                                      marginTop: 4,
-                                                      backgroundColor: '#f3f4f6'
-                                                    }}
-                                                    resizeMode="contain"
-                                                  />
+                                                  <View style={{ alignItems: 'center', marginTop: 4 }}>
+                                                    <Image
+                                                      source={{ uri: item.original_thread.image_url }}
+                                                      style={getResponsiveImageStyle(screenWidth)}
+                                                      resizeMode="cover"
+                                                    />
+                                                  </View>
                                                 )}
                                                 {/* Original thread views */}
                                                 <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
