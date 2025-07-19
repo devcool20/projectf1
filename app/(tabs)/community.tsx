@@ -102,6 +102,29 @@ const getResponsiveImageStyle = (screenWidth: number) => {
   };
 };
 
+// Helper function to calculate compact image dimensions for preview content
+const getCompactImageStyle = (screenWidth: number) => {
+  if (screenWidth < 400) {
+    // More compact for preview images on narrow screens
+    const compactWidth = screenWidth - 160; // 80px margin each side
+    const compactHeight = (compactWidth * 150) / 200; // Shorter height ratio
+    return {
+      width: compactWidth,
+      height: compactHeight,
+      borderRadius: 8, // Smaller border radius for compact look
+      marginTop: 4,
+      backgroundColor: '#f3f4f6'
+    };
+  }
+  return {
+    width: 200, // Smaller default width for preview images
+    height: 150, // Smaller default height for preview images
+    borderRadius: 8, // Smaller border radius for compact look
+    marginTop: 4,
+    backgroundColor: '#f3f4f6'
+  };
+};
+
 export default function CommunityScreen() {
   const router = useRouter();
   const { thread: threadId, profile: profileId } = useLocalSearchParams();
@@ -1723,13 +1746,11 @@ export default function CommunityScreen() {
 
                                         {/* Repost image */}
                                         {item.image_url && (
-                                          <View style={{ alignItems: 'center', marginBottom: 12 }}>
-                                            <Image
-                                              source={{ uri: item.image_url }}
-                                              style={getResponsiveImageStyle(screenWidth)}
-                                              resizeMode="cover"
-                                            />
-                                          </View>
+                                          <Image
+                                            source={{ uri: item.image_url }}
+                                            style={getResponsiveImageStyle(screenWidth)}
+                                            resizeMode="cover"
+                                          />
                                         )}
 
                                         {/* Original thread preview - embedded like Twitter */}
@@ -1778,7 +1799,7 @@ export default function CommunityScreen() {
                                                 <View style={{ alignItems: 'center', marginTop: 4 }}>
                                                   <Image
                                                     source={{ uri: item.original_thread.image_url }}
-                                                    style={getResponsiveImageStyle(screenWidth)}
+                                                    style={getCompactImageStyle(screenWidth)}
                                                     resizeMode="cover"
                                                   />
                                                 </View>
@@ -1963,13 +1984,11 @@ export default function CommunityScreen() {
 
                                           {/* Repost image */}
                                           {item.image_url && (
-                                            <View style={{ alignItems: 'center', marginBottom: 12 }}>
-                                              <Image
-                                                source={{ uri: item.image_url }}
-                                                style={getResponsiveImageStyle(screenWidth)}
-                                                resizeMode="cover"
-                                              />
-                                            </View>
+                                            <Image
+                                              source={{ uri: item.image_url }}
+                                              style={getResponsiveImageStyle(screenWidth)}
+                                              resizeMode="cover"
+                                            />
                                           )}
 
                                           {/* Original thread preview - embedded like Twitter */}
@@ -2012,7 +2031,7 @@ export default function CommunityScreen() {
                                                   <View style={{ alignItems: 'center', marginTop: 4 }}>
                                                     <Image
                                                       source={{ uri: item.original_thread.image_url }}
-                                                      style={getResponsiveImageStyle(screenWidth)}
+                                                      style={getCompactImageStyle(screenWidth)}
                                                       resizeMode="cover"
                                                     />
                                                   </View>
@@ -2243,7 +2262,7 @@ export default function CommunityScreen() {
                                                   <View style={{ alignItems: 'center', marginTop: 4 }}>
                                                     <Image
                                                       source={{ uri: item.original_thread.image_url }}
-                                                      style={getResponsiveImageStyle(screenWidth)}
+                                                      style={getCompactImageStyle(screenWidth)}
                                                       resizeMode="cover"
                                                     />
                                                   </View>

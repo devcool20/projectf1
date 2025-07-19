@@ -84,6 +84,28 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     };
   };
   
+  // Helper function to calculate compact image dimensions for preview content
+  const getCompactImageStyle = (screenWidth: number) => {
+    if (screenWidth < 400) {
+      const compactWidth = screenWidth - 160;
+      const compactHeight = (compactWidth * 150) / 200;
+      return {
+        width: compactWidth,
+        height: compactHeight,
+        borderRadius: 8,
+        marginTop: 4,
+        backgroundColor: '#f3f4f6'
+      };
+    }
+    return {
+      width: 200,
+      height: 150,
+      borderRadius: 8,
+      marginTop: 4,
+      backgroundColor: '#f3f4f6'
+    };
+  };
+  
   // Helper to detect mobile web
   function isMobileWeb() {
     if (Platform.OS !== 'web') return false;
@@ -771,17 +793,13 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                                 {threadData.original_thread?.content}
                               </Text>
                               {threadData.original_thread?.image_url && (
-                                <Image
-                                  source={{ uri: threadData.original_thread.image_url }}
-                                  style={{ 
-                                    width: screenWidth < 400 ? screenWidth - 80 : 280, 
-                                    height: screenWidth < 400 ? ((screenWidth - 80) * 200) / 280 : 200, 
-                                    borderRadius: 12,
-                                    marginTop: 4,
-                                    backgroundColor: '#f3f4f6'
-                                  }}
-                                  resizeMode="cover"
-                                />
+                                <View style={{ alignItems: 'center', marginTop: 4 }}>
+                                  <Image
+                                    source={{ uri: threadData.original_thread.image_url }}
+                                    style={getCompactImageStyle(screenWidth)}
+                                    resizeMode="cover"
+                                  />
+                                </View>
                               )}
                               {/* Show original thread views */}
                               <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
@@ -796,7 +814,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                 </View>
 
                 {/* Engagement bar - moved below preview for reposts */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginHorizontal: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 76 }}>
                   {/* Comments */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
                     <MessageCircle size={14} color="#666666" />

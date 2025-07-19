@@ -42,6 +42,27 @@ const getResponsiveImageStyle = (screenWidth: number) => {
   };
 };
 
+const getCompactImageStyle = (screenWidth: number) => {
+  if (screenWidth < 400) {
+    const compactWidth = screenWidth - 160;
+    const compactHeight = (compactWidth * 150) / 200;
+    return {
+      width: compactWidth,
+      height: compactHeight,
+      borderRadius: 8,
+      marginTop: 4,
+      backgroundColor: '#f3f4f6'
+    };
+  }
+  return {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    marginTop: 4,
+    backgroundColor: '#f3f4f6'
+  };
+};
+
 interface RepostModalProps {
   visible: boolean;
   onClose: () => void;
@@ -285,11 +306,11 @@ export default function RepostModal({
                   <Text style={{ color: '#1a1a1a', fontSize: 14, lineHeight: 20, marginBottom: 8 }}>
                     {originalThread.content}
                   </Text>
-                  {originalThread.image_url && (
+                  {originalThread?.image_url && (
                     <View style={{ alignItems: 'center', marginTop: 4 }}>
                       <Image
                         source={{ uri: originalThread.image_url }}
-                        style={getResponsiveImageStyle(screenWidth)}
+                        style={getCompactImageStyle(screenWidth)}
                         resizeMode="cover"
                       />
                     </View>

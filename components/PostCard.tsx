@@ -202,29 +202,27 @@ export default function PostCard({
             </TouchableOpacity>
           )}
           {imageUrl && (
-            <View style={{ marginTop: 8, alignItems: 'center' }}>
-              <Image
-                source={{ uri: imageUrl }}
-                style={(() => {
-                  if (!imageDimensions) {
-                    return getResponsiveImageStyle(screenWidth);
-                  }
-                  const imgW = imageDimensions.width;
-                  const imgH = imageDimensions.height;
-                  const aspectRatio = imgW / imgH;
-                  const maxWidth = screenWidth < 400 ? screenWidth - 120 : 280;
-                  const maxHeight = 400;
-                  let width = maxWidth;
-                  let height = imgH * (maxWidth / imgW);
-                  if (height > maxHeight) {
-                    height = maxHeight;
-                    width = imgW * (maxHeight / imgH);
-                  }
-                  return { borderRadius: 12, width, height, backgroundColor: '#f3f4f6' };
-                })()}
-                resizeMode="cover"
-              />
-            </View>
+            <Image
+              source={{ uri: imageUrl }}
+              style={(() => {
+                if (!imageDimensions) {
+                  return getResponsiveImageStyle(screenWidth);
+                }
+                const imgW = imageDimensions.width;
+                const imgH = imageDimensions.height;
+                const aspectRatio = imgW / imgH;
+                const maxWidth = screenWidth < 400 ? screenWidth - 120 : 280;
+                const maxHeight = 400;
+                let width = maxWidth;
+                let height = imgH * (maxWidth / imgW);
+                if (height > maxHeight) {
+                  height = maxHeight;
+                  width = imgW * (maxHeight / imgH);
+                }
+                return { borderRadius: 12, width, height, backgroundColor: '#f3f4f6', marginTop: 8 };
+              })()}
+              resizeMode="cover"
+            />
           )}
           {/* Engagement Bar */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>

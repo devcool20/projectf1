@@ -47,6 +47,27 @@ const getResponsiveImageStyle = (screenWidth: number) => {
   };
 };
 
+const getCompactImageStyle = (screenWidth: number) => {
+  if (screenWidth < 400) {
+    const compactWidth = screenWidth - 160;
+    const compactHeight = (compactWidth * 150) / 200;
+    return {
+      width: compactWidth,
+      height: compactHeight,
+      borderRadius: 8,
+      marginTop: 4,
+      backgroundColor: '#f3f4f6'
+    };
+  }
+  return {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    marginTop: 4,
+    backgroundColor: '#f3f4f6'
+  };
+};
+
 // Placeholder for favorite team/admin icon
 const AdminOrTeamIcon = ({ isAdmin, team }: { isAdmin: boolean; team?: string }) => (
   <View style={{ marginLeft: 8 }}>
@@ -1457,7 +1478,7 @@ return (
                                     <View style={{ alignItems: 'center', marginTop: 4 }}>
                                       <Image
                                         source={{ uri: item.original_thread.image_url }}
-                                        style={getResponsiveImageStyle(screenWidth)}
+                                        style={getCompactImageStyle(screenWidth)}
                                         resizeMode="cover"
                                       />
                                     </View>
