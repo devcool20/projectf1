@@ -15,7 +15,7 @@ import {
   Pressable,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Trash2, Heart, Camera, X, MessageCircle, Repeat2, BarChart3, MoreHorizontal } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Heart, Camera, X, MessageCircle, Repeat2, MoreHorizontal } from 'lucide-react-native';
 import PostCard from '../PostCard';
 import RepostModal from '../RepostModal';
 import EngagementButton from '../engagement-button';
@@ -226,9 +226,9 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
             setReplies([]);
           }
         } else {
-          // For regular thread replies, use the existing likes system
+          // For regular thread replies, use the reply_likes table
           const { data: likesData, error: likesError } = await supabase
-            .from('likes')
+            .from('reply_likes')
             .select('reply_id')
             .in('reply_id', data.map(r => r.id));
           
@@ -241,7 +241,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
 
           if (session) {
             const { data: userLikesData, error: userLikesError } = await supabase
-              .from('likes')
+              .from('reply_likes')
               .select('reply_id')
               .in('reply_id', data.map(r => r.id))
               .eq('user_id', session.user.id);
@@ -280,27 +280,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     }
   }, [thread, fetchReplies]);
 
-  // Fetch current view count when component mounts
-  useEffect(() => {
-    const fetchViewCount = async () => {
-      if (thread && !thread.view_count) {
-        try {
-          const { count, error } = await supabase
-            .from('thread_views')
-            .select('*', { count: 'exact', head: true })
-            .eq('thread_id', thread.id);
-          
-          if (!error && count !== null) {
-            setThreadData(prev => prev ? { ...prev, view_count: count } : prev);
-          }
-        } catch (error) {
-          console.error('Error fetching view count:', error);
-        }
-      }
-    };
-    
-    fetchViewCount();
-  }, [thread?.id]); // Only depend on thread ID, not the entire thread object
+
 
   useEffect(() => {
     setThreadData(thread);
@@ -368,10 +348,10 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
       } else {
         // Handle likes for regular thread replies
         if (isLiked) {
-          const { error } = await supabase.from('likes').delete().match({ reply_id: replyId, user_id: session.user.id });
+          const { error } = await supabase.from('reply_likes').delete().match({ reply_id: replyId, user_id: session.user.id });
           if (error) throw error;
         } else {
-          const { error } = await supabase.from('likes').insert({ reply_id: replyId, user_id: session.user.id });
+          const { error } = await supabase.from('reply_likes').insert({ reply_id: replyId, user_id: session.user.id });
           if (error) throw error;
         }
       }
@@ -664,7 +644,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
           <View style={[styles.postContainer, isVerySmallMobileWeb && { alignItems: 'flex-start', paddingLeft: 0, paddingRight: 0, marginLeft: -8 }]}> {/* <-- left shift only for mobile web */}
             {threadData.type === 'repost' ? (
               <View>
-                {/* Custom repost display without views and bookmarks icons */}
+                {/* Custom repost display without bookmarks icons */}
                 <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
                   <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity 
@@ -776,10 +756,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                                   />
                                 </View>
                               )}
-                              {/* Show original thread views */}
-                              <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
-                                {threadData.original_thread?.view_count || 0} views
-                              </Text>
+
                             </View>
                           </View>
                         </TouchableOpacity>
@@ -871,7 +848,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                 timestamp={threadData.created_at}
                 likes={threadData.likeCount || 0}
                 comments={threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
-                views={threadData.view_count || 0}
+
                 reposts={threadData.repostCount || 0}
                 isLiked={threadData.isLiked}
                 isBookmarked={threadData.isBookmarked || false}

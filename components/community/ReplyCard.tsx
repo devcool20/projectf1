@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { Heart, MessageCircle, Bookmark, BarChart3, MoreHorizontal } from 'lucide-react-native';
+import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react-native';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
@@ -268,11 +268,7 @@ export default function ReplyCard({
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>0</Text>
             </View>
 
-            {/* Views (not applicable for replies) */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-              <BarChart3 size={14} color="#666666" />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>-</Text>
-            </View>
+
           </View>
         </View>
       </View>

@@ -419,7 +419,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
             timestamp={threadData.created_at}
             likes={threadData.likeCount || 0}
             comments={threadData.replyCount || 0}
-            views={threadData.view_count || 0}
+
             isLiked={threadData.isLiked || false}
             favoriteTeam={userData.favoriteTeam}
             onCommentPress={() => {}}

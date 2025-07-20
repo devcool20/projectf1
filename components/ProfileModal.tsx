@@ -268,8 +268,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
       console.log('Deleting reposts...');
       await supabase.from('reposts').delete().eq('user_id', userId);
 
-      console.log('Deleting thread views...');
-      await supabase.from('thread_views').delete().eq('user_id', userId);
+
 
       console.log('Deleting bookmarks...');
       await supabase.from('bookmarks').delete().eq('user_id', userId);

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Image, Dimensions, Modal, Pressable } from 'react-native';
-import { Heart, MessageCircle, Bookmark, BarChart3, Repeat2, MoreHorizontal, Trash2 } from 'lucide-react-native';
+import { Heart, MessageCircle, Bookmark, Repeat2, MoreHorizontal, Trash2 } from 'lucide-react-native';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import EngagementButton from './engagement-button';
@@ -255,11 +255,7 @@ export default function RepostCard({
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{repostCount}</Text>
             </View>
 
-            {/* Views */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-              <BarChart3 size={14} color="#666666" />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>-</Text>
-            </View>
+
 
             {/* Bookmarks */}
             <EngagementButton

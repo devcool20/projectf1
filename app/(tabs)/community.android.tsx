@@ -61,28 +61,13 @@ export default function CommunityScreen() {
 
       if (threadsError) throw threadsError;
 
-      // Get view counts for all threads
-      const threadIds = threadsData.map((thread: any) => thread.id);
-      const { data: viewCountsData, error: viewCountsError } = await supabase
-        .from('thread_views')
-        .select('thread_id')
-        .in('thread_id', threadIds);
 
-      if (viewCountsError) {
-        console.error('Error fetching view counts:', viewCountsError);
-      }
-
-      // Create a map of thread_id to view count
-      const viewCountMap = (viewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
-        return acc;
-      }, {});
 
       let processedThreads = threadsData.map(t => ({
         ...t,
         likeCount: t.likes[0]?.count || 0,
         replyCount: t.replies[0]?.count || 0,
-        view_count: viewCountMap[t.id] || 0, // Use actual view count from thread_views table
+
       }));
 
       if (currentSession) {

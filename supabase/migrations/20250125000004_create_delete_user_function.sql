@@ -11,7 +11,7 @@ BEGIN
   DELETE FROM repost_replies WHERE user_id = delete_user_completely.user_id;
   DELETE FROM repost_likes WHERE user_id = delete_user_completely.user_id;
   DELETE FROM reposts WHERE user_id = delete_user_completely.user_id;
-  DELETE FROM thread_views WHERE user_id = delete_user_completely.user_id;
+
   DELETE FROM bookmarks WHERE user_id = delete_user_completely.user_id;
   DELETE FROM likes WHERE user_id = delete_user_completely.user_id;
   DELETE FROM replies WHERE user_id = delete_user_completely.user_id;

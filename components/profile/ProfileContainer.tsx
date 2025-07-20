@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, Dimensions, Pressable, Platform } from 'react-native';
-import { Pencil, ArrowLeft, AlertCircle, Heart, MessageCircle, Repeat2, LogOut, LogIn, UserPlus, UserMinus, BarChart3, MoreHorizontal } from 'lucide-react-native';
+import { Pencil, ArrowLeft, AlertCircle, Heart, MessageCircle, Repeat2, LogOut, LogIn, UserPlus, UserMinus, MoreHorizontal } from 'lucide-react-native';
 import EngagementButton from '../engagement-button';
 import { supabase } from '@/lib/supabase';
 import { EditProfileModal } from './EditProfileModal';
@@ -249,24 +249,16 @@ export default function ProfileContainer({
         // Don't throw here as this is not critical for profile display
       }
       
-      // Get view counts for these threads
+      // Get engagement counts for these threads
       const threadIds = (threadsData || []).map((thread: any) => thread.id);
-      let viewCountsData: any[] = [];
       let bookmarkCountsData: any[] = [];
       let likeCountsData: any[] = [];
       
       if (threadIds.length > 0) {
-        const [viewResponse, bookmarkResponse, likeResponse] = await Promise.all([
-          supabase.from('thread_views').select('thread_id').in('thread_id', threadIds),
+        const [bookmarkResponse, likeResponse] = await Promise.all([
           supabase.from('bookmarks').select('thread_id').in('thread_id', threadIds),
           supabase.from('likes').select('thread_id').in('thread_id', threadIds)
         ]);
-        
-        if (viewResponse.error) {
-          console.error('Error fetching view counts:', viewResponse.error);
-        } else {
-          viewCountsData = viewResponse.data || [];
-        }
         
         if (bookmarkResponse.error) {
           console.error('Error fetching bookmark counts:', bookmarkResponse.error);
@@ -280,12 +272,6 @@ export default function ProfileContainer({
           likeCountsData = likeResponse.data || [];
         }
       }
-      
-      // Create maps for counts
-      const viewCountMap = (viewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
-        return acc;
-      }, {});
       
       const bookmarkCountMap = (bookmarkCountsData || []).reduce((acc: any, bookmark: any) => {
         acc[bookmark.thread_id] = (acc[bookmark.thread_id] || 0) + 1;
@@ -320,7 +306,7 @@ export default function ProfileContainer({
         ...thread,
         likeCount: likeCountMap[thread.id] || 0,
         replyCount: thread.replies[0]?.count || 0,
-        view_count: viewCountMap[thread.id] || 0,
+
         bookmarkCount: bookmarkCountMap[thread.id] || 0,
         isLiked: userLikes.some(like => like.thread_id === thread.id),
         isBookmarked: userBookmarks.some(bookmark => bookmark.thread_id === thread.id),
@@ -397,22 +383,7 @@ export default function ProfileContainer({
         return acc;
       }, {});
 
-      // Get view counts for original threads of reposts
-      const originalThreadIds = (repostsData || []).map(r => r.original_thread_id);
-      const { data: repostViewCountsData, error: repostViewCountsError } = await supabase
-        .from('thread_views')
-        .select('thread_id')
-        .in('thread_id', originalThreadIds);
 
-      if (repostViewCountsError) {
-        console.error('Error fetching view counts for repost original threads:', repostViewCountsError);
-      }
-
-      // Create a map of original thread_id to view count
-      const repostViewCountMap = (repostViewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
-        return acc;
-      }, {});
 
       // Process reposts
       const processedReposts = (repostsData || []).map((repost: any) => {
@@ -424,7 +395,7 @@ export default function ProfileContainer({
           original_thread: originalThreadsMap[repost.original_thread_id],
           likeCount: repostLikeCountMap[repost.id] || 0,
           replyCount: 0, // Will be fetched from original thread
-          view_count: Math.max(repostViewCountMap[repost.original_thread_id] || 0, 1), // Views on original thread (minimum 1)
+
           repostCount: repostRepostCountMap[repost.id] || 0,
           isLiked: isLiked,
           isBookmarked: false, // Will be fetched separately if needed
@@ -546,7 +517,7 @@ export default function ProfileContainer({
         ...reply.threads,
         likeCount: 0, // This would need to be fetched or calculated
         replyCount: 0, // This would need to be fetched or calculated
-        view_count: 0, // This would need to be fetched or calculated
+
         isLiked: false,
         isBookmarked: false,
         profiles: reply.threads.profiles
@@ -1105,8 +1076,7 @@ export default function ProfileContainer({
       console.log('Deleting reposts...');
       await supabase.from('reposts').delete().eq('user_id', userId);
 
-      console.log('Deleting thread views...');
-      await supabase.from('thread_views').delete().eq('user_id', userId);
+
 
       console.log('Deleting bookmarks...');
       await supabase.from('bookmarks').delete().eq('user_id', userId);
@@ -1801,10 +1771,7 @@ return (
                                       />
                                     </View>
                                   )}
-                                  {/* Views inside the preview */}
-                                  <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
-                                    {item.view_count || 0} views
-                                  </Text>
+
                                 </View>
                               </View>
                             </TouchableOpacity>
@@ -1905,7 +1872,7 @@ return (
                         timestamp={item.created_at}
                         likes={item.likeCount || 0}
                         comments={item.replyCount || 0}
-                        views={item.view_count || 0}
+
                         reposts={item.repostCount || 0}
                         isLiked={item.isLiked || false}
                         isBookmarked={item.isBookmarked || false}

@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { Heart, MessageCircle, Bookmark, BarChart3, MoreHorizontal, Repeat2 } from 'lucide-react-native';
+import { Heart, MessageCircle, Bookmark, MoreHorizontal, Repeat2 } from 'lucide-react-native';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { Modal, Pressable } from 'react-native';
 import EngagementButton from './engagement-button';
@@ -35,7 +35,7 @@ export type PostCardProps = {
   timestamp: string;
   likes: number;
   comments: number;
-  views: number;
+
   reposts?: number; // Add repost count
   isLiked?: boolean;
   isBookmarked?: boolean;
@@ -61,7 +61,7 @@ export default function PostCard({
   timestamp,
   likes,
   comments,
-  views,
+
   reposts = 0,
   isLiked,
   isBookmarked,
@@ -237,11 +237,7 @@ export default function PostCard({
               />
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{reposts}</Text>
             </View>
-            {/* Views */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-              <BarChart3 size={14} color="#666666" />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{views}</Text>
-            </View>
+
             {/* Bookmarks */}
             <EngagementButton
               icon={Bookmark}

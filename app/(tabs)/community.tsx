@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -25,11 +25,12 @@ import { globalNewsService } from '@/lib/globalNewsService';
 import { useRouter, useLocalSearchParams, usePathname } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { ThreadView } from '@/components/community/ThreadView';
+import { AnimatedThreadView } from '@/components/community/AnimatedThreadView';
 import BookmarkCard from '@/components/community/BookmarkCard';
 import RepostModal from '@/components/RepostModal';
 
 
-import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, BarChart3, Search } from 'lucide-react-native';
+import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, Search } from 'lucide-react-native';
 import EngagementButton from '@/components/engagement-button';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
@@ -89,6 +90,18 @@ export default function CommunityScreen() {
   const router = useRouter();
   const { thread: threadId, profile: profileId } = useLocalSearchParams();
   const { width: screenWidth } = Dimensions.get('window');
+  
+  // Mobile web detection for animations
+  const isMobileWeb = () => {
+    if (Platform.OS !== 'web') return false;
+    if (typeof navigator !== 'undefined') {
+      return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    }
+    return false;
+  };
+  
+  const shouldUseAnimatedView = useMemo(() => isMobileWeb(), []);
+  
   const [threads, setThreads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -139,7 +152,10 @@ export default function CommunityScreen() {
   // Search functionality state
   const [searchResults, setSearchResults] = useState<{ threads: any[], profiles: any[] }>({ threads: [], profiles: [] });
   const [searchLoading, setSearchLoading] = useState(false);
-  const [isUpdatingViews, setIsUpdatingViews] = useState(false);
+
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [hasNewThreads, setHasNewThreads] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
 
   const { session, triggerOnboarding } = useAuth();
 
@@ -173,7 +189,7 @@ export default function CommunityScreen() {
       setCurrentAvatarUrl(null);
       console.error('Error fetching avatar_url:', err);
     }
-  }, [session]);
+  }, []);
 
   // Always fetch avatar on mount and when session changes
   useEffect(() => {
@@ -188,55 +204,145 @@ export default function CommunityScreen() {
     });
   }, []);
 
-  // Periodically update repost views - only when not viewing a thread
+  // Function to check for new threads
+  const checkForNewThreads = useCallback(async () => {
+    if (!lastFetchTime) return;
+    
+    try {
+      const { data: newThreads, error } = await supabase
+        .from('threads')
+        .select('id, created_at')
+        .gt('created_at', lastFetchTime.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      // Check for new reposts too
+      const { data: newReposts, error: repostError } = await supabase
+        .from('reposts')
+        .select('id, created_at')
+        .gt('created_at', lastFetchTime.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (repostError) throw repostError;
+
+      const hasNew = (newThreads && newThreads.length > 0) || (newReposts && newReposts.length > 0);
+      setHasNewThreads(hasNew);
+    } catch (error) {
+      console.error('Error checking for new threads:', error);
+    }
+  }, [lastFetchTime]);
+
+  // Function to fetch new threads
+  const fetchNewThreads = useCallback(async () => {
+    if (!lastFetchTime) return;
+    
+    try {
+      setRefreshing(true);
+      
+      // Fetch new threads since last fetch
+      const { data: newThreads, error: threadsError } = await supabase
+        .from('threads')
+        .select(`
+          *,
+          profiles:user_id (username, avatar_url, favorite_team),
+          likes:likes!thread_id(count),
+          replies:replies!thread_id(count)
+        `)
+        .gt('created_at', lastFetchTime.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (threadsError) throw threadsError;
+
+      // Fetch new reposts since last fetch
+      const { data: newReposts, error: repostsError } = await supabase
+        .from('reposts')
+        .select('*')
+        .gt('created_at', lastFetchTime.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (repostsError) throw repostsError;
+
+      // Process new threads and reposts
+      if (newThreads && newThreads.length > 0) {
+        const processedNewThreads = newThreads.map((thread: any) => ({
+          ...thread,
+          type: 'thread',
+          likeCount: thread.likes[0]?.count || 0,
+          replyCount: thread.replies[0]?.count || 0,
+          repostCount: 0,
+          isLiked: false,
+          isBookmarked: false,
+        }));
+
+        setThreads(prev => [...processedNewThreads, ...prev]);
+      }
+
+      if (newReposts && newReposts.length > 0) {
+        // Process new reposts (simplified for now)
+        const processedNewReposts = newReposts.map((repost: any) => ({
+          ...repost,
+          type: 'repost',
+          likeCount: 0,
+          replyCount: 0,
+          repostCount: 0,
+          isLiked: false,
+          isBookmarked: false,
+        }));
+
+        setThreads(prev => [...processedNewReposts, ...prev]);
+      }
+
+      setHasNewThreads(false);
+      setLastFetchTime(new Date());
+    } catch (error) {
+      console.error('Error fetching new threads:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [lastFetchTime]);
+
+  // Periodically check for new threads
   useEffect(() => {
-    if (isViewingThread || isViewingProfile || isUpdatingViews) {
-      return; // Don't update when viewing a thread or profile or already updating
+    if (isViewingThread || isViewingProfile) {
+      return; // Don't update when viewing a thread or profile
     }
 
-    const updateRepostViewsInterval = setInterval(() => {
-      const allReposts = [...threads, ...followingThreads].filter(t => t.type === 'repost');
-      const originalThreadIds = [...new Set(allReposts.map(r => r.original_thread?.id).filter(Boolean))];
-      
-      if (originalThreadIds.length > 0) {
-        setIsUpdatingViews(true);
-        originalThreadIds.forEach(threadId => {
-          updateRepostViews(threadId);
-        });
-        // Reset flag after a delay
-        setTimeout(() => setIsUpdatingViews(false), 1000);
-      }
-    }, 30000); // Update every 30 seconds instead of 10
+    const interval = setInterval(() => {
+      // Check for new threads
+      checkForNewThreads();
+    }, 30000); // Check every 30 seconds
 
-    return () => clearInterval(updateRepostViewsInterval);
-  }, [threads, followingThreads, isViewingThread, isViewingProfile, isUpdatingViews]);
+    return () => clearInterval(interval);
+  }, [isViewingThread, isViewingProfile, checkForNewThreads]);
 
-  // Update repost views when threads change - only once on initial load
-  useEffect(() => {
-    if ((threads.length > 0 || followingThreads.length > 0) && !isViewingThread && !isViewingProfile && !isUpdatingViews) {
-      const allReposts = [...threads, ...followingThreads].filter(t => t.type === 'repost');
-      const originalThreadIds = [...new Set(allReposts.map(r => r.original_thread?.id).filter(Boolean))];
-      
-      if (originalThreadIds.length > 0) {
-        setIsUpdatingViews(true);
-        // Update repost views after a short delay to ensure data is loaded
-        setTimeout(() => {
-          originalThreadIds.forEach(threadId => {
-            updateRepostViews(threadId);
-          });
-          // Reset flag after update
-          setTimeout(() => setIsUpdatingViews(false), 1000);
-        }, 2000);
-      }
-    }
-  }, [threads.length, followingThreads.length, isViewingThread, isViewingProfile, isUpdatingViews]); // Only depend on length, not the full arrays
+
+
 
   // Update avatar when changed in ProfileModal
   const handleAvatarUpdated = useCallback((url: string) => {
     setCurrentAvatarUrl(url);
     setAvatarCacheBust(Date.now());
-    fetchCurrentUserAvatar(); // Refetch to ensure sync
-  }, [fetchCurrentUserAvatar]);
+  }, []);
+
+  // Function to handle profile updates without refetching
+  const handleProfileUpdate = (userId: string, updates: any) => {
+    // Update threads with new profile info
+    setThreads(prev => prev.map(t => 
+      t.user_id === userId 
+        ? { ...t, profiles: { ...t.profiles, ...updates } }
+        : t
+    ));
+    
+    // Update following threads with new profile info
+    setFollowingThreads(prev => prev.map(t => 
+      t.user_id === userId 
+        ? { ...t, profiles: { ...t.profiles, ...updates } }
+        : t
+    ));
+  };
 
   const fetchBookmarkedThreads = useCallback(async (userSession: any) => {
     if (!userSession) {
@@ -287,22 +393,7 @@ export default function CommunityScreen() {
         console.error('Error fetching bookmarked reposts:', repostBookmarksError);
       }
 
-      // Get view counts for bookmarked threads
-      const threadIds = (threadBookmarks || []).map((bookmark: any) => bookmark.threads.id);
-      const { data: viewCountsData, error: viewCountsError } = await supabase
-        .from('thread_views')
-        .select('thread_id')
-        .in('thread_id', threadIds);
 
-      if (viewCountsError) {
-        console.error('Error fetching view counts for bookmarked threads:', viewCountsError);
-      }
-
-      // Create a map of thread_id to view count
-      const viewCountMap = (viewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
-        return acc;
-      }, {});
 
       // Process bookmarked threads
       const processedThreads = (threadBookmarks || []).map((bookmark: any) => {
@@ -312,7 +403,6 @@ export default function CommunityScreen() {
           type: 'thread',
           likeCount: thread.likes[0]?.count || 0,
           replyCount: thread.replies[0]?.count || 0,
-          view_count: viewCountMap[thread.id] || 0,
           isLiked: false,
           isBookmarked: true,
         };
@@ -331,7 +421,7 @@ export default function CommunityScreen() {
           created_at: repost.created_at,
           likeCount: 0, // Will be fetched separately
           replyCount: 0, // Will be fetched separately
-          view_count: 0, // Will be fetched separately
+
           repostCount: 0, // Will be fetched separately
           isLiked: false,
           isBookmarked: true,
@@ -447,7 +537,8 @@ export default function CommunityScreen() {
       const { data, error } = await supabase
         .from('profiles')
         .select('id')
-        .eq('is_admin', true);
+        .eq('is_admin', true)
+        .limit(1);
       
       if (error) {
         console.error('Error loading admin users:', error);
@@ -472,8 +563,16 @@ export default function CommunityScreen() {
         const { error } = await supabase.from('threads').delete().eq('id', threadId);
         if (error) throw error;
       }
-      await fetchThreads(session);
-      await fetchFollowingThreads(session);
+      
+      // Remove from threads state instead of refetching
+      setThreads(prev => prev.filter(t => t.id !== threadId));
+      setFollowingThreads(prev => prev.filter(t => t.id !== threadId));
+      
+      // If we're currently viewing the deleted thread, close it
+      if (selectedThread?.id === threadId) {
+        setIsViewingThread(false);
+        setSelectedThread(null);
+      }
     } catch (error) {
       console.error('Error deleting thread:', error);
       alert('Failed to delete thread');
@@ -575,22 +674,7 @@ export default function CommunityScreen() {
         userBookmarks = bookmarksResponse.data || [];
       }
 
-      // Get view counts for all threads
-      const threadIds = threadsData.map((thread: any) => thread.id);
-      const { data: viewCountsData, error: viewCountsError } = await supabase
-        .from('thread_views')
-          .select('thread_id')
-        .in('thread_id', threadIds);
 
-      if (viewCountsError) {
-        console.error('Error fetching view counts:', viewCountsError);
-      }
-
-      // Create a map of thread_id to view count
-      const viewCountMap = (viewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
-        return acc;
-      }, {});
         
       // Get repost counts for threads
       const { data: repostCountsData, error: repostCountsError } = await supabase
@@ -615,7 +699,7 @@ export default function CommunityScreen() {
         likeCount: thread.likes[0]?.count || 0,
         replyCount: thread.replies[0]?.count || 0,
         repostCount: repostCountMap[thread.id] || 0,
-        view_count: viewCountMap[thread.id] || 0,
+
         isLiked: userLikes.some(like => like.thread_id === thread.id),
         isBookmarked: userBookmarks.some(bookmark => bookmark.thread_id === thread.id),
       }));
@@ -638,25 +722,7 @@ export default function CommunityScreen() {
         return acc;
       }, {});
 
-      // Get real-time view counts for reposts (using original thread view counts)
-      const repostOriginalThreadIds = combinedRepostsData.map(r => r.original_thread_id);
-      const { data: repostViewCountsData, error: repostViewCountsError } = await supabase
-        .from('thread_views')
-        .select('thread_id')
-        .in('thread_id', repostOriginalThreadIds);
 
-      if (repostViewCountsError) {
-        console.error('Error fetching repost view counts:', repostViewCountsError);
-      }
-
-      // Create a map of thread_id to view count for reposts (using original thread IDs)
-      const repostViewCountMap = (repostViewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
-        return acc;
-      }, {});
-
-      console.log('Repost view count map:', repostViewCountMap);
-      console.log('Repost original thread IDs:', repostOriginalThreadIds);
 
       // Get reply counts for reposts (reposts can have their own replies)
       const { data: repostReplyCountsData, error: repostReplyCountsError } = await supabase
@@ -690,7 +756,7 @@ export default function CommunityScreen() {
           created_at: repost.created_at,
           likeCount: repostLikeCountMap[repost.id] || 0, // Likes on this repost
           replyCount: repostReplyCountMap[repost.id] || 0, // Replies on this repost
-          view_count: Math.max(repostViewCountMap[repost.original_thread_id] || 0, 1), // Views on original thread (minimum 1)
+
           repostCount: repostRepostCountMap[repost.id] || 0, // How many times this repost has been reposted
           isLiked: userLikes.some((like: any) => like.repost_id === repost.id),
           isBookmarked: userBookmarks.some(bookmark => bookmark.thread_id === repost.id),
@@ -702,12 +768,9 @@ export default function CommunityScreen() {
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setThreads(combinedFeed);
+      setLastFetchTime(new Date());
 
-      // Update repost views immediately after setting threads
-      const mainRepostOriginalThreadIds = processedReposts.map(r => r.original_thread?.id).filter(Boolean);
-      mainRepostOriginalThreadIds.forEach(threadId => {
-        updateRepostViews(threadId);
-      });
+
     } catch (error) {
       console.error('Error fetching threads:', error);
     } finally {
@@ -864,8 +927,9 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleThreadPress = async (thread: any) => {
-    // Set thread for overlay and update URL directly to community with thread parameter
+  const handleThreadPress = (thread: any) => {
+    console.log('Thread pressed:', thread.id, 'shouldUseAnimatedView:', shouldUseAnimatedView);
+    // Immediately set thread and show view for instant response
     setSelectedThread(thread);
     setIsViewingThread(true);
     
@@ -879,15 +943,23 @@ export default function CommunityScreen() {
       t.id === thread.id ? { ...t, viewTracked: true } : t
     ));
     
-    // Update repost views for this thread
-    updateRepostViews(thread.id);
-    
+    // Update URL immediately for better navigation
     router.push(`/community?thread=${thread.id}`);
   };
 
   const handleThreadIdPress = async (threadId: string) => {
-    // This function is used when we only have a thread ID (like from repost original thread)
-    // We need to fetch the thread data first, then navigate to it
+    // First check if we already have this thread in our state
+    const existingThread = threads.find(t => t.id === threadId) || followingThreads.find(t => t.id === threadId);
+    
+    if (existingThread) {
+      // Use existing thread data for instant response
+      setSelectedThread(existingThread);
+      setIsViewingThread(true);
+      router.push(`/community?thread=${threadId}`);
+      return;
+    }
+
+    // If not found in state, fetch from database
     try {
       const { data: threadData, error } = await supabase
         .from('threads')
@@ -976,10 +1048,25 @@ export default function CommunityScreen() {
     setShowRepostModal(true);
   };
 
-  const handleRepostSuccess = () => {
-    // Refresh both feeds to show new repost
-    fetchThreads(session);
-    fetchFollowingThreads(session);
+  const handleRepostSuccess = (newRepost: any) => {
+    // Add new repost to state instead of refetching
+    if (newRepost) {
+      const processedNewRepost = {
+        ...newRepost,
+        type: 'repost',
+        likeCount: 0,
+        replyCount: 0,
+        repostCount: 0,
+
+        isLiked: false,
+        isBookmarked: false,
+      };
+      
+      setThreads(prev => [processedNewRepost, ...prev]);
+      setFollowingThreads(prev => [processedNewRepost, ...prev]);
+      // Update last fetch time since we just added a new repost
+      setLastFetchTime(new Date());
+    }
   };
 
   // Search functionality
@@ -1093,46 +1180,8 @@ export default function CommunityScreen() {
     handleProfilePress(userId);
   };
 
-  // Function to update repost views in real-time
-  const updateRepostViews = async (originalThreadId: string) => {
-    try {
-      // Fetch the latest view count for the original thread
-      const { data: viewCountData, error } = await supabase
-        .from('thread_views')
-        .select('thread_id')
-        .eq('thread_id', originalThreadId);
 
-      if (error) {
-        console.error('Error fetching updated view count:', error);
-        return;
-      }
 
-      const newViewCount = viewCountData?.length || 0;
-
-      // Update the view count in both threads and followingThreads states
-      setThreads(prevThreads => {
-        const updated = prevThreads.map(thread => {
-          if (thread.type === 'repost' && thread.original_thread?.id === originalThreadId) {
-            return { ...thread, view_count: Math.max(newViewCount, 1) };
-          }
-          return thread;
-        });
-        return updated;
-      });
-
-      setFollowingThreads(prevThreads => {
-        const updated = prevThreads.map(thread => {
-          if (thread.type === 'repost' && thread.original_thread?.id === originalThreadId) {
-            return { ...thread, view_count: Math.max(newViewCount, 1) };
-          }
-          return thread;
-        });
-        return updated;
-      });
-    } catch (error) {
-      console.error('Error updating repost views:', error);
-    }
-  };
 
   const handleRepostLikeToggle = async (repostId: string, isLiked: boolean) => {
     if (!session) {
@@ -1219,10 +1268,14 @@ export default function CommunityScreen() {
           throw error;
         }
         
-        // Refresh both feeds after deletion
-        if (session) {
-          fetchThreads(session);
-          fetchFollowingThreads(session);
+        // Remove from threads state instead of refetching
+        setThreads(prev => prev.filter(t => t.id !== repostId));
+        setFollowingThreads(prev => prev.filter(t => t.id !== repostId));
+        
+        // If we're currently viewing the deleted repost, close it
+        if (selectedThread?.id === repostId) {
+          setIsViewingThread(false);
+          setSelectedThread(null);
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -1349,22 +1402,7 @@ export default function CommunityScreen() {
         console.error('Error fetching reposts from followed users:', repostsError);
       }
 
-      // Get view counts for these threads
-      const threadIds = threadsData.map((thread: any) => thread.id);
-      const { data: viewCountsData, error: viewCountsError } = await supabase
-        .from('thread_views')
-        .select('thread_id')
-        .in('thread_id', threadIds);
 
-      if (viewCountsError) {
-        console.error('Error fetching view counts for following threads:', viewCountsError);
-      }
-
-      // Create a map of thread_id to view count
-      const viewCountMap = (viewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
-        return acc;
-      }, {});
 
       // Get user's likes for threads and reposts
       const [userLikesData, userBookmarksData] = await Promise.all([
@@ -1401,7 +1439,7 @@ export default function CommunityScreen() {
         likeCount: item.likes[0]?.count || 0,
         replyCount: item.replies[0]?.count || 0,
         repostCount: repostCountMap[item.id] || 0,
-        view_count: viewCountMap[item.id] || 0,
+
       }));
 
       // Get repost engagement metrics for following feed
@@ -1423,24 +1461,9 @@ export default function CommunityScreen() {
         return acc;
       }, {});
 
-      // Get view counts for reposts (using original thread view counts for now)
-      const { data: followingRepostViewCountsData, error: followingRepostViewCountsError } = await supabase
-        .from('thread_views')
-        .select('thread_id')
-        .in('thread_id', followingRepostOriginalThreadIds);
 
-      if (followingRepostViewCountsError) {
-        console.error('Error fetching following repost view counts:', followingRepostViewCountsError);
-      }
 
-      // Create a map of original_thread_id to view count for reposts
-      const followingRepostViewCountMap = (followingRepostViewCountsData || []).reduce((acc: any, view: any) => {
-        acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
-        return acc;
-      }, {});
 
-      console.log('Following repost view count map:', followingRepostViewCountMap);
-      console.log('Following repost original thread IDs:', followingRepostOriginalThreadIds);
 
       // Get reply counts for reposts (reposts can have their own replies)
       const { data: followingRepostReplyCountsData, error: followingRepostReplyCountsError } = await supabase
@@ -1474,7 +1497,7 @@ export default function CommunityScreen() {
         created_at: repost.created_at,
         likeCount: followingRepostLikeCountMap[repost.id] || 0, // Likes on this repost
         replyCount: followingRepostReplyCountMap[repost.id] || 0, // Replies on this repost
-        view_count: Math.max(followingRepostViewCountMap[repost.original_thread_id] || 0, 1), // Views on original thread (minimum 1)
+
         repostCount: followingRepostRepostCountMap[repost.id] || 0, // How many times this repost has been reposted
         isLiked: likedRepostIds.has(repost.id),
         isBookmarked: followingRepostBookmarks.some(bookmark => bookmark.thread_id === repost.id),
@@ -1487,11 +1510,7 @@ export default function CommunityScreen() {
 
       setFollowingThreads(combinedFeed);
 
-      // Update repost views immediately after setting following threads
-      const followingFeedRepostOriginalThreadIds = processedReposts.map(r => r.original_thread?.id).filter(Boolean);
-      followingFeedRepostOriginalThreadIds.forEach(threadId => {
-        updateRepostViews(threadId);
-      });
+
     } catch (error) {
       console.error('Error fetching following threads:', error);
       setFollowingThreads([]);
@@ -1502,8 +1521,21 @@ export default function CommunityScreen() {
 
   const handleTabPress = (tab: 'for-you' | 'following') => {
     setActiveTab(tab);
-    if (tab === 'following' && session) {
+    if (tab === 'following' && session && followingThreads.length === 0) {
+      // Only fetch if we don't have following threads yet
       fetchFollowingThreads(session);
+    }
+  };
+
+  // Function to handle follow/unfollow updates without refetching
+  const handleFollowUpdate = (userId: string, isFollowing: boolean) => {
+    if (isFollowing) {
+      // User started following someone - add their threads to following feed
+      const userThreads = threads.filter(t => t.user_id === userId);
+      setFollowingThreads(prev => [...userThreads, ...prev]);
+    } else {
+      // User unfollowed someone - remove their threads from following feed
+      setFollowingThreads(prev => prev.filter(t => t.user_id !== userId));
     }
   };
 
@@ -1592,6 +1624,8 @@ export default function CommunityScreen() {
   );
 
   useEffect(() => {
+    if (isInitialized) return; // Prevent multiple initializations
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user?.email) {
         setCurrentUserEmail(session.user.email);
@@ -1600,12 +1634,11 @@ export default function CommunityScreen() {
           setAdminUserId(session.user.id);
         }
       }
-      // Only fetch threads on initial load, not on every auth change
-      if (!threads.length) {
-        fetchThreads(session);
-      }
+      // Only fetch threads on initial load
+      fetchThreads(session);
       // Load admin users from database
       loadAdminUsers();
+      setIsInitialized(true);
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
@@ -1616,64 +1649,44 @@ export default function CommunityScreen() {
           setAdminUserId(session.user.id);
         }
       }
-      // Only fetch threads if we don't have any data yet
-      if (!threads.length) {
+      // Only fetch threads if we haven't initialized yet
+      if (!isInitialized) {
         fetchThreads(session);
+        loadAdminUsers();
+        setIsInitialized(true);
       }
-      // Load admin users from database
-      loadAdminUsers();
     });
 
     // Fetch news from RSS feed
     fetchNews();
-  }, []);
+  }, [isInitialized]);
 
   // Handle thread parameter from URL
   useEffect(() => {
     if (threadId && typeof threadId === 'string') {
       // Find the thread in the current threads list
-      const thread = threads.find(t => t.id === threadId);
+      const thread = threads.find(t => t.id === threadId) || followingThreads.find(t => t.id === threadId);
       if (thread) {
         setSelectedThread(thread);
         setIsViewingThread(true);
-        
-        // Track view when thread is opened via URL (direct access)
-        if (session && !thread.viewTracked) {
-          const trackView = async () => {
-            try {
-              // Check if view already exists to avoid 409 conflict
-              const { data: existingView } = await supabase
-                .from('thread_views')
-                .select('id')
-                .eq('thread_id', threadId)
-                .eq('user_id', session.user.id)
-                .single();
+      } else if (threads.length > 0 || followingThreads.length > 0) {
+        // If we have threads loaded but this one isn't found, fetch it
+        handleThreadIdPress(threadId);
+      }
+      // If no threads are loaded yet, wait for them to load first
+    }
+  }, [threadId, threads, followingThreads, session]);
 
-              if (!existingView) {
-                await supabase.from('thread_views').insert({
-                  thread_id: threadId,
-                  user_id: session.user.id
-                });
-                
-                // Update repost views in real-time
-                updateRepostViews(threadId);
-              }
-              
-              // Mark as tracked to prevent duplicate tracking
-              setThreads(prev => prev.map(t => 
-                t.id === threadId ? { ...t, viewTracked: true } : t
-              ));
-            } catch (error) {
-              // Ignore 409 conflicts and other errors silently
-              console.error('Error tracking view:', error);
-            }
-          };
-          
-          trackView();
-        }
+  // Handle thread opening when threads are loaded and we have a threadId
+  useEffect(() => {
+    if (threadId && typeof threadId === 'string' && (threads.length > 0 || followingThreads.length > 0)) {
+      const thread = threads.find(t => t.id === threadId) || followingThreads.find(t => t.id === threadId);
+      if (thread && !selectedThread) {
+        setSelectedThread(thread);
+        setIsViewingThread(true);
       }
     }
-  }, [threadId, threads, session]);
+  }, [threads, followingThreads, threadId, selectedThread]);
 
   // Handle profile parameter from URL
   useEffect(() => {
@@ -1689,18 +1702,9 @@ export default function CommunityScreen() {
     // Refresh news on refresh
     fetchNews();
     
-    // Update repost views for all reposts in current feeds
-    const updateAllRepostViews = async () => {
-      const allReposts = [...threads, ...followingThreads].filter(t => t.type === 'repost');
-      const originalThreadIds = [...new Set(allReposts.map(r => r.original_thread?.id).filter(Boolean))];
-      
-      for (const threadId of originalThreadIds) {
-        await updateRepostViews(threadId);
-      }
-    };
-    
-    updateAllRepostViews();
-  }, [session, fetchNews, threads, followingThreads]);
+    // Reset new threads indicator
+    setHasNewThreads(false);
+  }, [session, fetchNews]);
 
   const handleCreateThread = async () => {
     if (!session) {
@@ -1735,17 +1739,38 @@ export default function CommunityScreen() {
         imageUrl = publicUrl;
       }
 
-      const { error } = await supabase.from('threads').insert({
+      const { data: newThread, error } = await supabase.from('threads').insert({
         content: content.trim(),
         user_id: session.user.id,
         image_url: imageUrl,
-      });
+      }).select(`
+        *,
+        profiles:user_id (username, avatar_url, favorite_team),
+        likes:likes!thread_id(count),
+        replies:replies!thread_id(count)
+      `).single();
 
       if (error) throw error;
 
       setContent('');
       setImage(null);
-      await fetchThreads(session);
+      
+      // Add new thread to state instead of refetching
+      if (newThread) {
+        const processedNewThread = {
+          ...newThread,
+          type: 'thread',
+          likeCount: 0,
+          replyCount: 0,
+          repostCount: 0,
+          isLiked: false,
+          isBookmarked: false,
+        };
+        
+        setThreads(prev => [processedNewThread, ...prev]);
+        // Update last fetch time since we just added a new thread
+        setLastFetchTime(new Date());
+      }
     } catch (error) {
       console.error('Error creating thread:', error);
       alert('Failed to create thread');
@@ -1785,18 +1810,39 @@ export default function CommunityScreen() {
         imageUrl = publicUrl;
       }
 
-      const { error } = await supabase.from('threads').insert({
+      const { data: newThread, error } = await supabase.from('threads').insert({
         content: modalContent.trim(),
         user_id: session.user.id,
         image_url: imageUrl,
-      });
+      }).select(`
+        *,
+        profiles:user_id (username, avatar_url, favorite_team),
+        likes:likes!thread_id(count),
+        replies:replies!thread_id(count)
+      `).single();
 
       if (error) throw error;
 
       setModalContent('');
       setModalImage(null);
       setShowPostModal(false);
-      await fetchThreads(session);
+      
+      // Add new thread to state instead of refetching
+      if (newThread) {
+        const processedNewThread = {
+          ...newThread,
+          type: 'thread',
+          likeCount: 0,
+          replyCount: 0,
+          repostCount: 0,
+          isLiked: false,
+          isBookmarked: false,
+        };
+        
+        setThreads(prev => [processedNewThread, ...prev]);
+        // Update last fetch time since we just added a new thread
+        setLastFetchTime(new Date());
+      }
     } catch (error) {
       console.error('Error creating thread:', error);
       alert('Failed to create thread');
@@ -2091,7 +2137,7 @@ export default function CommunityScreen() {
                             </View>
                           </View>
                           <Text style={{ fontSize: 14, color: '#000000', lineHeight: 18 }}>
-                            {item.content?.length > 100 ? `${item.content.substring(0, 100)}...` : item.content}
+                            {item.content?.length > 100 ? item.content.substring(0, 100) + '...' : item.content}
                           </Text>
                           {/* Show original thread preview for reposts */}
                           {item.original_thread && (
@@ -2107,7 +2153,7 @@ export default function CommunityScreen() {
                                 Original: {item.original_thread.profiles?.username || 'Unknown User'}
                               </Text>
                               <Text style={{ fontSize: 12, color: '#000000' }}>
-                                {item.original_thread.content?.length > 50 ? `${item.original_thread.content.substring(0, 50)}...` : item.original_thread.content}
+                                {item.original_thread.content?.length > 50 ? item.original_thread.content.substring(0, 50) + '...' : item.original_thread.content}
                               </Text>
                             </View>
                           )}
@@ -2172,7 +2218,7 @@ export default function CommunityScreen() {
                         onProfilePress={handleProfilePress}
                       />
                     </View>
-                  ) : isViewingThread && selectedThread ? (
+                  ) : isViewingThread && selectedThread && !shouldUseAnimatedView ? (
                     <ThreadView 
                       thread={selectedThread} 
                       onClose={handleCloseThread} 
@@ -2329,10 +2375,7 @@ export default function CommunityScreen() {
                                                   />
                                                 </View>
                                               )}
-                                              {/* Original thread views */}
-                                              <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
-                                                {item.original_thread?.view_count || 0} views
-                                              </Text>
+
                                             </View>
                                           </View>
                                         </TouchableOpacity>
@@ -2379,6 +2422,34 @@ export default function CommunityScreen() {
                           <Text style={{ fontSize: 18, fontWeight: 'bold', color: activeTab === 'following' ? '#000000' : '#505050' }} selectable={false}>Following</Text>
                         </TouchableOpacity>
                       </View>
+
+                      {/* Fetch New Threads Button */}
+                      {hasNewThreads && (
+                        <View style={{ padding: 16, backgroundColor: '#f0f9ff', borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
+                          <TouchableOpacity 
+                            onPress={fetchNewThreads}
+                            disabled={refreshing}
+                            style={{
+                              backgroundColor: '#dc2626',
+                              borderRadius: 20,
+                              paddingVertical: 8,
+                              paddingHorizontal: 16,
+                              alignItems: 'center',
+                              flexDirection: 'row',
+                              justifyContent: 'center',
+                              opacity: refreshing ? 0.7 : 1
+                            }}
+                          >
+                            {refreshing ? (
+                              <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
+                            ) : (
+                              <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 14 }}>
+                                🔄 Fetch New Threads
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      )}
                       {/* Create a new thread */}
                       <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
                         <View className="flex-row space-x-4">
@@ -2451,7 +2522,7 @@ export default function CommunityScreen() {
 
                         {/* Threads Feed */}
                         {activeTab === 'for-you' ? (
-                          loading ? (
+                          loading && threads.length === 0 ? (
                             <ActivityIndicator className="mt-8" />
                           ) : (
                                                         threads.map((item) => (
@@ -2574,10 +2645,7 @@ export default function CommunityScreen() {
                                                     />
                                                   </View>
                                                 )}
-                                                {/* Original thread views */}
-                                                <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
-                                                  {item.original_thread?.view_count || 0} views
-                                                </Text>
+
                                               </View>
                                             </View>
                                           </TouchableOpacity>
@@ -2631,7 +2699,7 @@ export default function CommunityScreen() {
                                       timestamp={item.created_at}
                                       likes={item.likeCount || 0}
                                       comments={item.replyCount || 0}
-                                      views={item.view_count || 0}
+
                                       reposts={item.repostCount || 0}
                                       isLiked={item.isLiked}
                                       isBookmarked={item.isBookmarked}
@@ -2785,10 +2853,7 @@ export default function CommunityScreen() {
                                                     />
                                                   </View>
                                                 )}
-                                                {/* Original thread views */}
-                                                <Text style={{ color: '#666666', fontSize: 11, marginTop: 4 }}>
-                                                  {item.original_thread?.view_count || 0} views
-                                                </Text>
+
                                               </View>
                                             </View>
                                           </TouchableOpacity>
@@ -2842,7 +2907,7 @@ export default function CommunityScreen() {
                                       timestamp={item.created_at}
                                       likes={item.likeCount || 0}
                                       comments={item.replyCount || 0}
-                                      views={item.view_count || 0}
+
                                       reposts={item.repostCount || 0}
                                       isLiked={item.isLiked}
                                       isBookmarked={item.isBookmarked}
@@ -3113,6 +3178,23 @@ export default function CommunityScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {/* Animated Thread View for Mobile Web */}
+      {shouldUseAnimatedView && selectedThread && (
+        <AnimatedThreadView 
+          thread={selectedThread} 
+          onClose={handleCloseThread} 
+          session={session} 
+          onProfilePress={handleProfilePress}
+          onRepostPress={handleRepostPress}
+          onThreadPress={handleThreadPress}
+          onThreadIdPress={handleThreadIdPress}
+          onDeleteRepost={handleRepostDeleteDirect}
+          isVisible={isViewingThread}
+        />
+      )}
+
+
 
     </SafeAreaView>
   );
