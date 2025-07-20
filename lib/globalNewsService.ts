@@ -25,8 +25,17 @@ class GlobalNewsService {
       return this.initializationPromise;
     }
 
+    // Start initialization immediately without waiting
     this.initializationPromise = this.performInitialization();
-    return this.initializationPromise;
+    
+    // Don't await here - let it run in background
+    this.initializationPromise.then(() => {
+      console.log('News service initialized successfully');
+    }).catch((error) => {
+      console.error('News service initialization failed:', error);
+    });
+    
+    return Promise.resolve();
   }
 
   private async performInitialization(): Promise<void> {

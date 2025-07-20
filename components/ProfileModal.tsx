@@ -48,6 +48,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
   const [activeTab, setActiveTab] = useState<'account' | 'following'>('account');
   const [followingUsers, setFollowingUsers] = useState<any[]>([]);
   const [followingLoading, setFollowingLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState<string>('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
   // Helper function to check if current user is admin
   const isCurrentUserAdmin = () => {
@@ -189,6 +191,54 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
     onClose();
   };
 
+  // Check username availability in real-time
+  const checkUsernameAvailability = useCallback(async (newUsername: string) => {
+    if (!newUsername.trim() || !session?.user?.id) {
+      setUsernameError('');
+      return;
+    }
+
+    setIsCheckingUsername(true);
+    try {
+      const { data: existingUser, error } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .eq('username', newUsername.trim())
+        .neq('id', session.user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error checking username:', error);
+        setUsernameError('Error checking username availability');
+        return;
+      }
+
+      if (existingUser) {
+        setUsernameError('Username already exists');
+      } else {
+        setUsernameError('');
+      }
+    } catch (error) {
+      console.error('Username check error:', error);
+      setUsernameError('Error checking username availability');
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  }, [session]);
+
+  // Debounced username check
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (username.trim()) {
+        checkUsernameAvailability(username);
+      } else {
+        setUsernameError('');
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [username, checkUsernameAvailability]);
+
   const handleTeamSelect = async (team: typeof F1_TEAMS[0]) => {
     setSelectedTeam(team);
     
@@ -214,7 +264,30 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
       return;
     }
 
+    if (usernameError) {
+      alert('Please fix the username error before saving.');
+      return;
+    }
+
     try {
+      // Check if username already exists (excluding current user)
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .eq('username', username.trim())
+        .neq('id', session.user.id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error checking username:', checkError);
+        return;
+      }
+
+      if (existingUser) {
+        alert('Username already exists. Please choose a different username.');
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({ username: username.trim() })
@@ -222,6 +295,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
       
       if (error) {
         console.error('Error updating username:', error);
+        if (error.code === '23505') { // Unique constraint violation
+          alert('Username already exists. Please choose a different username.');
+        }
         return;
       }
       
@@ -519,43 +595,63 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
                       <User size={20} color="#505050" />
                       <Text style={{ color: '#505050', marginLeft: 12, fontSize: 14 }}>Username</Text>
                     </View>
-                    <TouchableOpacity onPress={() => setIsEditingUsername(!isEditingUsername)}>
+                    <TouchableOpacity onPress={() => {
+                      setIsEditingUsername(!isEditingUsername);
+                      if (!isEditingUsername) {
+                        setUsernameError('');
+                      }
+                    }}>
                       <Text style={{ color: '#dc2626', fontSize: 14, fontWeight: '500' }}>
                         {isEditingUsername ? 'Cancel' : 'Edit'}
                       </Text>
                     </TouchableOpacity>
                   </View>
                   {isEditingUsername ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <TextInput
-                        style={{
-                          flex: 1,
-                          backgroundColor: '#ffffff',
-                          borderRadius: 8,
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderWidth: 1,
-                          borderColor: '#e5e5e5',
-                          color: '#000000',
-                          fontSize: 16,
-                          marginRight: 8
-                        }}
-                        value={username}
-                        onChangeText={setUsername}
-                        placeholder="Enter username"
-                        placeholderTextColor="#505050"
-                      />
-                      <TouchableOpacity
-                        onPress={handleUsernameUpdate}
-                        style={{
-                          backgroundColor: '#dc2626',
-                          paddingHorizontal: 16,
-                          paddingVertical: 8,
-                          borderRadius: 8
-                        }}
-                      >
-                        <Text style={{ color: '#ffffff', fontWeight: '500' }}>Save</Text>
-                      </TouchableOpacity>
+                    <View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                        <TextInput
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#ffffff',
+                            borderRadius: 8,
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderWidth: 1,
+                            borderColor: usernameError ? '#dc2626' : '#e5e5e5',
+                            color: '#000000',
+                            fontSize: 16,
+                            marginRight: 8
+                          }}
+                          value={username}
+                          onChangeText={setUsername}
+                          placeholder="Enter username"
+                          placeholderTextColor="#505050"
+                        />
+                        <TouchableOpacity
+                          onPress={handleUsernameUpdate}
+                          disabled={!!usernameError || isCheckingUsername}
+                          style={{
+                            backgroundColor: usernameError || isCheckingUsername ? '#9ca3af' : '#dc2626',
+                            paddingHorizontal: 16,
+                            paddingVertical: 8,
+                            borderRadius: 8
+                          }}
+                        >
+                          <Text style={{ color: '#ffffff', fontWeight: '500' }}>
+                            {isCheckingUsername ? 'Checking...' : 'Save'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      {usernameError && (
+                        <Text style={{ color: '#dc2626', fontSize: 12, marginTop: 4 }}>
+                          {usernameError}
+                        </Text>
+                      )}
+                      {isCheckingUsername && !usernameError && (
+                        <Text style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>
+                          Checking username availability...
+                        </Text>
+                      )}
                     </View>
                   ) : (
                     <Text style={{ color: '#000000', fontWeight: '500' }}>

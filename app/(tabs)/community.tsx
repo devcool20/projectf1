@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { globalNewsService } from '@/lib/globalNewsService';
 import { useRouter, useLocalSearchParams, usePathname } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { ThreadView } from '@/components/community/ThreadView';
@@ -27,7 +28,7 @@ import BookmarkCard from '@/components/community/BookmarkCard';
 import RepostModal from '@/components/RepostModal';
 
 
-import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, BarChart3 } from 'lucide-react-native';
+import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, BarChart3, Search } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
 import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
@@ -129,6 +130,13 @@ export default function CommunityScreen() {
   const [showRepostModal, setShowRepostModal] = useState(false);
   const [selectedThreadForRepost, setSelectedThreadForRepost] = useState<any>(null);
 
+  // Search functionality state
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{ threads: any[], profiles: any[] }>({ threads: [], profiles: [] });
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [isUpdatingViews, setIsUpdatingViews] = useState(false);
+
   const openRepostDeleteMenu = (repostId: string, event: any) => {
     setSelectedRepostForDelete(repostId);
     // Calculate position based on event
@@ -165,6 +173,57 @@ export default function CommunityScreen() {
   useEffect(() => {
     fetchCurrentUserAvatar();
   }, [session, fetchCurrentUserAvatar]);
+
+  // Initialize news service on app startup
+  useEffect(() => {
+    // Initialize news service in background
+    globalNewsService.initialize().catch(error => {
+      console.error('Failed to initialize news service:', error);
+    });
+  }, []);
+
+  // Periodically update repost views - only when not viewing a thread
+  useEffect(() => {
+    if (isViewingThread || isViewingProfile || isUpdatingViews) {
+      return; // Don't update when viewing a thread or profile or already updating
+    }
+
+    const updateRepostViewsInterval = setInterval(() => {
+      const allReposts = [...threads, ...followingThreads].filter(t => t.type === 'repost');
+      const originalThreadIds = [...new Set(allReposts.map(r => r.original_thread?.id).filter(Boolean))];
+      
+      if (originalThreadIds.length > 0) {
+        setIsUpdatingViews(true);
+        originalThreadIds.forEach(threadId => {
+          updateRepostViews(threadId);
+        });
+        // Reset flag after a delay
+        setTimeout(() => setIsUpdatingViews(false), 1000);
+      }
+    }, 30000); // Update every 30 seconds instead of 10
+
+    return () => clearInterval(updateRepostViewsInterval);
+  }, [threads, followingThreads, isViewingThread, isViewingProfile, isUpdatingViews]);
+
+  // Update repost views when threads change - only once on initial load
+  useEffect(() => {
+    if ((threads.length > 0 || followingThreads.length > 0) && !isViewingThread && !isViewingProfile && !isUpdatingViews) {
+      const allReposts = [...threads, ...followingThreads].filter(t => t.type === 'repost');
+      const originalThreadIds = [...new Set(allReposts.map(r => r.original_thread?.id).filter(Boolean))];
+      
+      if (originalThreadIds.length > 0) {
+        setIsUpdatingViews(true);
+        // Update repost views after a short delay to ensure data is loaded
+        setTimeout(() => {
+          originalThreadIds.forEach(threadId => {
+            updateRepostViews(threadId);
+          });
+          // Reset flag after update
+          setTimeout(() => setIsUpdatingViews(false), 1000);
+        }, 2000);
+      }
+    }
+  }, [threads.length, followingThreads.length, isViewingThread, isViewingProfile, isUpdatingViews]); // Only depend on length, not the full arrays
 
   // Update avatar when changed in ProfileModal
   const handleAvatarUpdated = useCallback((url: string) => {
@@ -573,15 +632,12 @@ export default function CommunityScreen() {
         return acc;
       }, {});
 
-      // Get view counts for reposts (using original thread view counts for now)
+      // Get real-time view counts for reposts (using original thread view counts)
       const repostOriginalThreadIds = combinedRepostsData.map(r => r.original_thread_id);
       const { data: repostViewCountsData, error: repostViewCountsError } = await supabase
         .from('thread_views')
         .select('thread_id')
         .in('thread_id', repostOriginalThreadIds);
-
-      // For now, let's give reposts a base view count to make them look more realistic
-      // In a real implementation, you would create a repost_views table
 
       if (repostViewCountsError) {
         console.error('Error fetching repost view counts:', repostViewCountsError);
@@ -592,6 +648,9 @@ export default function CommunityScreen() {
         acc[view.thread_id] = (acc[view.thread_id] || 0) + 1;
         return acc;
       }, {});
+
+      console.log('Repost view count map:', repostViewCountMap);
+      console.log('Repost original thread IDs:', repostOriginalThreadIds);
 
       // Get reply counts for reposts (reposts can have their own replies)
       const { data: repostReplyCountsData, error: repostReplyCountsError } = await supabase
@@ -636,13 +695,13 @@ export default function CommunityScreen() {
       const combinedFeed = [...processedThreads, ...processedReposts]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-
-      
-
-      
-
-
       setThreads(combinedFeed);
+
+      // Update repost views immediately after setting threads
+      const mainRepostOriginalThreadIds = processedReposts.map(r => r.original_thread?.id).filter(Boolean);
+      mainRepostOriginalThreadIds.forEach(threadId => {
+        updateRepostViews(threadId);
+      });
     } catch (error) {
       console.error('Error fetching threads:', error);
     } finally {
@@ -800,8 +859,6 @@ export default function CommunityScreen() {
   };
 
   const handleThreadPress = async (thread: any) => {
-
-    
     // Set thread for overlay and update URL directly to community with thread parameter
     setSelectedThread(thread);
     setIsViewingThread(true);
@@ -810,6 +867,14 @@ export default function CommunityScreen() {
     setThreads(prev => prev.map(t => 
       t.id === thread.id ? { ...t, viewTracked: true } : t
     ));
+    
+    // Also mark in following threads if it exists there
+    setFollowingThreads(prev => prev.map(t => 
+      t.id === thread.id ? { ...t, viewTracked: true } : t
+    ));
+    
+    // Update repost views for this thread
+    updateRepostViews(thread.id);
     
     router.push(`/community?thread=${thread.id}`);
   };
@@ -906,10 +971,161 @@ export default function CommunityScreen() {
   };
 
   const handleRepostSuccess = () => {
-    
     // Refresh both feeds to show new repost
     fetchThreads(session);
     fetchFollowingThreads(session);
+  };
+
+  // Search functionality
+  const handleSearchToggle = () => {
+    setShowSearch(!showSearch);
+    if (showSearch) {
+      setSearchQuery('');
+      setSearchResults({ threads: [], profiles: [] });
+    }
+  };
+
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults({ threads: [], profiles: [] });
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      const searchTerm = query.trim();
+
+
+
+      // Search for profiles - using proper Supabase syntax
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .ilike('username', `%${searchTerm}%`)
+        .limit(10);
+
+      if (profilesError) {
+        console.error('Error searching profiles:', profilesError);
+      }
+
+      // Search for threads - using proper Supabase syntax
+      const { data: threadsData, error: threadsError } = await supabase
+        .from('threads')
+        .select(`
+          *,
+          profiles:user_id (*)
+        `)
+        .ilike('content', `%${searchTerm}%`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (threadsError) {
+        console.error('Error searching threads:', threadsError);
+      }
+
+      // Search for reposts - using proper Supabase syntax
+      const { data: repostsData, error: repostsError } = await supabase
+        .from('reposts')
+        .select(`
+          *,
+          profiles:user_id (*),
+          original_thread:original_thread_id (*)
+        `)
+        .ilike('content', `%${searchTerm}%`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (repostsError) {
+        console.error('Error searching reposts:', repostsError);
+      }
+
+      console.log('Search results:', { 
+        profiles: profilesData?.length || 0, 
+        threads: threadsData?.length || 0,
+        reposts: repostsData?.length || 0
+      });
+      
+      // Debug: Let's see what content exists in the database
+      if (searchTerm.toLowerCase() === 'taklu') {
+        console.log('=== DEBUG: Looking for "taklu" ===');
+        console.log('Threads with content:', threadsData?.map(t => ({ id: t.id, content: t.content })));
+        console.log('Reposts with content:', repostsData?.map(r => ({ 
+          id: r.id, 
+          content: r.content, 
+          originalContent: r.original_thread?.content 
+        })));
+      }
+
+      setSearchResults({
+        profiles: profilesData || [],
+        threads: [...(threadsData || []), ...(repostsData || [])]
+      });
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch(searchQuery);
+      } else {
+        setSearchResults({ threads: [], profiles: [] });
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, performSearch]);
+
+  const handleSearchProfilePress = (userId: string) => {
+    setShowSearch(false);
+    setSearchQuery('');
+    setSearchResults({ threads: [], profiles: [] });
+    handleProfilePress(userId);
+  };
+
+  // Function to update repost views in real-time
+  const updateRepostViews = async (originalThreadId: string) => {
+    try {
+      // Fetch the latest view count for the original thread
+      const { data: viewCountData, error } = await supabase
+        .from('thread_views')
+        .select('thread_id')
+        .eq('thread_id', originalThreadId);
+
+      if (error) {
+        console.error('Error fetching updated view count:', error);
+        return;
+      }
+
+      const newViewCount = viewCountData?.length || 0;
+
+      // Update the view count in both threads and followingThreads states
+      setThreads(prevThreads => {
+        const updated = prevThreads.map(thread => {
+          if (thread.type === 'repost' && thread.original_thread?.id === originalThreadId) {
+            return { ...thread, view_count: Math.max(newViewCount, 1) };
+          }
+          return thread;
+        });
+        return updated;
+      });
+
+      setFollowingThreads(prevThreads => {
+        const updated = prevThreads.map(thread => {
+          if (thread.type === 'repost' && thread.original_thread?.id === originalThreadId) {
+            return { ...thread, view_count: Math.max(newViewCount, 1) };
+          }
+          return thread;
+        });
+        return updated;
+      });
+    } catch (error) {
+      console.error('Error updating repost views:', error);
+    }
   };
 
   const handleRepostLikeToggle = async (repostId: string, isLiked: boolean) => {
@@ -1217,6 +1433,9 @@ export default function CommunityScreen() {
         return acc;
       }, {});
 
+      console.log('Following repost view count map:', followingRepostViewCountMap);
+      console.log('Following repost original thread IDs:', followingRepostOriginalThreadIds);
+
       // Get reply counts for reposts (reposts can have their own replies)
       const { data: followingRepostReplyCountsData, error: followingRepostReplyCountsError } = await supabase
         .from('repost_replies')
@@ -1261,6 +1480,12 @@ export default function CommunityScreen() {
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setFollowingThreads(combinedFeed);
+
+      // Update repost views immediately after setting following threads
+      const followingFeedRepostOriginalThreadIds = processedReposts.map(r => r.original_thread?.id).filter(Boolean);
+      followingFeedRepostOriginalThreadIds.forEach(threadId => {
+        updateRepostViews(threadId);
+      });
     } catch (error) {
       console.error('Error fetching following threads:', error);
       setFollowingThreads([]);
@@ -1454,10 +1679,13 @@ export default function CommunityScreen() {
                 .single();
 
               if (!existingView) {
-              await supabase.from('thread_views').insert({
-                thread_id: threadId,
-                user_id: session.user.id
-              });
+                await supabase.from('thread_views').insert({
+                  thread_id: threadId,
+                  user_id: session.user.id
+                });
+                
+                // Update repost views in real-time
+                updateRepostViews(threadId);
               }
               
               // Mark as tracked to prevent duplicate tracking
@@ -1489,7 +1717,19 @@ export default function CommunityScreen() {
     fetchThreads(session);
     // Refresh news on refresh
     fetchNews();
-  }, [session, fetchNews]);
+    
+    // Update repost views for all reposts in current feeds
+    const updateAllRepostViews = async () => {
+      const allReposts = [...threads, ...followingThreads].filter(t => t.type === 'repost');
+      const originalThreadIds = [...new Set(allReposts.map(r => r.original_thread?.id).filter(Boolean))];
+      
+      for (const threadId of originalThreadIds) {
+        await updateRepostViews(threadId);
+      }
+    };
+    
+    updateAllRepostViews();
+  }, [session, fetchNews, threads, followingThreads]);
 
   const handleCreateThread = async () => {
     if (!session) {
@@ -1626,7 +1866,210 @@ export default function CommunityScreen() {
           <Menu size={24} color="#000000" />
         </TouchableOpacity>
         <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000000' }} selectable={false}>Community</Text>
-        <View className="w-6" />{/* Spacer */}
+        <TouchableOpacity onPress={handleSearchToggle}>
+          <Search size={24} color="#000000" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Search Bar */}
+      {showSearch && (
+        <View style={{ padding: 16, backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Search size={20} color="#666666" style={{ marginRight: 8 }} />
+            <TextInput
+              placeholder="Search threads and people..."
+              placeholderTextColor="#999999"
+              style={{
+                flex: 1,
+                fontSize: 16,
+                color: '#000000',
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                backgroundColor: '#f8f9fa',
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: '#e5e5e5',
+              }}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity 
+                onPress={() => {
+                  setSearchQuery('');
+                  setSearchResults({ threads: [], profiles: [] });
+                }}
+                style={{ marginLeft: 8, padding: 4 }}
+              >
+                <X size={16} color="#666666" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Search Results */}
+          {searchQuery.length > 0 && (
+            <View style={{ marginTop: 16 }}>
+              {searchLoading ? (
+                <ActivityIndicator style={{ marginVertical: 20 }} />
+              ) : (
+                <ScrollView style={{ maxHeight: 400 }}>
+                  {/* Profiles Results */}
+                  {searchResults.profiles.length > 0 && (
+                    <View style={{ marginBottom: 16 }}>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000000', marginBottom: 8 }}>People</Text>
+                      {searchResults.profiles.map((profile) => (
+                        <TouchableOpacity
+                          key={profile.id}
+                          onPress={() => handleSearchProfilePress(profile.id)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            padding: 12,
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: 8,
+                            marginBottom: 8,
+                            borderWidth: 1,
+                            borderColor: '#e5e5e5',
+                          }}
+                        >
+                          <Image
+                            source={{
+                              uri: profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.username?.charAt(0)}&background=random`
+                            }}
+                            style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }}
+                          />
+                          <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#000000' }}>
+                                {profile.username || 'Unknown User'}
+                              </Text>
+                              {profile.email === 'sharmadivyanshu265@gmail.com' ? (
+                                <Image 
+                                  source={require('@/assets/images/favicon.png')} 
+                                  style={{ width: 16, height: 14, marginLeft: 4 }}
+                                  resizeMode="contain"
+                                />
+                              ) : profile.favorite_team && TEAM_LOGOS[profile.favorite_team] && (
+                                <Image 
+                                  source={TEAM_LOGOS[profile.favorite_team]} 
+                                  style={{ width: 16, height: 14, marginLeft: 4 }}
+                                  resizeMode="contain"
+                                />
+                              )}
+                            </View>
+                            {profile.email && (
+                              <Text style={{ fontSize: 12, color: '#666666' }}>
+                                {profile.email}
+                              </Text>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Threads and Reposts Results */}
+                  {searchResults.threads.length > 0 && (
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000000', marginBottom: 8 }}>Threads & Reposts</Text>
+                      {searchResults.threads.map((item) => (
+                        <TouchableOpacity
+                          key={item.id}
+                          onPress={() => {
+                            setShowSearch(false);
+                            setSearchQuery('');
+                            setSearchResults({ threads: [], profiles: [] });
+                            handleThreadPress(item);
+                          }}
+                          style={{
+                            padding: 12,
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: 8,
+                            marginBottom: 8,
+                            borderWidth: 1,
+                            borderColor: '#e5e5e5',
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                            <Image
+                              source={{
+                                uri: item.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0)}&background=random`
+                              }}
+                              style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
+                            />
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#000000' }}>
+                                {item.profiles?.username || 'Unknown User'}
+                              </Text>
+                              {item.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                                <Image 
+                                  source={require('@/assets/images/favicon.png')} 
+                                  style={{ width: 12, height: 10, marginLeft: 2 }}
+                                  resizeMode="contain"
+                                />
+                              ) : item.profiles?.favorite_team && TEAM_LOGOS[item.profiles.favorite_team] && (
+                                <Image 
+                                  source={TEAM_LOGOS[item.profiles.favorite_team]} 
+                                  style={{ width: 12, height: 10, marginLeft: 2 }}
+                                  resizeMode="contain"
+                                />
+                              )}
+                              {/* Show repost indicator */}
+                              {item.original_thread_id && (
+                                <Text style={{ fontSize: 10, color: '#666666', marginLeft: 4, fontStyle: 'italic' }}>
+                                  reposted
+                                </Text>
+                              )}
+                            </View>
+                          </View>
+                          <Text style={{ fontSize: 14, color: '#000000', lineHeight: 18 }}>
+                            {item.content?.length > 100 ? `${item.content.substring(0, 100)}...` : item.content}
+                          </Text>
+                          {/* Show original thread preview for reposts */}
+                          {item.original_thread && (
+                            <View style={{ 
+                              marginTop: 8, 
+                              padding: 8, 
+                              backgroundColor: '#ffffff', 
+                              borderRadius: 4, 
+                              borderWidth: 1, 
+                              borderColor: '#e5e5e5' 
+                            }}>
+                              <Text style={{ fontSize: 12, color: '#666666', marginBottom: 4 }}>
+                                Original: {item.original_thread.profiles?.username || 'Unknown User'}
+                              </Text>
+                              <Text style={{ fontSize: 12, color: '#000000' }}>
+                                {item.original_thread.content?.length > 50 ? `${item.original_thread.content.substring(0, 50)}...` : item.original_thread.content}
+                              </Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* No Results */}
+                  {searchResults.profiles.length === 0 && searchResults.threads.length === 0 && searchQuery.length > 0 && !searchLoading && (
+                    <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                      <Text style={{ fontSize: 16, color: '#666666' }}>No results found</Text>
+                      <Text style={{ fontSize: 14, color: '#999999', marginTop: 4 }}>Try searching for something else</Text>
+                    </View>
+                  )}
+                </ScrollView>
+              )}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Desktop Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="hidden md:flex">
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000000' }} selectable={false}>Community</Text>
+        <TouchableOpacity onPress={handleSearchToggle} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f9fa', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#e5e5e5' }}>
+          <Search size={20} color="#666666" style={{ marginRight: 8 }} />
+          <Text style={{ color: '#666666', fontSize: 16 }}>Search</Text>
+        </TouchableOpacity>
       </View>
 
       {

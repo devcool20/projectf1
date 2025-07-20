@@ -64,13 +64,20 @@ export default function NewsScreen() {
     try {
       setLoading(true);
       
-      // Initialize global service if not already done
-      await globalNewsService.initialize();
-      
-      // Get articles from global service
+      // Get articles from global service (should already be loaded)
       const newsData = globalNewsService.getArticles();
-      setArticles(newsData);
-      setFilteredArticles(newsData);
+      
+      if (newsData.length > 0) {
+        // Use cached data if available
+        setArticles(newsData);
+        setFilteredArticles(newsData);
+      } else {
+        // Fallback: initialize if not already done
+        await globalNewsService.initialize();
+        const freshData = globalNewsService.getArticles();
+        setArticles(freshData);
+        setFilteredArticles(freshData);
+      }
     } catch (error) {
       // Silent error handling
     } finally {

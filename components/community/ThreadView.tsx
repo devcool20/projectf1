@@ -118,19 +118,19 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     }
   };
 
-  const fetchReplies = useCallback(async () => {
-    if (!thread) return;
+  const fetchReplies = useCallback(async (currentThread: any) => {
+    if (!currentThread) return;
     setLoadingReplies(true);
     try {
       let data;
       let error;
 
-      if (threadData?.type === 'repost') {
+      if (currentThread?.type === 'repost') {
         // For reposts, fetch from repost_replies table
         const { data: repostRepliesData, error: repostRepliesError } = await supabase
           .from('repost_replies')
           .select('*')
-          .eq('repost_id', thread.id)
+          .eq('repost_id', currentThread.id)
           .order('created_at', { ascending: true });
         
         if (repostRepliesError) throw repostRepliesError;
@@ -171,7 +171,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
             *,
             profiles:user_id (username, avatar_url, favorite_team)
           `)
-          .eq('thread_id', thread.id)
+          .eq('thread_id', currentThread.id)
           .order('created_at', { ascending: true });
         
         data = threadRepliesData;
@@ -182,7 +182,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
 
       if (data && data.length > 0) {
         // For repost replies, we need to handle likes differently since they're in a different table
-        if (threadData?.type === 'repost') {
+        if (currentThread?.type === 'repost') {
           // Fetch likes for repost replies from repost_reply_likes table
           if (data && data.length > 0) {
             const { data: likesData, error: likesError } = await supabase
@@ -271,18 +271,18 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     } finally {
       setLoadingReplies(false);
     }
-  }, [thread]);
+  }, []);
 
   useEffect(() => {
     if (thread) {
-      fetchReplies();
+      fetchReplies(thread);
     }
-  }, [thread]);
+  }, [thread, fetchReplies]);
 
   // Fetch current view count when component mounts
   useEffect(() => {
     const fetchViewCount = async () => {
-      if (thread) {
+      if (thread && !thread.view_count) {
         try {
           const { count, error } = await supabase
             .from('thread_views')
@@ -299,21 +299,12 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     };
     
     fetchViewCount();
-  }, [thread]);
+  }, [thread?.id]); // Only depend on thread ID, not the entire thread object
 
   useEffect(() => {
     setThreadData(thread);
 
-    // Debug: Log thread data for reposts
-    if (thread && thread.type === 'repost') {
-      console.log('DEBUG - ThreadView received repost:', {
-        id: thread.id,
-        original_thread_id: thread.original_thread_id,
-        original_thread_exists: !!thread.original_thread,
-        original_thread_image: thread.original_thread?.image_url,
-        original_thread_content: thread.original_thread?.content
-      });
-    }
+
 
     // Scroll to top when thread changes
     if (thread && scrollViewRef.current) {
