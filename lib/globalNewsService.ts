@@ -40,13 +40,7 @@ class GlobalNewsService {
 
   private async performInitialization(): Promise<void> {
     try {
-      // First try to get cached articles
-      const cachedArticles = await newsService.getCachedArticles(50);
-      if (cachedArticles.length > 0) {
-        this.articles = cachedArticles;
-      }
-
-      // Then fetch fresh news in background
+      // Fetch fresh news directly (no database dependency)
       const freshArticles = await newsService.fetchAllNews();
       if (freshArticles.length > 0) {
         this.articles = freshArticles;

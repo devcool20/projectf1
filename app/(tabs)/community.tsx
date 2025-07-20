@@ -42,7 +42,7 @@ function useColorScheme(): ColorSchemeName {
 }
 
 const NAV_ITEMS = [
-  { href: '/community', icon: MessageCircle, name: 'Community' },
+  { href: '/community', icon: MessageCircle, name: 'Threads' },
   { href: '/home', icon: Home, name: 'Home' },
   { href: '/screenings', icon: Clapperboard, name: 'Screenings' },
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
@@ -1504,9 +1504,6 @@ export default function CommunityScreen() {
   const SidebarContent = () => (
     <View style={{ flex: 1 }}>
       <View>
-        <View className="px-3 mb-6">
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }} selectable={false}>projectF1</Text>
-        </View>
         <View style={{ gap: 12 }}>
           {NAV_ITEMS.map((item) => {
             const isActive = (item.href === '/bookmarks' && showBookmarks) ||
@@ -1865,7 +1862,7 @@ export default function CommunityScreen() {
         <TouchableOpacity onPress={toggleSidebar}>
           <Menu size={24} color="#000000" />
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000000' }} selectable={false}>Community</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626' }} selectable={false}>projectF1</Text>
         <TouchableOpacity onPress={handleSearchToggle}>
           <Search size={24} color="#000000" />
         </TouchableOpacity>
@@ -2065,7 +2062,7 @@ export default function CommunityScreen() {
 
       {/* Desktop Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="hidden md:flex">
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#000000' }} selectable={false}>Community</Text>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }} selectable={false}>projectF1</Text>
         <TouchableOpacity onPress={handleSearchToggle} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f9fa', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#e5e5e5' }}>
           <Search size={20} color="#666666" style={{ marginRight: 8 }} />
           <Text style={{ color: '#666666', fontSize: 16 }}>Search</Text>

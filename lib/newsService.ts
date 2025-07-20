@@ -1,5 +1,3 @@
-import { supabase } from './supabase';
-
 // News API configuration
 const NEWS_API_BASE_URL = 'https://newsapi.org/v2';
 const NEWS_API_KEY = process.env.EXPO_PUBLIC_NEWS_API_KEY;
@@ -51,7 +49,7 @@ export interface NewsAPIArticle {
   content: string | null;
 }
 
-export interface NewsAPIResponse {
+interface NewsAPIResponse {
   status: string;
   totalResults: number;
   articles: NewsAPIArticle[];
@@ -155,14 +153,13 @@ class NewsService {
     }
   }
 
-  // Fetch from GNews API as fallback
+  // Fetch from GNews API
   private async fetchFromGNewsAPI(searchTerm: string, page: number = 1): Promise<NewsAPIArticle[]> {
     try {
       if (!GNEWS_API_KEY || GNEWS_API_KEY === 'your-gnews-api-key') {
-        console.log('GNews API key not configured');
         return [];
       }
-
+      
       const params = new URLSearchParams({
         q: searchTerm,
         lang: 'en',
@@ -191,18 +188,77 @@ class NewsService {
           id: null,
           name: article.source?.name || 'Unknown'
         },
-        author: article.author || null,
-        title: article.title || '',
-        description: article.description || '',
-        url: article.url || '',
-        urlToImage: article.image || null,
-        publishedAt: article.publishedAt || new Date().toISOString(),
-        content: article.content || ''
+        author: article.author,
+        title: article.title,
+        description: article.description,
+        url: article.url,
+        urlToImage: article.image,
+        publishedAt: article.publishedAt,
+        content: article.content
       }));
     } catch (error) {
       console.error('GNews API error:', error);
       return [];
     }
+  }
+
+  // Remove duplicate articles based on URL
+  private removeDuplicateArticles(articles: NewsAPIArticle[]): NewsAPIArticle[] {
+    const seen = new Set<string>();
+    return articles.filter(article => {
+      const url = article.url.split('?')[0]; // Remove query parameters
+      if (seen.has(url)) {
+        return false;
+      }
+      seen.add(url);
+      return true;
+    });
+  }
+
+  // Clean content by removing navigation elements and truncating
+  private cleanContent(content: string): string {
+    if (!content) return '';
+    
+    // Remove common navigation text
+    const navigationPatterns = [
+      /\[.*?\]/g, // Remove text in brackets
+      /Click here.*?\./gi,
+      /Read more.*?\./gi,
+      /Continue reading.*?\./gi,
+      /View full article.*?\./gi,
+      /Subscribe.*?\./gi,
+      /Sign up.*?\./gi
+    ];
+    
+    let cleaned = content;
+    navigationPatterns.forEach(pattern => {
+      cleaned = cleaned.replace(pattern, '');
+    });
+    
+    // Truncate if too long
+    if (cleaned.length > 500) {
+      cleaned = cleaned.substring(0, 500).trim() + '...';
+    }
+    
+    return cleaned;
+  }
+
+  // Check if content contains navigation elements
+  private containsNavigationContent(content: string): boolean {
+    const navigationKeywords = [
+      'click here', 'read more', 'continue reading', 'view full article',
+      'subscribe', 'sign up', 'log in', 'register', 'newsletter'
+    ];
+    
+    return navigationKeywords.some(keyword => 
+      content.toLowerCase().includes(keyword)
+    );
+  }
+
+  // Generate placeholder image based on title
+  private generatePlaceholderImage(title: string): string {
+    const encodedTitle = encodeURIComponent(title.substring(0, 50));
+    return `https://via.placeholder.com/400x200/DC2626/FFFFFF?text=${encodedTitle}`;
   }
 
   // Fetch all Formula 1 news from multiple search terms
@@ -302,28 +358,16 @@ class NewsService {
            }
          }
          
-         // Process articles and save to database
+         // Process articles and convert to our format
          const processedArticles: NewsArticle[] = [];
-         const limit = Math.min(f1RelevantArticles.length, 30); // Limit to 30 articles
+         const limit = Math.min(f1RelevantArticles.length, 30);
         
         for (let i = 0; i < limit; i++) {
           const apiArticle = f1RelevantArticles[i];
           
-          // Check if we already have this article in database
-          let existingArticle: NewsArticle | null = null;
-          try {
-            existingArticle = await this.getArticleByUrl(apiArticle.url);
-          } catch (dbError) {
-            // Silent error handling
-          }
-          
-          if (existingArticle) {
-            processedArticles.push(existingArticle);
-            continue;
-          }
-
           // Convert News API article to our format
-          const article: Partial<NewsArticle> = {
+          const article: NewsArticle = {
+            id: `article_${i}_${Date.now()}`, // Generate unique ID
             title: apiArticle.title,
             description: apiArticle.description || '',
             content: apiArticle.content || apiArticle.description || '',
@@ -332,7 +376,9 @@ class NewsService {
             author: apiArticle.author,
             published_at: apiArticle.publishedAt,
             source: apiArticle.source.name,
-            category: 'F1 News'
+            category: 'F1 News',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           };
 
           // Clean and validate content
@@ -361,20 +407,9 @@ class NewsService {
             article.content.length >= 100 && 
             !this.containsNavigationContent(article.content);
           
-          // Only save articles with images and good content
+          // Only include articles with images and good content
           if (article.image_url && hasGoodContent) {
-            try {
-              const savedArticle = await this.saveArticle(article as any);
-              if (savedArticle) {
-                processedArticles.push(savedArticle);
-              } else {
-                // Add the article anyway even if saving failed
-                processedArticles.push(article as any);
-              }
-            } catch (saveError) {
-              // Add the article anyway even if saving failed
-              processedArticles.push(article as any);
-            }
+            processedArticles.push(article);
           }
         }
 
@@ -390,83 +425,9 @@ class NewsService {
 
       return await Promise.race([fetchPromise, timeout]);
     } catch (error) {
+      console.error('News fetch error:', error);
       return [];
     }
-  }
-
-  // Remove duplicate articles based on URL
-  private removeDuplicateArticles(articles: NewsAPIArticle[]): NewsAPIArticle[] {
-    const seen = new Set<string>();
-    return articles.filter(article => {
-      const url = article.url.toLowerCase();
-      if (seen.has(url)) {
-        return false;
-      }
-      seen.add(url);
-      return true;
-    });
-  }
-
-  // Clean content text
-  private cleanContent(content: string): string {
-    try {
-      if (!content) return '';
-      
-      // Remove HTML tags if present
-      content = content.replace(/<[^>]*>/g, '');
-      
-      // Decode HTML entities
-      content = content.replace(/&amp;/g, '&');
-      content = content.replace(/&lt;/g, '<');
-      content = content.replace(/&gt;/g, '>');
-      content = content.replace(/&quot;/g, '"');
-      content = content.replace(/&#39;/g, "'");
-      content = content.replace(/&nbsp;/g, ' ');
-      content = content.replace(/&mdash;/g, '—');
-      content = content.replace(/&ndash;/g, '–');
-      content = content.replace(/&hellip;/g, '...');
-      
-      // Remove truncation patterns like "+754 chars" or similar
-      content = content.replace(/\+\d+\s*chars?/gi, '');
-      content = content.replace(/\[.*?\]/g, ''); // Remove square bracket content
-      content = content.replace(/\.\.\.$/, ''); // Remove trailing ellipsis
-      
-      // Remove common unwanted patterns
-      content = content.replace(/subscribe to our newsletter/gi, '');
-      content = content.replace(/follow us on/gi, '');
-      content = content.replace(/share this article/gi, '');
-      content = content.replace(/related articles/gi, '');
-      content = content.replace(/advertisement/gi, '');
-      content = content.replace(/sponsored content/gi, '');
-      
-      // Remove extra whitespace
-      content = content.replace(/\s+/g, ' ');
-      content = content.trim();
-      
-      return content;
-    } catch (error) {
-      return '';
-    }
-  }
-
-  // Check if content contains navigation elements
-  private containsNavigationContent(content: string): boolean {
-    const navKeywords = [
-      'skip to content', 'opens in a new tab', 'chevron dropdown',
-      'previous', 'next', 'round', 'schedule', 'results', 'standings',
-      'archive', 'sign in', 'subscribe', 'f1 tv', 'hospitality',
-      'experiences', 'store', 'tickets', 'authentics', 'fia',
-      'race series', 'driver standings', 'team standings', 'full schedule'
-    ];
-    
-    const lowerContent = content.toLowerCase();
-    return navKeywords.some(keyword => lowerContent.includes(keyword));
-  }
-
-  // Generate placeholder image
-  private generatePlaceholderImage(title: string): string {
-    const encodedTitle = encodeURIComponent(title.substring(0, 30));
-    return `https://via.placeholder.com/800x400/1f2937/ffffff?text=${encodedTitle}`;
   }
 
   // Get mock articles as final fallback
@@ -494,145 +455,41 @@ class NewsService {
       },
       {
         source: { id: null, name: 'Autosport' },
-        author: 'Autosport Team',
-        title: 'Ferrari Introduces Major Upgrades for Upcoming Race',
-        description: 'Italian team brings significant aerodynamic improvements to boost performance.',
-        url: 'https://www.autosport.com',
-        urlToImage: 'https://via.placeholder.com/400x200/DC2626/FFFFFF?text=Ferrari+Upgrades',
+        author: 'Autosport Staff',
+        title: 'Ferrari Shows Strong Pace in Latest Testing Session',
+        description: 'Scuderia Ferrari demonstrates promising performance with their latest car updates.',
+        url: 'https://www.autosport.com/f1',
+        urlToImage: 'https://via.placeholder.com/400x200/DC2626/FFFFFF?text=Ferrari',
         publishedAt: new Date(Date.now() - 7200000).toISOString(),
-        content: 'Ferrari has unveiled a comprehensive upgrade package for their SF-23 challenger, featuring new aerodynamic components designed to improve downforce and reduce drag. Team principal Frederic Vasseur expressed confidence in the improvements.'
-      },
-      {
-        source: { id: null, name: 'Motorsport.com' },
-        author: 'Motorsport Staff',
-        title: 'McLaren Confirms Driver Lineup for Next Season',
-        description: 'British team announces their driver pairing for the upcoming Formula 1 championship.',
-        url: 'https://www.motorsport.com/f1',
-        urlToImage: 'https://via.placeholder.com/400x200/DC2626/FFFFFF?text=McLaren+Lineup',
-        publishedAt: new Date(Date.now() - 10800000).toISOString(),
-        content: 'McLaren has officially confirmed their driver lineup for the next Formula 1 season, with Lando Norris continuing alongside Oscar Piastri. The team expressed excitement about their young driver pairing and their potential for future success.'
-      },
-      {
-        source: { id: null, name: 'BBC Sport' },
-        author: 'BBC F1 Team',
-        title: 'New Safety Regulations Announced for Formula 1',
-        description: 'FIA introduces enhanced safety measures following latest technical review.',
-        url: 'https://www.bbc.com/sport/formula1',
-        urlToImage: 'https://via.placeholder.com/400x200/DC2626/FFFFFF?text=F1+Safety',
-        publishedAt: new Date(Date.now() - 14400000).toISOString(),
-        content: 'The FIA has announced a series of new safety regulations for Formula 1, including enhanced cockpit protection and improved barrier systems. These measures aim to further improve driver safety in the sport.'
+        content: 'Ferrari has shown encouraging signs during their latest testing session, with both Charles Leclerc and Carlos Sainz reporting positive feedback about the car\'s handling and performance characteristics.'
       }
     ];
   }
 
-  // Get article from database by URL
-  private async getArticleByUrl(url: string): Promise<NewsArticle | null> {
-    try {
-      // Clean the URL to avoid encoding issues
-      const cleanUrl = url.split('?')[0]; // Remove query parameters
-      
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('*')
-        .ilike('url', `%${cleanUrl}%`) // Use ILIKE for partial matching
-        .limit(1)
-        .single();
-
-      if (error || !data) {
-        return null;
-      }
-
-      return data as NewsArticle;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  // Save article to database
-  private async saveArticle(article: Partial<NewsArticle>): Promise<NewsArticle | null> {
-    try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .insert({
-          title: article.title,
-          description: article.description,
-          content: article.content,
-          url: article.url,
-          image_url: article.image_url,
-          author: article.author,
-          published_at: article.published_at,
-          source: article.source,
-          category: article.category
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return null;
-      }
-
-      return data as NewsArticle;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  // Get cached articles from database
+  // Get cached articles (now just returns the in-memory cache)
   async getCachedArticles(limit: number = 50): Promise<NewsArticle[]> {
-    try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('*')
-        .order('published_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        return [];
-      }
-
-      return data as NewsArticle[];
-    } catch (error) {
-      return [];
-    }
+    return Array.from(this.cache.values()).slice(0, limit);
   }
 
-  // Get article by ID
+  // Get article by ID (from cache)
   async getArticleById(id: string): Promise<NewsArticle | null> {
-    try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error || !data) {
-        return null;
-      }
-
-      return data as NewsArticle;
-    } catch (error) {
-      return null;
-    }
+    return this.cache.get(id) || null;
   }
 
-  // Search articles
+  // Search articles (from cache)
   async searchArticles(query: string, limit: number = 20): Promise<NewsArticle[]> {
-    try {
-      const { data, error } = await supabase
-        .from('news_articles')
-        .select('*')
-        .or(`title.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%`)
-        .order('published_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        return [];
-      }
-
-      return data as NewsArticle[];
-    } catch (error) {
-      return [];
+    if (!query.trim()) {
+      return Array.from(this.cache.values()).slice(0, limit);
     }
+
+    const searchTerm = query.toLowerCase();
+    const results = Array.from(this.cache.values()).filter(article =>
+      article.title.toLowerCase().includes(searchTerm) ||
+      article.description.toLowerCase().includes(searchTerm) ||
+      article.content.toLowerCase().includes(searchTerm)
+    );
+
+    return results.slice(0, limit);
   }
 }
 
