@@ -41,16 +41,31 @@ export const AuthModal: FC<AuthModalProps> = ({ visible, onClose, onSuccess }) =
         if (!user) throw new Error('User not found after signup');
 
         // Create the profile entry
-        const { error: profileError } = await supabase
+        console.log('Creating profile for user:', user.id);
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .insert({
+          .upsert({
             id: user.id,
             username: email.split('@')[0],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           })
-          .select()
-          .single();
+          .select();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          throw profileError;
+        }
+
+        // Handle case where no profile data is returned
+        if (!profileData || profileData.length === 0) {
+          throw new Error('Profile creation failed - no data returned');
+        }
+
+        // If multiple profiles exist, use the first one (this shouldn't happen but handles edge cases)
+        const profile = profileData.length > 1 ? profileData[0] : profileData[0];
+
+        console.log('Profile created successfully:', profile);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -62,7 +77,18 @@ export const AuthModal: FC<AuthModalProps> = ({ visible, onClose, onSuccess }) =
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      
+      // Check for specific error types and provide better user guidance
+      if (errorMessage.includes('Invalid login credentials') || 
+          errorMessage.includes('Email not confirmed') ||
+          errorMessage.includes('User not found')) {
+        setError('No account found with this email. Please sign up to create a new account.');
+      } else if (errorMessage.includes('Wrong password')) {
+        setError('Incorrect password. Please try again.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

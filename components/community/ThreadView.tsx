@@ -685,7 +685,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                         <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
                           {threadData.profiles?.username || 'Unknown User'}
                         </Text>
-                        {threadData.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                        {threadData.profiles?.is_admin ? (
                           <Image 
                             source={require('@/assets/images/favicon.png')} 
                             style={{ width: 24, height: 22, marginLeft: 4 }}
@@ -838,7 +838,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                 isBookmarked={threadData.isBookmarked || false}
                 favoriteTeam={threadData.profiles?.favorite_team}
                 userId={threadData.user_id}
-                userEmail={threadData.profiles?.email}
+                                        userEmail={session?.user?.email || ''}
                 onCommentPress={() => {}} // No action needed in thread view
                 onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
                 onBookmarkPress={handleBookmarkToggle}
@@ -934,7 +934,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                         >
                           <Text style={{ fontWeight: 'bold', color: '#000', fontSize: USERNAME_FONT_SIZE }} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
                         </TouchableOpacity>
-                        {reply.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                        {reply.profiles?.is_admin ? (
                           <Image 
                             source={require('@/assets/images/favicon.png')} 
                             style={{ width: USERNAME_FONT_SIZE * 1.2, height: USERNAME_FONT_SIZE * 1.2, marginLeft: 6 }}

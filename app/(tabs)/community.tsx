@@ -16,6 +16,7 @@ import {
   Alert,
   Dimensions,
   Pressable,
+  SafeAreaView,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
@@ -34,6 +35,8 @@ import { ProfileModal } from '@/components/ProfileModal';
 import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import ProfileContainer from '@/components/profile/ProfileContainer';
+import { useAuth } from '@/contexts/AuthContext';
+import { LockedScreen } from '@/components/auth/LockedScreen';
 
 // Wrapper to handle web compatibility for useColorScheme
 function useColorScheme(): ColorSchemeName {
@@ -88,11 +91,18 @@ export default function CommunityScreen() {
   const [threads, setThreads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [session, setSession] = useState<any>(null);
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState('');
+  const [adminUserId, setAdminUserId] = useState('');
+  const [news, setNews] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'for-you' | 'following'>('for-you');
   const [showAuth, setShowAuth] = useState(false);
   const [content, setContent] = useState('');
   const [modalContent, setModalContent] = useState('');
-  const [news, setNews] = useState<any[]>([]);
   const [randomizedNews, setRandomizedNews] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [image, setImage] = useState<string | null>(null);
@@ -100,18 +110,14 @@ export default function CommunityScreen() {
   const [selectedThread, setSelectedThread] = useState<any | null>(null);
   const [isViewingThread, setIsViewingThread] = useState(false);
 
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showOtherUserProfileModal, setShowOtherUserProfileModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [showPostModal, setShowPostModal] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
+  const [showOtherUserProfileModal, setShowOtherUserProfileModal] = useState(false);
+  const [selectedThreadForRepost, setSelectedThreadForRepost] = useState<any>(null);
   const [followingThreads, setFollowingThreads] = useState<any[]>([]);
   const [followingLoading, setFollowingLoading] = useState(false);
-  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
-  const [adminUserId, setAdminUserId] = useState<string>('');
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState<string | null>(null);
   const [avatarCacheBust, setAvatarCacheBust] = useState<number>(Date.now());
+
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [bookmarkedThreads, setBookmarkedThreads] = useState<any[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(false);
@@ -128,14 +134,13 @@ export default function CommunityScreen() {
   const [isViewingProfile, setIsViewingProfile] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [showRepostModal, setShowRepostModal] = useState(false);
-  const [selectedThreadForRepost, setSelectedThreadForRepost] = useState<any>(null);
 
   // Search functionality state
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ threads: any[], profiles: any[] }>({ threads: [], profiles: [] });
   const [searchLoading, setSearchLoading] = useState(false);
   const [isUpdatingViews, setIsUpdatingViews] = useState(false);
+
+  const { session, triggerOnboarding } = useAuth();
 
   const openRepostDeleteMenu = (repostId: string, event: any) => {
     setSelectedRepostForDelete(repostId);
@@ -409,16 +414,16 @@ export default function CommunityScreen() {
 
   const openSidebar = () => {
     sidebarTranslateX.value = withTiming(0);
-    setIsSidebarOpen(true);
+    setSidebarOpen(true);
   };
 
   const closeSidebar = () => {
     sidebarTranslateX.value = withTiming(-256);
-    setIsSidebarOpen(false);
+    setSidebarOpen(false);
   };
 
   const toggleSidebar = () => {
-    if (isSidebarOpen) {
+    if (sidebarOpen) {
       closeSidebar();
     } else {
       openSidebar();
@@ -1494,7 +1499,7 @@ export default function CommunityScreen() {
     }
   }, []);
 
-  const handleTabPress = (tab: 'foryou' | 'following') => {
+  const handleTabPress = (tab: 'for-you' | 'following') => {
     setActiveTab(tab);
     if (tab === 'following' && session) {
       fetchFollowingThreads(session);
@@ -1587,7 +1592,6 @@ export default function CommunityScreen() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       if (session?.user?.email) {
         setCurrentUserEmail(session.user.email);
         // Set admin user ID if current user is admin
@@ -1604,7 +1608,6 @@ export default function CommunityScreen() {
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
       if (session?.user?.email) {
         setCurrentUserEmail(session.user.email);
         // Set admin user ID if current user is admin
@@ -1622,37 +1625,7 @@ export default function CommunityScreen() {
 
     // Fetch news from RSS feed
     fetchNews();
-
-
-
-        // Simple text selection prevention that doesn't interfere with inputs
-    const preventTextSelection = (e: Event) => {
-      const target = e.target as Element | null;
-      if (!target || !(target instanceof HTMLElement)) {
-        return;
-      }
-      // Always allow selection in input elements
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || 
-          target.hasAttribute('contenteditable') || target.closest('input, textarea')) {
-        return;
-      }
-      
-      // Only prevent text selection, not other interactions
-      if (e.type === 'selectstart') {
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    // Add minimal event listeners
-    document.addEventListener('selectstart', preventTextSelection, { passive: false });
-    
-    return () => {
-      document.removeEventListener('selectstart', preventTextSelection);
-    };
-
-
-  }, [fetchNews]);
+  }, []);
 
   // Handle thread parameter from URL
   useEffect(() => {
@@ -1855,8 +1828,12 @@ export default function CommunityScreen() {
     }
   };
 
+  const handleGetStarted = () => {
+    triggerOnboarding();
+  };
+
   return (
-    <View style={{ width: '100%', height: '100%', backgroundColor: '#ffffff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
       {/* Mobile Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="md:hidden">
         <TouchableOpacity onPress={toggleSidebar}>
@@ -1999,7 +1976,7 @@ export default function CommunityScreen() {
                               <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#000000' }}>
                                 {item.profiles?.username || 'Unknown User'}
                               </Text>
-                              {item.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                              {item.profiles?.is_admin ? (
                                 <Image 
                                   source={require('@/assets/images/favicon.png')} 
                                   style={{ width: 12, height: 10, marginLeft: 2 }}
@@ -2073,7 +2050,7 @@ export default function CommunityScreen() {
         // BEGIN main community feed UI
         <View className="flex-row flex-1 overflow-hidden">
           {/* Mobile Sidebar (Animated) */}
-          {isSidebarOpen && (
+          {sidebarOpen && (
             <Pressable
               className="absolute inset-0 z-10 bg-black/50 md:hidden"
               onPress={closeSidebar}
@@ -2172,7 +2149,7 @@ export default function CommunityScreen() {
                                                 <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
                                                   {item.profiles?.username || 'Unknown User'}
                                                 </Text>
-                                                {item.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                                                {item.profiles?.is_admin ? (
                                                   <Image 
                                                     source={require('@/assets/images/favicon.png')} 
                                                     style={{ width: 24, height: 22, marginLeft: 4 }}
@@ -2233,7 +2210,7 @@ export default function CommunityScreen() {
                                                 <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
                                                   {item.original_thread?.profiles?.username || 'Unknown User'}
                                                 </Text>
-                                                {item.original_thread?.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                                                {item.original_thread?.profiles?.is_admin ? (
                                                   <Image 
                                                     source={require('@/assets/images/favicon.png')} 
                                                     style={{ width: 16, height: 14, marginLeft: 2 }}
@@ -2287,7 +2264,7 @@ export default function CommunityScreen() {
                                   imageUrl={item.image_url}
                                   timestamp={item.created_at}
                                   favoriteTeam={item.profiles?.favorite_team}
-                                  isAdmin={item.profiles?.email === 'sharmadivyanshu265@gmail.com'}
+                                  isAdmin={item.profiles?.is_admin || false}
                                   onBookmarkPress={() => handleBookmarkToggleInBookmarks(item.id, item.isBookmarked)}
                                   onThreadPress={() => handleThreadPress(item)}
                                 />
@@ -2302,8 +2279,8 @@ export default function CommunityScreen() {
                     <>
                       {/* Header for "For you" / "Following" */}
                       <View style={{ flexDirection: 'row', justifyContent: 'space-around', borderBottomWidth: 1, borderBottomColor: '#9ca3af', padding: 16, backgroundColor: '#ffffff' }}>
-                        <TouchableOpacity onPress={() => handleTabPress('foryou')} style={{ flex: 1, alignItems: 'center' }}>
-                          <Text style={{ fontSize: 18, fontWeight: 'bold', color: activeTab === 'foryou' ? '#000000' : '#505050' }} selectable={false}>For you</Text>
+                        <TouchableOpacity onPress={() => handleTabPress('for-you')} style={{ flex: 1, alignItems: 'center' }}>
+                          <Text style={{ fontSize: 18, fontWeight: 'bold', color: activeTab === 'for-you' ? '#000000' : '#505050' }} selectable={false}>For you</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => handleTabPress('following')} style={{ flex: 1, alignItems: 'center' }}>
                           <Text style={{ fontSize: 18, fontWeight: 'bold', color: activeTab === 'following' ? '#000000' : '#505050' }} selectable={false}>Following</Text>
@@ -2380,7 +2357,7 @@ export default function CommunityScreen() {
                         
 
                         {/* Threads Feed */}
-                        {activeTab === 'foryou' ? (
+                        {activeTab === 'for-you' ? (
                           loading ? (
                             <ActivityIndicator className="mt-8" />
                           ) : (
@@ -2411,7 +2388,7 @@ export default function CommunityScreen() {
                                               <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
                                                 {item.profiles?.username || 'Unknown User'}
                                               </Text>
-                                              {item.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                                              {item.profiles?.is_admin ? (
                                                 <Image 
                                                   source={require('@/assets/images/favicon.png')} 
                                                   style={{ width: 24, height: 22, marginLeft: 4 }}
@@ -2579,7 +2556,7 @@ export default function CommunityScreen() {
                                       canAdminDelete={isCurrentUserAdmin()}
                                       isAdmin={isUserAdmin(item.user_id)}
                                       showReadMore={true}
-                                      userEmail={item.profiles?.email}
+                                      userEmail={session?.user?.email || ''}
                                     />
                                   </TouchableOpacity>
                                 )}
@@ -2618,7 +2595,7 @@ export default function CommunityScreen() {
                                               <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
                                                 {item.profiles?.username || 'Unknown User'}
                                               </Text>
-                                              {item.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                                              {item.profiles?.is_admin ? (
                                                 <Image 
                                                   source={require('@/assets/images/favicon.png')} 
                                                   style={{ width: 24, height: 22, marginLeft: 4 }}
@@ -2790,7 +2767,7 @@ export default function CommunityScreen() {
                                       canAdminDelete={isCurrentUserAdmin()}
                                       isAdmin={isUserAdmin(item.user_id)}
                                       showReadMore={true}
-                                      userEmail={item.profiles?.email}
+                                      userEmail={session?.user?.email || ''}
                                     />
                                   </TouchableOpacity>
                                 )}
@@ -2844,6 +2821,15 @@ export default function CommunityScreen() {
         </View>
         // END main community feed UI
       }
+
+      {/* Locked Screen for non-authenticated users */}
+      {!session && (
+        <LockedScreen
+          onGetStarted={handleGetStarted}
+          title="Join the F1 Community"
+          subtitle="Sign up to share your thoughts, engage with other fans, and stay updated with the latest F1 news!"
+        />
+      )}
 
       <AuthModal
         visible={showAuth}
@@ -3035,6 +3021,6 @@ export default function CommunityScreen() {
         </Pressable>
       </Modal>
 
-    </View>
+    </SafeAreaView>
   );
 }

@@ -13,21 +13,33 @@ export interface Database {
         Row: {
           id: string
           username: string
+          full_name: string | null
+          bio: string | null
           avatar_url: string | null
+          favorite_team: string | null
+          is_admin: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
           id: string
           username: string
+          full_name?: string | null
+          bio?: string | null
           avatar_url?: string | null
+          favorite_team?: string | null
+          is_admin?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           username?: string
+          full_name?: string | null
+          bio?: string | null
           avatar_url?: string | null
+          favorite_team?: string | null
+          is_admin?: boolean
           created_at?: string
           updated_at?: string
         }

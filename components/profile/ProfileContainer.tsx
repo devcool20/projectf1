@@ -86,6 +86,13 @@ export default function ProfileContainer({
   // Add state for repost modal
   const [showRepostModal, setShowRepostModal] = useState(false);
   const [selectedThreadForRepost, setSelectedThreadForRepost] = useState<any>(null);
+  
+  // Add state for delete profile
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deletingProfile, setDeletingProfile] = useState(false);
+  
+  // Add state for profile setup message
+  const [showProfileSetupMessage, setShowProfileSetupMessage] = useState(false);
 
   // Helper function to check if user is admin
   const isUserAdmin = (userProfile: any, userSession: any) => {
@@ -106,6 +113,8 @@ export default function ProfileContainer({
 
   useEffect(() => {
     fetchAllData();
+    // Reset profile setup message when session changes (user logs in/out)
+    setShowProfileSetupMessage(false);
   }, [userId, session]);
 
   // Prevent auto-refresh when switching browser tabs
@@ -150,18 +159,78 @@ export default function ProfileContainer({
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, full_name, bio, avatar_url, favorite_team, created_at, is_admin')
-        .eq('id', userId)
-        .single();
+        .eq('id', userId);
 
       if (profileError) {
         throw new Error(`Failed to fetch profile: ${profileError.message}`);
       }
 
-      if (!profileData) {
+      // Handle case where no profile is found or multiple profiles exist
+      if (!profileData || profileData.length === 0) {
+        // Try to create a profile if one doesn't exist
+        console.log('No profile found, attempting to create one for user:', userId);
+        
+        // Create a basic profile with minimal required data
+        const profileDataToInsert = {
+          id: userId,
+          username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user',
+          full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        console.log('Attempting to insert profile data:', profileDataToInsert);
+
+        const { data: newProfileData, error: createError } = await supabase
+          .from('profiles')
+          .insert(profileDataToInsert)
+          .select('id, username, full_name, bio, avatar_url, favorite_team, created_at, is_admin')
+          .single();
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          // Try to fetch the profile again in case it was created by a trigger
+          const { data: retryProfileData, error: retryError } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, bio, avatar_url, favorite_team, created_at, is_admin')
+            .eq('id', userId)
+            .single();
+
+          if (retryError || !retryProfileData) {
+            console.error('Error retrying profile fetch:', retryError);
+            // Show profile setup message instead of temporary profile
+            setProfile(null);
+            setShowProfileSetupMessage(true);
+            return; // Skip the rest of the function since we're showing setup message
+          }
+
+                  setProfile(retryProfileData);
+        setShowProfileSetupMessage(false); // Hide setup message since profile was found
+        return; // Skip the rest of the function since we found the profile
+        }
+
+        // Handle case where no profile data is returned
+        if (!newProfileData) {
+          // Show profile setup message instead of temporary profile
+          console.log('No profile data returned, showing setup message');
+          setProfile(null);
+          setShowProfileSetupMessage(true);
+          return; // Skip the rest of the function since we're showing setup message
+        }
+
+        setProfile(newProfileData);
+        setShowProfileSetupMessage(false); // Hide setup message since profile was created
+        return; // Skip the rest of the function since we just created the profile
+      }
+
+      // If multiple profiles exist, use the first one (this shouldn't happen but handles edge cases)
+      const profile = profileData.length > 1 ? profileData[0] : profileData[0];
+      
+      if (!profile) {
         throw new Error('Profile not found');
       }
 
-      setProfile(profileData);
+      setProfile(profile);
 
       // Fetch threads (posts) with like/bookmark/view counts
       const { data: threadsData, error: threadsError } = await supabase
@@ -1014,6 +1083,112 @@ export default function ProfileContainer({
     }
   };
 
+  const handleDeleteProfile = async (): Promise<void> => {
+    if (!session?.user?.id) return;
+
+    setDeletingProfile(true);
+    try {
+      const userId = session.user.id;
+      console.log('Starting profile deletion for user:', userId);
+
+      // Delete all user data manually in the correct order
+      console.log('Deleting repost reply likes...');
+      await supabase.from('repost_reply_likes').delete().eq('user_id', userId);
+
+      console.log('Deleting repost replies...');
+      await supabase.from('repost_replies').delete().eq('user_id', userId);
+
+      console.log('Deleting repost likes...');
+      await supabase.from('repost_likes').delete().eq('user_id', userId);
+
+      console.log('Deleting reposts...');
+      await supabase.from('reposts').delete().eq('user_id', userId);
+
+      console.log('Deleting thread views...');
+      await supabase.from('thread_views').delete().eq('user_id', userId);
+
+      console.log('Deleting bookmarks...');
+      await supabase.from('bookmarks').delete().eq('user_id', userId);
+
+      console.log('Deleting likes...');
+      await supabase.from('likes').delete().eq('user_id', userId);
+
+      console.log('Deleting replies...');
+      await supabase.from('replies').delete().eq('user_id', userId);
+
+      console.log('Deleting threads...');
+      await supabase.from('threads').delete().eq('user_id', userId);
+
+      console.log('Deleting follows...');
+      await supabase.from('follows').delete().or(`follower_id.eq.${userId},following_id.eq.${userId}`);
+
+      // Delete avatar from storage if exists
+      if (profile?.avatar_url) {
+        try {
+          console.log('Deleting avatar from storage...');
+          const avatarPath = profile.avatar_url.split('/').pop();
+          if (avatarPath) {
+            await supabase.storage
+              .from('avatars')
+              .remove([avatarPath]);
+          }
+        } catch (storageError) {
+          console.error('Error deleting avatar from storage:', storageError);
+          // Don't throw here as the main deletion succeeded
+        }
+      }
+
+      console.log('Deleting profile...');
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+        throw profileError;
+      }
+
+      console.log('Profile deletion completed successfully');
+
+      // Try to delete the auth user as well
+      console.log('Attempting to delete auth user...');
+      try {
+        const { data: authDeleteResult, error: authDeleteError } = await supabase.rpc('delete_auth_user', {
+          user_id: userId
+        });
+
+        if (authDeleteError) {
+          console.error('Error deleting auth user:', authDeleteError);
+          // Don't throw here as the profile is already deleted
+        } else {
+          console.log('Auth user deletion result:', authDeleteResult);
+          if (authDeleteResult) {
+            console.log('Auth user deleted successfully');
+          } else {
+            console.log('Auth user deletion failed or user not found');
+          }
+        }
+      } catch (authError) {
+        console.error('Error calling delete_auth_user function:', authError);
+        // Don't throw here as the profile is already deleted
+      }
+
+      // Sign out the user
+      console.log('Signing out user...');
+      await supabase.auth.signOut();
+      
+      setShowDeleteConfirmation(false);
+      console.log('Complete profile deletion process completed');
+    } catch (error) {
+      console.error('Error deleting profile:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      Alert.alert('Error', `Failed to delete profile: ${errorMessage}`);
+    } finally {
+      setDeletingProfile(false);
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -1058,6 +1233,38 @@ export default function ProfileContainer({
           }}
         >
           <Text style={{ color: '#666', fontWeight: 'bold' }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Profile setup message
+  if (showProfileSetupMessage) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', padding: 20 }}>
+        <View style={{ alignItems: 'center', marginBottom: 32 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 12, textAlign: 'center' }}>
+            Complete Your Profile Setup
+          </Text>
+          <Text style={{ fontSize: 16, color: '#657786', textAlign: 'center', marginBottom: 16, lineHeight: 24 }}>
+            Your account was created successfully, but your profile needs to be set up with your favorite team, bio, and other details.
+          </Text>
+          <Text style={{ fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 32, lineHeight: 20 }}>
+            Go back to the threads and come back to profile to edit all these things.
+          </Text>
+        </View>
+        <TouchableOpacity
+          onPress={onBack}
+          style={{
+            backgroundColor: '#dc2626',
+            paddingHorizontal: 32,
+            paddingVertical: 16,
+            borderRadius: 25,
+            alignItems: 'center',
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 16 }}>Go Back to Community</Text>
         </TouchableOpacity>
       </View>
     );
@@ -1353,9 +1560,9 @@ return (
           </TouchableOpacity>
         </View>
         
-        {/* Logout Button - only show for current user's profile */}
+        {/* Logout and Delete Buttons - only show for current user's profile */}
         {session?.user?.id === userId && (
-          <View style={{ alignItems: 'center' }}>
+          <View style={{ alignItems: 'center', gap: 12 }}>
             <TouchableOpacity
               onPress={handleLogout}
               style={{
@@ -1377,6 +1584,29 @@ return (
             >
               <LogOut size={18} color="#dc2626" style={{ marginRight: 8 }} />
               <Text style={{ color: '#dc2626', fontSize: 14, fontWeight: '600' }}>Logout</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              onPress={() => setShowDeleteConfirmation(true)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#dc2626',
+                paddingHorizontal: 20,
+                paddingVertical: 12,
+                borderRadius: 25,
+                borderWidth: 1,
+                borderColor: '#dc2626',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                opacity: 0.8
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600' }}>Delete Profile</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1469,7 +1699,7 @@ return (
                                 <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
                                   {item.profiles?.username || 'Unknown User'}
                                 </Text>
-                                {item.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                                {item.profiles?.is_admin ? (
                                   <Image 
                                     source={require('@/assets/images/favicon.png')} 
                                     style={{ width: 24, height: 22, marginLeft: 4 }}
@@ -1544,7 +1774,7 @@ return (
                                     <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
                                       {item.original_thread?.profiles?.username || 'Unknown User'}
                                     </Text>
-                                    {item.original_thread?.profiles?.email === 'sharmadivyanshu265@gmail.com' ? (
+                                    {item.original_thread?.profiles?.is_admin ? (
                                       <Image 
                                         source={require('@/assets/images/favicon.png')} 
                                         style={{ width: 16, height: 14, marginLeft: 2 }}
@@ -1633,7 +1863,7 @@ return (
                         isBookmarked={item.isBookmarked || false}
                         favoriteTeam={item.profiles?.favorite_team || profile.favorite_team}
                         userId={item.user_id}
-                        userEmail={item.profiles?.email || ''}
+                        userEmail={session?.user?.email || ''}
                         onCommentPress={() => handleThreadClick(item.id)}
                         onLikePress={() => handleLikeToggle(item.id, item.isLiked || false)}
                         onBookmarkPress={() => handleBookmarkToggle(item.id, item.isBookmarked || false)}
@@ -1641,7 +1871,7 @@ return (
                         onDeletePress={() => handleDeleteThread(item.id)}
                         onProfilePress={() => {}} // Already in profile view
                         canDelete={session?.user?.id === item.user_id}
-                        isAdmin={item.profiles?.email === 'sharmadivyanshu265@gmail.com'}
+                        isAdmin={item.profiles?.is_admin || false}
                         canAdminDelete={session?.user?.email === 'sharmadivyanshu265@gmail.com'}
                       />
                     </TouchableOpacity>
@@ -2022,6 +2252,107 @@ return (
         session={session}
         onRepostSuccess={handleRepostSuccess}
       />
+
+      {/* Delete Profile Confirmation Modal */}
+      <Modal
+        visible={showDeleteConfirmation}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowDeleteConfirmation(false)}
+      >
+        <View style={{ 
+          flex: 1, 
+          backgroundColor: 'rgba(0,0,0,0.5)', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          padding: 20
+        }}>
+          <View style={{ 
+            backgroundColor: '#ffffff', 
+            borderRadius: 16, 
+            padding: 24, 
+            width: '100%', 
+            maxWidth: 400,
+            alignItems: 'center'
+          }}>
+            <Text style={{ 
+              fontSize: 20, 
+              fontWeight: 'bold', 
+              color: '#dc2626', 
+              marginBottom: 16,
+              textAlign: 'center'
+            }}>
+              Delete Profile
+            </Text>
+            
+            <Text style={{ 
+              fontSize: 16, 
+              color: '#374151', 
+              marginBottom: 24,
+              textAlign: 'center',
+              lineHeight: 22
+            }}>
+              Are you sure you want to delete your profile? This action cannot be undone and will permanently remove all your data including:
+            </Text>
+            
+            <View style={{ 
+              backgroundColor: '#fef2f2', 
+              borderRadius: 8, 
+              padding: 16, 
+              marginBottom: 24,
+              width: '100%'
+            }}>
+              <Text style={{ color: '#dc2626', fontSize: 14, marginBottom: 4 }}>• All your posts and replies</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14, marginBottom: 4 }}>• All your likes and bookmarks</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14, marginBottom: 4 }}>• All your reposts and comments</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14, marginBottom: 4 }}>• Your profile information</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14 }}>• Your avatar and settings</Text>
+            </View>
+            
+            <View style={{ 
+              flexDirection: 'row', 
+              gap: 12, 
+              width: '100%'
+            }}>
+              <TouchableOpacity
+                onPress={() => setShowDeleteConfirmation(false)}
+                disabled={deletingProfile}
+                style={{ 
+                  flex: 1,
+                  backgroundColor: '#6b7280', 
+                  paddingVertical: 12, 
+                  borderRadius: 8,
+                  alignItems: 'center'
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: '600' }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={handleDeleteProfile}
+                disabled={deletingProfile}
+                style={{ 
+                  flex: 1,
+                  backgroundColor: '#dc2626', 
+                  paddingVertical: 12, 
+                  borderRadius: 8,
+                  alignItems: 'center'
+                }}
+              >
+                {deletingProfile ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={{ color: 'white', fontWeight: '600' }}>
+                    Delete Profile
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }; 

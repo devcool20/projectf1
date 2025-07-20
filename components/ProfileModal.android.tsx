@@ -35,6 +35,8 @@ export const ProfileModal: FC<ProfileModalProps> = ({
 
   const [selectedTeam, setSelectedTeam] = useState<F1Team>(F1_TEAMS[0]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deletingProfile, setDeletingProfile] = useState(false);
 
   // Helper function to check if current user is admin
   const isCurrentUserAdmin = () => {
@@ -96,6 +98,71 @@ export const ProfileModal: FC<ProfileModalProps> = ({
   const handleLogout = async (): Promise<void> => {
     await supabase.auth.signOut();
     onClose();
+  };
+
+  const handleDeleteProfile = async (): Promise<void> => {
+    if (!session?.user?.id) return;
+
+    setDeletingProfile(true);
+    try {
+      const userId = session.user.id;
+      console.log('Starting profile deletion for user:', userId);
+
+      // Delete all user data manually in the correct order
+      console.log('Deleting repost reply likes...');
+      await supabase.from('repost_reply_likes').delete().eq('user_id', userId);
+
+      console.log('Deleting repost replies...');
+      await supabase.from('repost_replies').delete().eq('user_id', userId);
+
+      console.log('Deleting repost likes...');
+      await supabase.from('repost_likes').delete().eq('user_id', userId);
+
+      console.log('Deleting reposts...');
+      await supabase.from('reposts').delete().eq('user_id', userId);
+
+      console.log('Deleting thread views...');
+      await supabase.from('thread_views').delete().eq('user_id', userId);
+
+      console.log('Deleting bookmarks...');
+      await supabase.from('bookmarks').delete().eq('user_id', userId);
+
+      console.log('Deleting likes...');
+      await supabase.from('likes').delete().eq('user_id', userId);
+
+      console.log('Deleting replies...');
+      await supabase.from('replies').delete().eq('user_id', userId);
+
+      console.log('Deleting threads...');
+      await supabase.from('threads').delete().eq('user_id', userId);
+
+      console.log('Deleting follows...');
+      await supabase.from('follows').delete().or(`follower_id.eq.${userId},following_id.eq.${userId}`);
+
+      console.log('Deleting profile...');
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+        throw profileError;
+      }
+
+      console.log('Profile deletion completed successfully');
+
+      // Sign out the user
+      await supabase.auth.signOut();
+      
+      setShowDeleteConfirmation(false);
+      onClose();
+    } catch (error) {
+      console.error('Error deleting profile:', error);
+      alert('Failed to delete profile. Please try again.');
+    } finally {
+      setDeletingProfile(false);
+    }
   };
 
   const handleTeamSelect = async (team: F1Team): Promise<void> => {
@@ -250,6 +317,14 @@ export const ProfileModal: FC<ProfileModalProps> = ({
       >
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
+
+      {/* Delete Profile Button */}
+      <TouchableOpacity 
+        style={[styles.logoutButton, { backgroundColor: '#dc2626', opacity: 0.8, marginTop: 12 }]}
+        onPress={() => setShowDeleteConfirmation(true)}
+      >
+        <Text style={styles.logoutText}>Delete Profile</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -299,6 +374,103 @@ export const ProfileModal: FC<ProfileModalProps> = ({
           </ScrollView>
         </View>
       </View>
+
+      {/* Delete Profile Confirmation Modal */}
+      <Modal
+        visible={showDeleteConfirmation}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowDeleteConfirmation(false)}
+      >
+        <View style={{ 
+          flex: 1, 
+          backgroundColor: 'rgba(0,0,0,0.5)', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          padding: 20
+        }}>
+          <View style={{ 
+            backgroundColor: '#ffffff', 
+            borderRadius: 16, 
+            padding: 24, 
+            width: '100%', 
+            maxWidth: 400,
+            alignItems: 'center'
+          }}>
+            <Text style={{ 
+              fontSize: 20, 
+              fontWeight: 'bold', 
+              color: '#dc2626', 
+              marginBottom: 16,
+              textAlign: 'center'
+            }}>
+              Delete Profile
+            </Text>
+            
+            <Text style={{ 
+              fontSize: 16, 
+              color: '#374151', 
+              marginBottom: 24,
+              textAlign: 'center',
+              lineHeight: 22
+            }}>
+              Are you sure you want to delete your profile? This action cannot be undone and will permanently remove all your data including:
+            </Text>
+            
+            <View style={{ 
+              backgroundColor: '#fef2f2', 
+              borderRadius: 8, 
+              padding: 16, 
+              marginBottom: 24,
+              width: '100%'
+            }}>
+              <Text style={{ color: '#dc2626', fontSize: 14, marginBottom: 4 }}>• All your posts and replies</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14, marginBottom: 4 }}>• All your likes and bookmarks</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14, marginBottom: 4 }}>• All your reposts and comments</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14, marginBottom: 4 }}>• Your profile information</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14 }}>• Your avatar and settings</Text>
+            </View>
+            
+            <View style={{ 
+              flexDirection: 'row', 
+              gap: 12, 
+              width: '100%'
+            }}>
+              <TouchableOpacity
+                onPress={() => setShowDeleteConfirmation(false)}
+                disabled={deletingProfile}
+                style={{ 
+                  flex: 1,
+                  backgroundColor: '#6b7280', 
+                  paddingVertical: 12, 
+                  borderRadius: 8,
+                  alignItems: 'center'
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: '600' }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={handleDeleteProfile}
+                disabled={deletingProfile}
+                style={{ 
+                  flex: 1,
+                  backgroundColor: '#dc2626', 
+                  paddingVertical: 12, 
+                  borderRadius: 8,
+                  alignItems: 'center'
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: '600' }}>
+                  {deletingProfile ? 'Deleting...' : 'Delete Profile'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }; 

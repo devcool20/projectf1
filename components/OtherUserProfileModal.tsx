@@ -55,11 +55,23 @@ export const OtherUserProfileModal: React.FC<OtherUserProfileModalProps> = ({
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, favorite_team, avatar_url')
-        .eq('id', userId)
-        .single();
+        .eq('id', userId);
 
       if (error) throw error;
-      setProfile(data);
+      
+      // Handle case where no profile is found or multiple profiles exist
+      if (!data || data.length === 0) {
+        throw new Error('Profile not found');
+      }
+
+      // If multiple profiles exist, use the first one (this shouldn't happen but handles edge cases)
+      const profile = data.length > 1 ? data[0] : data[0];
+      
+      if (!profile) {
+        throw new Error('Profile not found');
+      }
+      
+      setProfile(profile);
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {

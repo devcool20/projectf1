@@ -109,21 +109,61 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id)
-        .single();
+        .eq('id', session.user.id);
 
       if (error) {
         console.error('Error loading profile:', error);
         return;
       }
 
-      if (data) {
-        setProfile(data);
-        setUsername(data.username || '');
-        setFullName(data.full_name || '');
-        setBio(data.bio || '');
-        setSelectedTeam(data.favorite_team || '');
-        setAvatarUrl(data.avatar_url || '');
+      // Handle case where no profile is found or multiple profiles exist
+      if (!data || data.length === 0) {
+        // Try to create a profile if one doesn't exist
+        console.log('No profile found, attempting to create one for user:', session.user.id);
+        const { data: newProfileData, error: createError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: session.user.id,
+            username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select('*');
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          return;
+        }
+
+        // Handle case where no profile data is returned
+        if (!newProfileData || newProfileData.length === 0) {
+          console.error('Profile not found and could not be created');
+          return;
+        }
+
+        // If multiple profiles exist, use the first one (this shouldn't happen but handles edge cases)
+        const profile = newProfileData.length > 1 ? newProfileData[0] : newProfileData[0];
+
+        // Use the newly created profile data
+        setProfile(profile);
+        setUsername(profile.username || '');
+        setFullName(profile.full_name || '');
+        setBio(profile.bio || '');
+        setSelectedTeam(profile.favorite_team || '');
+        setAvatarUrl(profile.avatar_url || '');
+        return; // Skip the rest since we just created the profile
+      }
+
+      // If multiple profiles exist, use the first one (this shouldn't happen but handles edge cases)
+      const profile = data.length > 1 ? data[0] : data[0];
+      
+      if (profile) {
+        setProfile(profile);
+        setUsername(profile.username || '');
+        setFullName(profile.full_name || '');
+        setBio(profile.bio || '');
+        setSelectedTeam(profile.favorite_team || '');
+        setAvatarUrl(profile.avatar_url || '');
       }
     } catch (error) {
       console.error('Error loading profile:', error);
