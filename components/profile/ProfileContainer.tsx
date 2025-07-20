@@ -1399,7 +1399,7 @@ return (
               paddingVertical: 10,
               borderRadius: 25,
               borderWidth: 1,
-              borderColor: isFollowing ? '#e5e5e5' : '#dc2626',
+              borderColor: isFollowing ? '#ffffff' : '#dc2626',
               backgroundColor: isFollowing ? '#ffffff' : '#dc2626',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 1 },
@@ -1458,7 +1458,7 @@ return (
                   borderRadius: 16, 
                   padding: 6, 
                   borderWidth: 2, 
-                  borderColor: '#e5e5e5',
+                  borderColor: '#ffffff',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.15,
@@ -1753,7 +1753,7 @@ return (
                               onPress={() => handleThreadClick(item.original_thread?.id)}
                               style={{
                                 borderWidth: 1,
-                                borderColor: '#e5e5e5',
+                                borderColor: '#ffffff',
                                 borderRadius: 12,
                                 padding: 12,
                                 backgroundColor: '#f8f9fa',

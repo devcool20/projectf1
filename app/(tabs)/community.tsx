@@ -1862,7 +1862,7 @@ export default function CommunityScreen() {
                 backgroundColor: '#f8f9fa',
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: '#e5e5e5',
+                borderColor: '#ffffff',
               }}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -1904,7 +1904,7 @@ export default function CommunityScreen() {
                             borderRadius: 8,
                             marginBottom: 8,
                             borderWidth: 1,
-                            borderColor: '#e5e5e5',
+                            borderColor: '#ffffff',
                           }}
                         >
                           <Image
@@ -1962,7 +1962,7 @@ export default function CommunityScreen() {
                             borderRadius: 8,
                             marginBottom: 8,
                             borderWidth: 1,
-                            borderColor: '#e5e5e5',
+                            borderColor: '#ffffff',
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
@@ -2008,7 +2008,7 @@ export default function CommunityScreen() {
                               backgroundColor: '#ffffff', 
                               borderRadius: 4, 
                               borderWidth: 1, 
-                              borderColor: '#e5e5e5' 
+                              borderColor: '#ffffff' 
                             }}>
                               <Text style={{ fontSize: 12, color: '#666666', marginBottom: 4 }}>
                                 Original: {item.original_thread.profiles?.username || 'Unknown User'}
@@ -2040,7 +2040,7 @@ export default function CommunityScreen() {
       {/* Desktop Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="hidden md:flex">
         <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }} selectable={false}>projectF1</Text>
-        <TouchableOpacity onPress={handleSearchToggle} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f9fa', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#e5e5e5' }}>
+        <TouchableOpacity onPress={handleSearchToggle} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f9fa', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#ffffff' }}>
           <Search size={20} color="#666666" style={{ marginRight: 8 }} />
           <Text style={{ color: '#666666', fontSize: 16 }}>Search</Text>
         </TouchableOpacity>

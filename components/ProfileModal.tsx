@@ -777,7 +777,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
                             paddingHorizontal: 12,
                             paddingVertical: 8,
                             borderWidth: 1,
-                            borderColor: usernameError ? '#dc2626' : '#e5e5e5',
+                            borderColor: usernameError ? '#dc2626' : '#ffffff',
                             color: '#000000',
                             fontSize: 16,
                             marginRight: 8
@@ -881,7 +881,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
                                 padding: 12,
                                 borderRadius: 8,
                                 borderWidth: 2,
-                                borderColor: selectedTeam.name === team.name ? '#dc2626' : '#e5e5e5',
+                                borderColor: selectedTeam.name === team.name ? '#dc2626' : '#ffffff',
                                 backgroundColor: selectedTeam.name === team.name ? '#fef2f2' : '#ffffff'
                               }}
                               onPress={() => handleTeamSelect(team)}

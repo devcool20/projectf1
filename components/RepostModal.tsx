@@ -227,7 +227,7 @@ export default function RepostModal({
           {originalThread && (
             <View style={{
               borderWidth: 1,
-              borderColor: '#e5e5e5',
+              borderColor: '#ffffff',
               borderRadius: 12,
               padding: 16,
               backgroundColor: '#f8f9fa',

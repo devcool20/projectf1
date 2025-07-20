@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(96, 96, 96, 0.1)',
   },
   teamOptionUnselected: {
-    borderColor: '#747272',
+    borderColor: '#ffffff',
     backgroundColor: '#f9f9f9',
   },
   teamOptionLogo: {

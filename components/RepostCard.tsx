@@ -171,7 +171,7 @@ export default function RepostCard({
             onPress={(e) => handleOriginalThreadPress(repost.original_thread_id, e)}
             style={{
               borderWidth: 1,
-              borderColor: '#e5e5e5',
+              borderColor: '#ffffff',
               borderRadius: 12,
               padding: 12,
               backgroundColor: '#f8f9fa',

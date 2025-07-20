@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#e5e5e5',
+    borderColor: '#ffffff',
   },
   
   searchIcon: {
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#e5e5e5',
+    borderColor: '#ffffff',
     paddingVertical: 16,
     paddingHorizontal: 16,
   },
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#e5e5e5',
+    borderColor: '#ffffff',
   },
   
   filterChipActive: {

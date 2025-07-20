@@ -22,7 +22,7 @@ export const buttonStyles = StyleSheet.create({
   },
   outline: {
     borderWidth: 1,
-    borderColor: '#747272', // border
+    borderColor: '#ffffff', // border
     backgroundColor: 'transparent',
   },
   secondary: {

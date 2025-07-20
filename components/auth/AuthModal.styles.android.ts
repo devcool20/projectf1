@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Architects Daughter',
     borderWidth: 1,
-    borderColor: '#e3e3e3',
+    borderColor: '#ffffff',
   },
   button: {
     backgroundColor: '#606060',

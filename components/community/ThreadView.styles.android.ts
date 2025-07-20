@@ -68,7 +68,7 @@ export const styles = StyleSheet.create({
     minHeight: 36,
     maxHeight: 36,
     borderWidth: 1,
-    borderColor: '#747272', // --border
+    borderColor: '#ffffff', // --border
     fontFamily: 'Architects Daughter',
   },
   imagePickerButton: {

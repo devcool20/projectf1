@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#ffffff',
     outlineStyle: 'none',
     outlineWidth: 0,
     outlineColor: 'transparent',
@@ -671,7 +671,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#ffffff',
     marginBottom: 16,
   },
   teamIcon: {

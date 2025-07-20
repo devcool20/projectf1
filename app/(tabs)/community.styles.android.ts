@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: '#747272', // --border
+    borderColor: '#ffffff', // --border
   },
   // Feed container
   feedContainer: {
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderBottomWidth: 1,
-    borderColor: '#747272', // --border
+    borderColor: '#ffffff', // --border
     padding: 16,
     backgroundColor: '#ffffff', // --card
   },
@@ -87,7 +87,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000000',
     backgroundColor: 'transparent',
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: '#ffffff',
     padding: 0,
     lineHeight: 24,
     minHeight: 40,

@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e5e5e5',
+    borderColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
   },
   uploadContainer: {
     borderWidth: 2,
-    borderColor: '#e5e5e5',
+    borderColor: '#ffffff',
     borderStyle: 'dashed',
     borderRadius: 16,
     padding: 20,

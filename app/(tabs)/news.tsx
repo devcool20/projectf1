@@ -442,7 +442,7 @@ export default function NewsScreen() {
                   borderRadius: 16,
                   backgroundColor: selectedSource === source ? '#dc2626' : '#f8f9fa',
                   borderWidth: 1,
-                  borderColor: selectedSource === source ? '#dc2626' : '#e5e5e5',
+                  borderColor: selectedSource === source ? '#dc2626' : '#ffffff',
                 }}
               >
                 <Text style={{

@@ -173,6 +173,8 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#ffffff',
   },
   contentInput: {
     height: 120,

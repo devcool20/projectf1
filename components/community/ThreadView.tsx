@@ -1134,8 +1134,8 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderRadius: 16,
     backgroundColor: 'transparent',
-    borderWidth: 0,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#ffffff',
     fontSize: 14,
     minHeight: 36,
     maxHeight: 36,
@@ -1147,7 +1147,6 @@ const styles = StyleSheet.create({
     outlineStyle: 'none',
     outlineWidth: 0,
     outlineColor: 'transparent',
-    borderColor: 'transparent',
   },
   imagePickerButton: {
     padding: 6,
