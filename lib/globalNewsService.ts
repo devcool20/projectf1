@@ -1,19 +1,9 @@
 import { newsService, NewsArticle } from './newsService';
 
 class GlobalNewsService {
-  private static instance: GlobalNewsService;
   private articles: NewsArticle[] = [];
   private isInitialized: boolean = false;
   private initializationPromise: Promise<void> | null = null;
-
-  private constructor() {}
-
-  static getInstance(): GlobalNewsService {
-    if (!GlobalNewsService.instance) {
-      GlobalNewsService.instance = new GlobalNewsService();
-    }
-    return GlobalNewsService.instance;
-  }
 
   // Initialize news fetching once on app startup
   async initialize(): Promise<void> {
@@ -40,10 +30,10 @@ class GlobalNewsService {
 
   private async performInitialization(): Promise<void> {
     try {
-      // Fetch fresh news directly (no database dependency)
-      const freshArticles = await newsService.fetchAllNews();
-      if (freshArticles.length > 0) {
-        this.articles = freshArticles;
+      // Initialize with first batch of articles
+      const initialArticles = await newsService.initialize();
+      if (initialArticles.length > 0) {
+        this.articles = initialArticles;
       }
 
       this.isInitialized = true;
@@ -53,15 +43,36 @@ class GlobalNewsService {
     }
   }
 
-  // Get all articles
+  // Get current articles
   getArticles(): NewsArticle[] {
     return this.articles;
+  }
+
+  // Load more articles (pagination)
+  async loadMoreArticles(): Promise<NewsArticle[]> {
+    try {
+      const newArticles = await newsService.loadMoreArticles();
+      if (newArticles.length > 0) {
+        this.articles.push(...newArticles);
+      }
+      return newArticles;
+    } catch (error) {
+      console.error('Failed to load more articles:', error);
+      return [];
+    }
+  }
+
+  // Check if there are more articles to load
+  hasMoreArticles(): boolean {
+    return newsService.hasMore();
   }
 
   // Refresh articles (for pull-to-refresh)
   async refresh(): Promise<NewsArticle[]> {
     try {
-      const freshArticles = await newsService.fetchAllNews();
+      // Reset pagination and get fresh articles
+      newsService.resetPagination();
+      const freshArticles = await newsService.initialize();
       if (freshArticles.length > 0) {
         this.articles = freshArticles;
       }
@@ -89,11 +100,6 @@ class GlobalNewsService {
   getArticleById(id: string): NewsArticle | null {
     return this.articles.find(article => article.id === id) || null;
   }
-
-  // Check if initialized
-  isReady(): boolean {
-    return this.isInitialized;
-  }
 }
 
-export const globalNewsService = GlobalNewsService.getInstance(); 
+export const globalNewsService = new GlobalNewsService(); 

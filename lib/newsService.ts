@@ -12,12 +12,7 @@ const F1_SEARCH_TERMS = [
   '"Formula One"',
   '"F1 racing"',
   '"Grand Prix"',
-  '"F1 championship"',
-  '"Formula 1 drivers"',
-  '"F1 teams"',
-  '"Formula 1 race"',
-  '"F1 qualifying"',
-  '"Formula 1 practice"'
+  '"F1 championship"'
 ];
 
 export interface NewsArticle {
@@ -59,10 +54,20 @@ class NewsService {
   private cache: Map<string, NewsArticle> = new Map();
   private lastFetch: number = 0;
   private readonly CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+  private currentPage: number = 1;
+  private hasMoreArticles: boolean = true;
+  private allProcessedArticles: NewsArticle[] = [];
+  private readonly ARTICLES_PER_PAGE = 5;
 
   // Fetch news from News API with fallback
   async fetchNewsFromAPI(searchTerm: string, page: number = 1, useTopHeadlines: boolean = false): Promise<NewsAPIArticle[]> {
     try {
+      // Check if we have valid API keys
+      if (!NEWS_API_KEY || NEWS_API_KEY === 'your-news-api-key') {
+        console.log('No valid News API key found, using mock data...');
+        return this.getMockArticles();
+      }
+
       // Try News API first
       const newsApiArticles = await this.fetchFromNewsAPI(searchTerm, page, useTopHeadlines);
       if (newsApiArticles.length > 0) {
@@ -88,7 +93,7 @@ class NewsService {
   // Fetch from News API
   private async fetchFromNewsAPI(searchTerm: string, page: number = 1, useTopHeadlines: boolean = false): Promise<NewsAPIArticle[]> {
     try {
-      if (!NEWS_API_KEY) {
+      if (!NEWS_API_KEY || NEWS_API_KEY === 'your-news-api-key') {
         return [];
       }
       
@@ -123,7 +128,7 @@ class NewsService {
         language: 'en',
         sortBy: 'publishedAt',
         page: page.toString(),
-        pageSize: '20', // Maximum articles per request
+        pageSize: '10', // Reduced from 20 to avoid rate limiting
         apiKey: NEWS_API_KEY
       });
       
@@ -136,7 +141,11 @@ class NewsService {
       const response = await fetch(`${NEWS_API_BASE_URL}/${endpoint}?${params}`);
       
       if (!response.ok) {
-        console.error(`❌ News API request failed: ${response.status} ${response.statusText}`);
+        if (response.status === 429) {
+          console.log('News API rate limit reached, will try GNews API...');
+        } else {
+          console.error(`❌ News API request failed: ${response.status} ${response.statusText}`);
+        }
         return [];
       }
 
@@ -157,6 +166,7 @@ class NewsService {
   private async fetchFromGNewsAPI(searchTerm: string, page: number = 1): Promise<NewsAPIArticle[]> {
     try {
       if (!GNEWS_API_KEY || GNEWS_API_KEY === 'your-gnews-api-key') {
+        console.log('No valid GNews API key found, using mock data...');
         return [];
       }
       
@@ -164,7 +174,7 @@ class NewsService {
         q: searchTerm,
         lang: 'en',
         country: 'us',
-        max: '20',
+        max: '10', // Reduced from 20 to avoid rate limiting
         page: page.toString(),
         apikey: GNEWS_API_KEY
       });
@@ -172,7 +182,11 @@ class NewsService {
       const response = await fetch(`${GNEWS_API_BASE_URL}/search?${params}`);
       
       if (!response.ok) {
-        console.error(`❌ GNews API request failed: ${response.status} ${response.statusText}`);
+        if (response.status === 403) {
+          console.log('GNews API key invalid or expired, using mock data...');
+        } else {
+          console.error(`❌ GNews API request failed: ${response.status} ${response.statusText}`);
+        }
         return [];
       }
 
@@ -215,50 +229,100 @@ class NewsService {
     });
   }
 
-  // Clean content by removing navigation elements and truncating
+  // Clean content by removing HTML tags and extra whitespace
   private cleanContent(content: string): string {
     if (!content) return '';
     
-    // Remove common navigation text
-    const navigationPatterns = [
-      /\[.*?\]/g, // Remove text in brackets
-      /Click here.*?\./gi,
-      /Read more.*?\./gi,
-      /Continue reading.*?\./gi,
-      /View full article.*?\./gi,
-      /Subscribe.*?\./gi,
-      /Sign up.*?\./gi
-    ];
+    // Remove HTML tags
+    let cleaned = content.replace(/<[^>]*>/g, '');
     
-    let cleaned = content;
-    navigationPatterns.forEach(pattern => {
-      cleaned = cleaned.replace(pattern, '');
-    });
+    // Remove extra whitespace and newlines
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
     
-    // Truncate if too long
+    // Truncate if too long (keep it reasonable for mobile)
     if (cleaned.length > 500) {
-      cleaned = cleaned.substring(0, 500).trim() + '...';
+      cleaned = cleaned.substring(0, 500) + '...';
     }
     
     return cleaned;
   }
 
-  // Check if content contains navigation elements
+  // Check if content contains navigation or irrelevant text
   private containsNavigationContent(content: string): boolean {
     const navigationKeywords = [
-      'click here', 'read more', 'continue reading', 'view full article',
-      'subscribe', 'sign up', 'log in', 'register', 'newsletter'
+      'click here', 'read more', 'continue reading', 'subscribe', 'sign up',
+      'advertisement', 'ad', 'sponsored', 'cookie policy', 'privacy policy'
     ];
     
-    return navigationKeywords.some(keyword => 
-      content.toLowerCase().includes(keyword)
-    );
+    const lowerContent = content.toLowerCase();
+    return navigationKeywords.some(keyword => lowerContent.includes(keyword));
   }
 
-  // Generate placeholder image based on title
+  // Generate placeholder image using a more reliable service
   private generatePlaceholderImage(title: string): string {
-    const encodedTitle = encodeURIComponent(title.substring(0, 50));
-    return `https://via.placeholder.com/400x200/DC2626/FFFFFF?text=${encodedTitle}`;
+    // Use a more reliable placeholder service or local assets
+    const encodedTitle = encodeURIComponent(title.substring(0, 20));
+    return `https://picsum.photos/400/200?random=${Date.now()}&text=${encodedTitle}`;
+  }
+
+  // Initialize and fetch first batch of articles
+  async initialize(): Promise<NewsArticle[]> {
+    if (this.allProcessedArticles.length > 0) {
+      // Return first page from cache
+      return this.allProcessedArticles.slice(0, this.ARTICLES_PER_PAGE);
+    }
+
+    try {
+      const articles = await this.fetchAllNews();
+      return articles.slice(0, this.ARTICLES_PER_PAGE);
+    } catch (error) {
+      console.error('Failed to initialize news:', error);
+      return this.getMockArticles().slice(0, this.ARTICLES_PER_PAGE);
+    }
+  }
+
+  // Load more articles (pagination)
+  async loadMoreArticles(): Promise<NewsArticle[]> {
+    if (!this.hasMoreArticles) {
+      return [];
+    }
+
+    const startIndex = (this.currentPage - 1) * this.ARTICLES_PER_PAGE;
+    const endIndex = startIndex + this.ARTICLES_PER_PAGE;
+    
+    // If we have enough articles in cache, return them
+    if (endIndex <= this.allProcessedArticles.length) {
+      this.currentPage++;
+      return this.allProcessedArticles.slice(startIndex, endIndex);
+    }
+
+    // If we need to fetch more articles
+    try {
+      const newArticles = await this.fetchMoreNews();
+      if (newArticles.length > 0) {
+        this.allProcessedArticles.push(...newArticles);
+        this.currentPage++;
+        return newArticles.slice(0, this.ARTICLES_PER_PAGE);
+      } else {
+        this.hasMoreArticles = false;
+        return [];
+      }
+    } catch (error) {
+      console.error('Failed to load more articles:', error);
+      this.hasMoreArticles = false;
+      return [];
+    }
+  }
+
+  // Check if there are more articles to load
+  hasMore(): boolean {
+    return this.hasMoreArticles;
+  }
+
+  // Reset pagination
+  resetPagination(): void {
+    this.currentPage = 1;
+    this.hasMoreArticles = true;
   }
 
   // Fetch all Formula 1 news from multiple search terms
@@ -266,8 +330,8 @@ class NewsService {
     const now = Date.now();
     
     // Check cache first
-    if (now - this.lastFetch < this.CACHE_DURATION && this.cache.size > 0) {
-      return Array.from(this.cache.values());
+    if (now - this.lastFetch < this.CACHE_DURATION && this.allProcessedArticles.length > 0) {
+      return this.allProcessedArticles;
     }
 
     // Add timeout to prevent hanging
@@ -280,15 +344,15 @@ class NewsService {
         const allArticles: NewsAPIArticle[] = [];
         const usedImageUrls = new Set<string>(); // Track used image URLs
         
-        // Fetch from multiple search terms to get comprehensive F1 news
-        const searchTerms = F1_SEARCH_TERMS.slice(0, 5); // Limit to first 5 terms to avoid rate limiting
+        // Fetch from fewer search terms to avoid rate limiting
+        const searchTerms = F1_SEARCH_TERMS.slice(0, 2); // Reduced to 2 terms for initial load
         
         for (const searchTerm of searchTerms) {
           const articles = await this.fetchNewsFromAPI(searchTerm);
           allArticles.push(...articles);
           
-          // Add delay between requests to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Add longer delay between requests to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Increased from 1000ms to 2000ms
         }
         
         // Remove duplicates based on URL
@@ -335,7 +399,7 @@ class NewsService {
                category: 'sports',
                language: 'en',
                page: '1',
-               pageSize: '20',
+               pageSize: '10', // Reduced from 20
                apiKey: NEWS_API_KEY
              });
              
@@ -360,7 +424,7 @@ class NewsService {
          
          // Process articles and convert to our format
          const processedArticles: NewsArticle[] = [];
-         const limit = Math.min(f1RelevantArticles.length, 30);
+         const limit = Math.min(f1RelevantArticles.length, 15); // Reduced to 15 for initial load
         
         for (let i = 0; i < limit; i++) {
           const apiArticle = f1RelevantArticles[i];
@@ -414,10 +478,7 @@ class NewsService {
         }
 
         // Update cache
-        this.cache.clear();
-        processedArticles.forEach(article => {
-          this.cache.set(article.id, article);
-        });
+        this.allProcessedArticles = processedArticles;
         this.lastFetch = now;
 
         return processedArticles;
@@ -426,6 +487,115 @@ class NewsService {
       return await Promise.race([fetchPromise, timeout]);
     } catch (error) {
       console.error('News fetch error:', error);
+      return [];
+    }
+  }
+
+  // Fetch more news for pagination
+  private async fetchMoreNews(): Promise<NewsArticle[]> {
+    try {
+      const allArticles: NewsAPIArticle[] = [];
+      const usedImageUrls = new Set<string>();
+      
+      // Get already used image URLs
+      this.allProcessedArticles.forEach(article => {
+        if (article.image_url) {
+          usedImageUrls.add(article.image_url);
+        }
+      });
+      
+      // Fetch from additional search terms or next page
+      const searchTerms = F1_SEARCH_TERMS.slice(2, 4); // Get next 2 terms
+      
+      for (const searchTerm of searchTerms) {
+        const articles = await this.fetchNewsFromAPI(searchTerm, 2); // Try page 2
+        allArticles.push(...articles);
+        
+        // Add delay between requests
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
+      // Process new articles
+      const uniqueArticles = this.removeDuplicateArticles(allArticles);
+      const articlesWithImages = uniqueArticles.filter(article => 
+        article.urlToImage && 
+        article.urlToImage.trim() !== '' &&
+        article.urlToImage !== 'null'
+      );
+      
+      const f1RelevantArticles = articlesWithImages.filter(article => {
+        const title = article.title.toLowerCase();
+        const description = (article.description || '').toLowerCase();
+        const content = (article.content || '').toLowerCase();
+        
+        const f1Keywords = [
+          'formula 1', 'formula one', 'f1', 'grand prix', 'gp',
+          'max verstappen', 'lewis hamilton', 'charles leclerc', 'lando norris',
+          'ferrari', 'mercedes', 'red bull', 'mclaren', 'aston martin',
+          'alpine', 'williams', 'haas', 'alfa romeo', 'alpha tauri',
+          'racing', 'qualifying', 'practice', 'race', 'championship',
+          'podium', 'pole position', 'fastest lap', 'pit stop',
+          'team principal', 'driver', 'constructor', 'points'
+        ];
+        
+        const hasF1Content = f1Keywords.some(keyword => 
+          title.includes(keyword) || 
+          description.includes(keyword) || 
+          content.includes(keyword)
+        );
+        
+        return hasF1Content;
+      });
+      
+      const processedArticles: NewsArticle[] = [];
+      const limit = Math.min(f1RelevantArticles.length, 10); // Limit to 10 new articles
+        
+      for (let i = 0; i < limit; i++) {
+        const apiArticle = f1RelevantArticles[i];
+        
+        const article: NewsArticle = {
+          id: `article_${this.allProcessedArticles.length + i}_${Date.now()}`,
+          title: apiArticle.title,
+          description: apiArticle.description || '',
+          content: apiArticle.content || apiArticle.description || '',
+          url: apiArticle.url,
+          image_url: apiArticle.urlToImage,
+          author: apiArticle.author,
+          published_at: apiArticle.publishedAt,
+          source: apiArticle.source.name,
+          category: 'F1 News',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        if (article.content) {
+          article.content = this.cleanContent(article.content);
+        }
+
+        if (!article.content || article.content.trim() === '') {
+          article.content = article.description || '';
+        }
+
+        if (article.image_url && usedImageUrls.has(article.image_url)) {
+          article.image_url = this.generatePlaceholderImage(article.title || 'F1 News');
+        }
+        
+        if (article.image_url) {
+          usedImageUrls.add(article.image_url);
+        }
+
+        const hasGoodContent = article.content && 
+          article.content.length >= 100 && 
+          !this.containsNavigationContent(article.content);
+        
+        if (article.image_url && hasGoodContent) {
+          processedArticles.push(article);
+        }
+      }
+
+      return processedArticles;
+    } catch (error) {
+      console.error('Failed to fetch more news:', error);
       return [];
     }
   }
@@ -439,7 +609,7 @@ class NewsService {
         title: 'Max Verstappen Dominates Practice Session Ahead of Grand Prix',
         description: 'Red Bull driver shows exceptional pace in final practice session, setting the fastest lap time.',
         url: 'https://www.formula1.com',
-        urlToImage: 'https://via.placeholder.com/400x200/DC2626/FFFFFF?text=Max+Verstappen',
+        urlToImage: 'https://picsum.photos/400/200?random=1&text=Max+Verstappen',
         publishedAt: new Date().toISOString(),
         content: 'Max Verstappen continued his impressive form by topping the timesheets in the final practice session ahead of this weekend\'s Grand Prix. The Red Bull driver set a blistering pace that left his competitors trailing by over half a second.'
       },
@@ -449,7 +619,7 @@ class NewsService {
         title: 'Lewis Hamilton Discusses Future Plans with Mercedes',
         description: 'Seven-time world champion opens up about his contract negotiations and future in Formula 1.',
         url: 'https://www.espn.com/f1',
-        urlToImage: 'https://via.placeholder.com/400x200/DC2626/FFFFFF?text=Lewis+Hamilton',
+        urlToImage: 'https://picsum.photos/400/200?random=2&text=Lewis+Hamilton',
         publishedAt: new Date(Date.now() - 3600000).toISOString(),
         content: 'Lewis Hamilton has revealed details about his ongoing contract negotiations with Mercedes, expressing his desire to continue racing in Formula 1. The seven-time world champion emphasized his commitment to the team and his passion for the sport.'
       },
@@ -459,7 +629,7 @@ class NewsService {
         title: 'Ferrari Shows Strong Pace in Latest Testing Session',
         description: 'Scuderia Ferrari demonstrates promising performance with their latest car updates.',
         url: 'https://www.autosport.com/f1',
-        urlToImage: 'https://via.placeholder.com/400x200/DC2626/FFFFFF?text=Ferrari',
+        urlToImage: 'https://picsum.photos/400/200?random=3&text=Ferrari',
         publishedAt: new Date(Date.now() - 7200000).toISOString(),
         content: 'Ferrari has shown encouraging signs during their latest testing session, with both Charles Leclerc and Carlos Sainz reporting positive feedback about the car\'s handling and performance characteristics.'
       }

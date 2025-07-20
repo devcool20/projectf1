@@ -51,6 +51,7 @@ export default function NewsScreen() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
@@ -85,6 +86,33 @@ export default function NewsScreen() {
       setRefreshing(false);
     }
   }, []);
+
+  // Load more articles when user scrolls to bottom
+  const loadMoreArticles = useCallback(async () => {
+    if (loadingMore || !globalNewsService.hasMoreArticles()) {
+      return;
+    }
+
+    try {
+      setLoadingMore(true);
+      const newArticles = await globalNewsService.loadMoreArticles();
+      if (newArticles.length > 0) {
+        setArticles(prev => [...prev, ...newArticles]);
+        // Update filtered articles as well
+        const updatedFiltered = globalNewsService.searchArticles(searchQuery);
+        if (selectedSource !== 'all') {
+          const sourceFiltered = updatedFiltered.filter(article => article.source === selectedSource);
+          setFilteredArticles(sourceFiltered);
+        } else {
+          setFilteredArticles(updatedFiltered);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load more articles:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, searchQuery, selectedSource]);
 
   useEffect(() => {
     fetchNews();
@@ -156,6 +184,17 @@ export default function NewsScreen() {
   const handleSourceFilter = (source: string) => {
     setSelectedSource(source);
     setShowFilters(false);
+  };
+
+  // Handle scroll to load more articles
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20;
+    
+    if (layoutMeasurement.height + contentOffset.y >= 
+        contentSize.height - paddingToBottom) {
+      loadMoreArticles();
+    }
   };
 
   const renderArticleCard = (article: NewsArticle) => (
@@ -267,6 +306,50 @@ export default function NewsScreen() {
       </View>
     </TouchableOpacity>
   );
+
+  const renderLoadMoreButton = () => {
+    if (!globalNewsService.hasMoreArticles()) {
+      return (
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <Text style={{ fontSize: 14, color: '#999', textAlign: 'center' }}>
+            No more articles to load
+          </Text>
+        </View>
+      );
+    }
+
+    if (loadingMore) {
+      return (
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <ActivityIndicator size="small" color="#dc2626" />
+          <Text style={{ marginTop: 8, fontSize: 14, color: '#666' }}>
+            Loading more articles...
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        onPress={loadMoreArticles}
+        style={{
+          margin: 16,
+          padding: 16,
+          backgroundColor: '#dc2626',
+          borderRadius: 12,
+          alignItems: 'center',
+        }}
+        activeOpacity={0.8}
+      >
+        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
+          Load More Articles
+        </Text>
+        <Text style={{ color: '#ffffff', fontSize: 12, marginTop: 4, opacity: 0.8 }}>
+          Load 5 more articles
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
@@ -389,6 +472,8 @@ export default function NewsScreen() {
         }
         contentContainerStyle={{ paddingVertical: 16 }}
         showsVerticalScrollIndicator={true}
+        onScroll={handleScroll}
+        scrollEventThrottle={400}
       >
         <View style={{ maxWidth: 800, alignSelf: 'center', width: '100%' }}>
         {loading ? (
@@ -398,17 +483,18 @@ export default function NewsScreen() {
               Loading latest news...
             </Text>
             <Text style={{ fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' }}>
-              This may take a few moments as we fetch full articles
+              Loading first 5 articles to get you started
             </Text>
           </View>
         ) : filteredArticles.length > 0 ? (
           <>
             <View style={{ marginBottom: 8, paddingHorizontal: 16 }}>
               <Text style={{ fontSize: 14, color: '#666' }}>
-                {`${filteredArticles.length} article${filteredArticles.length !== 1 ? 's' : ''} found`}
+                {`${filteredArticles.length} article${filteredArticles.length !== 1 ? 's' : ''} loaded`}
               </Text>
             </View>
             {filteredArticles.map(renderArticleCard)}
+            {renderLoadMoreButton()}
           </>
         ) : (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
