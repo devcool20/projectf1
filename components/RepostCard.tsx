@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, Image, Dimensions, Modal, Pressable } from 'react-native';
 import { Heart, MessageCircle, Bookmark, BarChart3, Repeat2, MoreHorizontal, Trash2 } from 'lucide-react-native';
-import { formatThreadTimestamp } from '@/lib/utils';
+import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
 const TEAM_LOGOS: { [key: string]: any } = {
@@ -21,47 +21,7 @@ const TEAM_LOGOS: { [key: string]: any } = {
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
-// Helper function to calculate responsive image dimensions
-const getResponsiveImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    // More aggressive margin for very narrow screens
-    const responsiveWidth = screenWidth - 120; // 60px margin each side
-    const responsiveHeight = (responsiveWidth * 200) / 280;
-    return {
-      width: responsiveWidth,
-      height: responsiveHeight,
-      borderRadius: 12,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 280,
-    height: 200,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6'
-  };
-};
-
-const getCompactImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    const compactWidth = screenWidth - 160;
-    const compactHeight = (compactWidth * 150) / 200;
-    return {
-      width: compactWidth,
-      height: compactHeight,
-      borderRadius: 8,
-      marginTop: 4,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 200,
-    height: 150,
-    borderRadius: 8,
-    marginTop: 4,
-    backgroundColor: '#f3f4f6'
-  };
-};
+// Using imported utility functions from lib/utils.ts
 
 export type RepostCardProps = {
   repost: any;
@@ -88,6 +48,31 @@ export default function RepostCard({
   const likeCount = repost.likeCount || 0;
   const isLiked = repost.isLiked || false;
   const repostCount = repost.repostCount || 0;
+
+  // Add state for dropdown menu
+  const [menuVisible, setMenuVisible] = useState(false);
+  const menuAnchorRef = useRef<any>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+
+  const openMenu = () => {
+    if (menuAnchorRef.current && 'measure' in menuAnchorRef.current) {
+      (menuAnchorRef.current as any).measure(
+        (
+          fx: number,
+          fy: number,
+          width: number,
+          height: number,
+          px: number,
+          py: number
+        ) => {
+          setMenuPos({ top: py + height + 4, left: px - 60 });
+          setMenuVisible(true);
+        }
+      );
+    } else {
+      setMenuVisible(true);
+    }
+  };
 
   const handleLikePress = (e: any) => {
     e.stopPropagation(); // Prevent triggering parent TouchableOpacity
@@ -162,6 +147,16 @@ export default function RepostCard({
             <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
               {formatThreadTimestamp(repost.created_at)}
             </Text>
+            {/* More options button for repost owner or admin - moved to top right */}
+            {session && (repost.user_id === session.user.id || repost.profiles?.is_admin) && onDeletePress && (
+              <TouchableOpacity 
+                ref={menuAnchorRef}
+                onPress={openMenu}
+                style={{ marginLeft: 'auto', padding: 4 }}
+              >
+                <MoreHorizontal size={20} color="#888" />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Repost content */}
@@ -212,7 +207,7 @@ export default function RepostCard({
                   <View style={{ alignItems: 'center', marginTop: 4 }}>
                     <Image
                       source={{ uri: repost.original_thread.image_url }}
-                      style={getCompactImageStyle(screenWidth)}
+                      style={getVeryCompactImageStyle(screenWidth)}
                       resizeMode="cover"
                     />
                   </View>
@@ -260,19 +255,31 @@ export default function RepostCard({
               <BarChart3 size={14} color="#666666" />
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>-</Text>
             </View>
-
-            {/* More options button for repost owner or admin */}
-            {session && (repost.user_id === session.user.id || repost.profiles?.is_admin) && onDeletePress && (
-              <TouchableOpacity 
-                onPress={() => onDeletePress(repost.id, 'repost')}
-                style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' }}
-              >
-                <MoreHorizontal size={14} color="#666666" />
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       </View>
+
+      {/* Three-dot menu modal */}
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable style={{ flex: 1 }} onPress={() => setMenuVisible(false)}>
+          <View style={{ position: 'absolute', top: menuPos.top, left: menuPos.left, backgroundColor: '#fff', borderRadius: 8, elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, padding: 8, minWidth: 120 }}>
+            <TouchableOpacity 
+              onPress={() => { 
+                setMenuVisible(false); 
+                onDeletePress?.(repost.id, 'repost'); 
+              }} 
+              style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+            >
+              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 } 

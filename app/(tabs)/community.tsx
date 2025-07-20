@@ -15,9 +15,10 @@ import {
   Platform,
   Alert,
   Dimensions,
+  Pressable,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { formatThreadTimestamp } from '@/lib/utils';
+import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useRouter, useLocalSearchParams, usePathname } from 'expo-router';
 import PostCard from '@/components/PostCard';
@@ -26,12 +27,11 @@ import BookmarkCard from '@/components/community/BookmarkCard';
 import RepostModal from '@/components/RepostModal';
 
 
-import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, BarChart3, Trash2 } from 'lucide-react-native';
+import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, BarChart3 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
 import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { Pressable } from 'react-native';
 import ProfileContainer from '@/components/profile/ProfileContainer';
 
 // Wrapper to handle web compatibility for useColorScheme
@@ -41,7 +41,8 @@ function useColorScheme(): ColorSchemeName {
 }
 
 const NAV_ITEMS = [
-  { href: '/', icon: Home, name: 'Home' },
+  { href: '/community', icon: MessageCircle, name: 'Community' },
+  { href: '/home', icon: Home, name: 'Home' },
   { href: '/screenings', icon: Clapperboard, name: 'Screenings' },
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
   { href: '/drivers', icon: Trophy, name: 'Drivers' },
@@ -79,52 +80,6 @@ const truncateToLines = (text: string, maxLength: number = 120) => {
   return text.substring(0, maxLength).trim() + '...';
 };
 
-// Helper function to calculate responsive image dimensions
-const getResponsiveImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    // More aggressive margin for very narrow screens
-    const responsiveWidth = screenWidth - 120; // 60px margin each side
-    const responsiveHeight = (responsiveWidth * 200) / 280;
-    return {
-      width: responsiveWidth,
-      height: responsiveHeight,
-      borderRadius: 12,
-      marginTop: 4,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 280,
-    height: 200,
-    borderRadius: 12,
-    marginTop: 4,
-    backgroundColor: '#f3f4f6'
-  };
-};
-
-// Helper function to calculate compact image dimensions for preview content
-const getCompactImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    // More compact for preview images on narrow screens
-    const compactWidth = screenWidth - 160; // 80px margin each side
-    const compactHeight = (compactWidth * 150) / 200; // Shorter height ratio
-    return {
-      width: compactWidth,
-      height: compactHeight,
-      borderRadius: 8, // Smaller border radius for compact look
-      marginTop: 4,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 200, // Smaller default width for preview images
-    height: 150, // Smaller default height for preview images
-    borderRadius: 8, // Smaller border radius for compact look
-    marginTop: 4,
-    backgroundColor: '#f3f4f6'
-  };
-};
-
 export default function CommunityScreen() {
   const router = useRouter();
   const { thread: threadId, profile: profileId } = useLocalSearchParams();
@@ -135,10 +90,12 @@ export default function CommunityScreen() {
   const [session, setSession] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [content, setContent] = useState('');
+  const [modalContent, setModalContent] = useState('');
   const [news, setNews] = useState<any[]>([]);
   const [randomizedNews, setRandomizedNews] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [image, setImage] = useState<string | null>(null);
+  const [modalImage, setModalImage] = useState<string | null>(null);
   const [selectedThread, setSelectedThread] = useState<any | null>(null);
   const [isViewingThread, setIsViewingThread] = useState(false);
 
@@ -157,8 +114,12 @@ export default function CommunityScreen() {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [bookmarkedThreads, setBookmarkedThreads] = useState<any[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(false);
+
+  // Add state for repost delete menu
   const [repostDeleteMenuVisible, setRepostDeleteMenuVisible] = useState(false);
   const [selectedRepostForDelete, setSelectedRepostForDelete] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+
   const colorScheme = useColorScheme();
   const sidebarTranslateX = useSharedValue(-256);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -168,6 +129,17 @@ export default function CommunityScreen() {
   const [showRepostModal, setShowRepostModal] = useState(false);
   const [selectedThreadForRepost, setSelectedThreadForRepost] = useState<any>(null);
 
+  const openRepostDeleteMenu = (repostId: string, event: any) => {
+    setSelectedRepostForDelete(repostId);
+    // Calculate position based on event
+    if (event && event.nativeEvent) {
+      const { pageX, pageY } = event.nativeEvent;
+      setMenuPos({ top: pageY + 20, left: pageX - 60 });
+    } else {
+      setMenuPos({ top: 100, left: 200 }); // Fallback position
+    }
+    setRepostDeleteMenuVisible(true);
+  };
 
   // Fetch current user's avatar URL
   const fetchCurrentUserAvatar = useCallback(async () => {
@@ -999,26 +971,6 @@ export default function CommunityScreen() {
     }
   };
 
-  const showDeleteRepostAlert = (repostId: string) => {
-    Alert.alert(
-      'Delete Repost',
-      'Are you sure you want to delete this repost?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => handleDeleteThread(repostId, 'repost')
-        }
-      ]
-    );
-  };
-
-  const handleRepostDeletePress = (repostId: string) => {
-    setSelectedRepostForDelete(repostId);
-    setRepostDeleteMenuVisible(true);
-  };
-
   const handleRepostDeleteDirect = async (repostId: string) => {
     // Check if user has permission first
     try {
@@ -1039,24 +991,20 @@ export default function CommunityScreen() {
         return;
       }
       
-      // Use confirm for web platform as it's more reliable
-      const confirmed = window.confirm('Are you sure you want to delete this repost?');
-      if (confirmed) {
-        try {
-          const { error } = await supabase.from('reposts').delete().eq('id', repostId);
-          if (error) {
-            throw error;
-          }
-          
-          // Refresh both feeds after deletion
-          if (session) {
-            fetchThreads(session);
-            fetchFollowingThreads(session);
-          }
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          alert(`Failed to delete repost: ${errorMessage}`);
+      try {
+        const { error } = await supabase.from('reposts').delete().eq('id', repostId);
+        if (error) {
+          throw error;
         }
+        
+        // Refresh both feeds after deletion
+        if (session) {
+          fetchThreads(session);
+          fetchFollowingThreads(session);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        alert(`Failed to delete repost: ${errorMessage}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -1064,13 +1012,7 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleRepostDeleteConfirm = () => {
-    if (selectedRepostForDelete) {
-      showDeleteRepostAlert(selectedRepostForDelete);
-      setRepostDeleteMenuVisible(false);
-      setSelectedRepostForDelete(null);
-    }
-  };
+
 
 
 
@@ -1342,7 +1284,8 @@ export default function CommunityScreen() {
         </View>
         <View style={{ gap: 12 }}>
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href || (item.href === '/bookmarks' && showBookmarks);
+            const isActive = (item.href === '/bookmarks' && showBookmarks) ||
+                            (item.href !== '/community' && item.href !== '/bookmarks' && pathname === item.href);
             return (
               <TouchableOpacity
                 key={item.href}
@@ -1366,6 +1309,13 @@ export default function CommunityScreen() {
                     } else {
                       setShowAuth(true);
                     }
+                  } else if (item.href === '/community') {
+                    // Stay on community page, just close sidebar
+                    setShowBookmarks(false);
+                    setIsViewingProfile(false);
+                    setSelectedProfile(null);
+                    setIsViewingThread(false);
+                    setSelectedThread(null);
                   } else {
                     setShowBookmarks(false);
                     setIsViewingProfile(false);
@@ -1591,6 +1541,57 @@ export default function CommunityScreen() {
     }
   };
 
+  const handleCreateModalThread = async () => {
+    if (!session) {
+      setShowAuth(true);
+      return;
+    }
+    if (!modalContent.trim() && !modalImage) return;
+
+    try {
+      let imageUrl: string | null = null;
+      if (modalImage) {
+        const response = await fetch(modalImage);
+        const blob = await response.blob();
+        const fileName = modalImage.split('/').pop();
+        const fileExt = fileName?.split('.').pop();
+        const filePath = `${session.user.id}/${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('thread-images')
+          .upload(filePath, blob, {
+            contentType: blob.type,
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('thread-images')
+          .getPublicUrl(filePath);
+        
+        imageUrl = publicUrl;
+      }
+
+      const { error } = await supabase.from('threads').insert({
+        content: modalContent.trim(),
+        user_id: session.user.id,
+        image_url: imageUrl,
+      });
+
+      if (error) throw error;
+
+      setModalContent('');
+      setModalImage(null);
+      setShowPostModal(false);
+      await fetchThreads(session);
+    } catch (error) {
+      console.error('Error creating thread:', error);
+      alert('Failed to create thread');
+    }
+  };
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -1601,6 +1602,19 @@ export default function CommunityScreen() {
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
+    }
+  };
+
+  const pickModalImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setModalImage(result.assets[0].uri);
     }
   };
 
@@ -1800,7 +1814,7 @@ export default function CommunityScreen() {
                                                 <View style={{ alignItems: 'center', marginTop: 4 }}>
                                                   <Image
                                                     source={{ uri: item.original_thread.image_url }}
-                                                    style={getCompactImageStyle(screenWidth)}
+                                                    style={getVeryCompactImageStyle(screenWidth)}
                                                     resizeMode="cover"
                                                   />
                                                 </View>
@@ -1970,6 +1984,18 @@ export default function CommunityScreen() {
                                                   resizeMode="contain"
                                                 />
                                               )}
+                                              {/* More options button for repost owner or admin - moved to top right */}
+                                              {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
+                                                <TouchableOpacity 
+                                                  onPress={(e) => openRepostDeleteMenu(item.id, e)}
+                                                  style={{ 
+                                                    marginLeft: 'auto',
+                                                    padding: 4
+                                                  }}
+                                                >
+                                                  <MoreHorizontal size={20} color="#888" />
+                                                </TouchableOpacity>
+                                              )}
                                             </View>
                                             <Text style={{ fontSize: 11, color: '#888' }}>
                                               {formatThreadTimestamp(item.created_at) || ''}
@@ -2033,7 +2059,7 @@ export default function CommunityScreen() {
                                                   <View style={{ alignItems: 'center', marginTop: 4 }}>
                                                     <Image
                                                       source={{ uri: item.original_thread.image_url }}
-                                                      style={getCompactImageStyle(screenWidth)}
+                                                      style={getVeryCompactImageStyle(screenWidth)}
                                                       resizeMode="cover"
                                                     />
                                                   </View>
@@ -2080,26 +2106,6 @@ export default function CommunityScreen() {
                                                 {item.likeCount || 0}
                                               </Text>
                                             </TouchableOpacity>
-
-                                            {/* Delete button for reposts */}
-                                            {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
-                                              <TouchableOpacity 
-                                                onPress={() => {
-                                                  console.log('Delete repost clicked:', item.id);
-                                                  handleRepostDeleteDirect(item.id);
-                                                }}
-                                                style={{ 
-                                                  flexDirection: 'row', 
-                                                  alignItems: 'center', 
-                                                  marginLeft: 'auto',
-                                                  padding: 8,
-                                                  backgroundColor: '#fef2f2',
-                                                  borderRadius: 4
-                                                }}
-                                              >
-                                                <Trash2 size={16} color="#dc2626" />
-                                              </TouchableOpacity>
-                                            )}
                                           </View>
                                         </View>
                                       </View>
@@ -2185,17 +2191,16 @@ export default function CommunityScreen() {
                                                   resizeMode="contain"
                                                 />
                                               )}
+                                              {/* More options button for repost owner or admin - moved to top right */}
                                               {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
                                                 <TouchableOpacity 
-                                                  onPress={() => handleRepostDeleteDirect(item.id)}
+                                                  onPress={(e) => openRepostDeleteMenu(item.id, e)}
                                                   style={{ 
-                                                    marginLeft: 'auto', 
-                                                    padding: 8,
-                                                    backgroundColor: '#fef2f2',
-                                                    borderRadius: 4
+                                                    marginLeft: 'auto',
+                                                    padding: 4
                                                   }}
                                                 >
-                                                  <Trash2 size={16} color="#dc2626" />
+                                                  <MoreHorizontal size={20} color="#888" />
                                                 </TouchableOpacity>
                                               )}
                                             </View>
@@ -2265,7 +2270,7 @@ export default function CommunityScreen() {
                                                   <View style={{ alignItems: 'center', marginTop: 4 }}>
                                                     <Image
                                                       source={{ uri: item.original_thread.image_url }}
-                                                      style={getCompactImageStyle(screenWidth)}
+                                                      style={getVeryCompactImageStyle(screenWidth)}
                                                       resizeMode="cover"
                                                     />
                                                   </View>
@@ -2312,26 +2317,6 @@ export default function CommunityScreen() {
                                                 {item.likeCount || 0}
                                               </Text>
                                             </TouchableOpacity>
-
-                                            {/* Delete button for reposts */}
-                                            {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
-                                              <TouchableOpacity 
-                                                onPress={() => {
-                                                  console.log('Delete repost clicked:', item.id);
-                                                  handleRepostDeleteDirect(item.id);
-                                                }}
-                                                style={{ 
-                                                  flexDirection: 'row', 
-                                                  alignItems: 'center', 
-                                                  marginLeft: 'auto',
-                                                  padding: 8,
-                                                  backgroundColor: '#fef2f2',
-                                                  borderRadius: 4
-                                                }}
-                                              >
-                                                <Trash2 size={16} color="#dc2626" />
-                                              </TouchableOpacity>
-                                            )}
                                           </View>
                                         </View>
                                       </View>
@@ -2466,36 +2451,7 @@ export default function CommunityScreen() {
         onRepostSuccess={handleRepostSuccess}
       />
 
-      {/* Repost Delete Menu Modal */}
-      <Modal
-        visible={repostDeleteMenuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setRepostDeleteMenuVisible(false)}
-      >
-        <Pressable style={{ flex: 1 }} onPress={() => setRepostDeleteMenuVisible(false)}>
-          <View style={{ 
-            position: 'absolute', 
-            top: '40%', 
-            right: '20%', 
-            backgroundColor: '#fff', 
-            borderRadius: 8, 
-            elevation: 4, 
-            shadowColor: '#000', 
-            shadowOpacity: 0.1, 
-            shadowRadius: 8, 
-            padding: 8, 
-            minWidth: 120 
-          }}>
-            <TouchableOpacity 
-              onPress={handleRepostDeleteConfirm} 
-              style={{ paddingVertical: 8, paddingHorizontal: 12 }}
-            >
-              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
+
 
       {/* Post Modal */}
       <Modal
@@ -2507,7 +2463,11 @@ export default function CommunityScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
                       <View style={{ width: '90%', maxWidth: 420, backgroundColor: '#fff', borderRadius: 20, padding: 24, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)', alignItems: 'stretch', position: 'relative' }}>
             {/* Close Button */}
-            <TouchableOpacity onPress={() => setShowPostModal(false)} style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
+            <TouchableOpacity onPress={() => {
+              setShowPostModal(false);
+              setModalContent('');
+              setModalImage(null);
+            }} style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
               <X size={28} color="#dc2626" />
             </TouchableOpacity>
             {/* Post Input */}
@@ -2564,18 +2524,18 @@ export default function CommunityScreen() {
                     minHeight: 40,
                     maxHeight: 120,
                   } as any}
-                  value={content}
-                  onChangeText={setContent}
+                  value={modalContent}
+                  onChangeText={setModalContent}
                   multiline
                 />
-                {image && (
+                {modalImage && (
                   <View style={{ position: 'relative', marginTop: 8 }}>
                     <Image
-                      source={{ uri: image }}
+                      source={{ uri: modalImage }}
                       style={{ width: '100%', height: 180, borderRadius: 12, backgroundColor: '#f3f4f6' }}
                       resizeMode="contain"
                     />
-                    <TouchableOpacity onPress={() => setImage(null)} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#000', opacity: 0.7, borderRadius: 16, padding: 4 }}>
+                    <TouchableOpacity onPress={() => setModalImage(null)} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#000', opacity: 0.7, borderRadius: 16, padding: 4 }}>
                       <X size={20} color="#fff" />
                     </TouchableOpacity>
                   </View>
@@ -2583,22 +2543,56 @@ export default function CommunityScreen() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-              <TouchableOpacity onPress={pickImage}>
+              <TouchableOpacity onPress={pickModalImage}>
                 <Camera size={24} color="#1DA1F2" />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={async () => {
-                  await handleCreateThread();
-                  setShowPostModal(false);
-                }}
+                onPress={handleCreateModalThread}
                 style={{ backgroundColor: '#dc2626', borderRadius: 9999, paddingVertical: 10, paddingHorizontal: 32, alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(220, 38, 38, 0.15)' }}
-                disabled={!content.trim() && !image}
+                disabled={!modalContent.trim() && !modalImage}
               >
-                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, opacity: (!content.trim() && !image) ? 0.5 : 1 }}>Post</Text>
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, opacity: (!modalContent.trim() && !modalImage) ? 0.5 : 1 }}>Post</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* Repost Delete Menu Modal */}
+      <Modal
+        visible={repostDeleteMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRepostDeleteMenuVisible(false)}
+      >
+        <Pressable style={{ flex: 1 }} onPress={() => setRepostDeleteMenuVisible(false)}>
+          <View style={{ 
+            position: 'absolute', 
+            top: menuPos.top, 
+            left: menuPos.left, 
+            backgroundColor: '#fff', 
+            borderRadius: 8, 
+            elevation: 4, 
+            shadowColor: '#000', 
+            shadowOpacity: 0.1, 
+            shadowRadius: 8, 
+            padding: 8, 
+            minWidth: 120 
+          }}>
+            <TouchableOpacity 
+              onPress={() => { 
+                setRepostDeleteMenuVisible(false); 
+                if (selectedRepostForDelete) {
+                  handleRepostDeleteDirect(selectedRepostForDelete);
+                  setSelectedRepostForDelete(null);
+                }
+              }} 
+              style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+            >
+              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
       </Modal>
 
     </View>

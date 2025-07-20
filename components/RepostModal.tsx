@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, TextInput, Image, Modal, Alert, Dimension
 import { X, Camera } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import * as ImagePicker from 'expo-image-picker';
+import { getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
@@ -21,47 +22,7 @@ const TEAM_LOGOS: { [key: string]: any } = {
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
-// Helper function to calculate responsive image dimensions
-const getResponsiveImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    // More aggressive margin for very narrow screens
-    const responsiveWidth = screenWidth - 120; // 60px margin each side
-    const responsiveHeight = (responsiveWidth * 200) / 280;
-    return {
-      width: responsiveWidth,
-      height: responsiveHeight,
-      borderRadius: 12,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 280,
-    height: 200,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6'
-  };
-};
-
-const getCompactImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    const compactWidth = screenWidth - 160;
-    const compactHeight = (compactWidth * 150) / 200;
-    return {
-      width: compactWidth,
-      height: compactHeight,
-      borderRadius: 8,
-      marginTop: 4,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 200,
-    height: 150,
-    borderRadius: 8,
-    marginTop: 4,
-    backgroundColor: '#f3f4f6'
-  };
-};
+// Using imported utility functions from lib/utils.ts
 
 interface RepostModalProps {
   visible: boolean;
@@ -310,7 +271,7 @@ export default function RepostModal({
                     <View style={{ alignItems: 'center', marginTop: 4 }}>
                       <Image
                         source={{ uri: originalThread.image_url }}
-                        style={getCompactImageStyle(screenWidth)}
+                        style={getVeryCompactImageStyle(screenWidth)}
                         resizeMode="cover"
                       />
                     </View>

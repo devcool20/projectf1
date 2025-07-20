@@ -17,8 +17,9 @@ import {
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X, MessageCircle, Repeat2, BarChart3, MoreHorizontal } from 'lucide-react-native';
 import PostCard from '../PostCard';
+import RepostModal from '../RepostModal';
 import * as ImagePicker from 'expo-image-picker';
-import { formatThreadTimestamp } from '@/lib/utils';
+import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
@@ -61,50 +62,18 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
   const scrollViewRef = useRef<ScrollView>(null);
   const menuAnchorRef = useRef<any>(null);
 
+  // Add state for repost delete menu
+  const [repostDeleteMenuVisible, setRepostDeleteMenuVisible] = useState(false);
+  const [selectedRepostForDelete, setSelectedRepostForDelete] = useState<string | null>(null);
+  const [repostMenuPos, setRepostMenuPos] = useState({ top: 0, left: 0 });
+
+  // Add state for repost modal
+  const [showRepostModal, setShowRepostModal] = useState(false);
+  const [selectedThreadForRepost, setSelectedThreadForRepost] = useState<any>(null);
+
   const { width: screenWidth } = Dimensions.get('window');
   
-  // Helper function to calculate responsive image dimensions
-  const getResponsiveImageStyle = (screenWidth: number) => {
-    if (screenWidth < 400) {
-      // More aggressive margin for very narrow screens
-      const responsiveWidth = screenWidth - 120; // 60px margin each side
-      const responsiveHeight = (responsiveWidth * 200) / 280;
-      return {
-        width: responsiveWidth,
-        height: responsiveHeight,
-        borderRadius: 12,
-        backgroundColor: '#f3f4f6'
-      };
-    }
-    return {
-      width: 280,
-      height: 200,
-      borderRadius: 12,
-      backgroundColor: '#f3f4f6'
-    };
-  };
-  
-  // Helper function to calculate compact image dimensions for preview content
-  const getCompactImageStyle = (screenWidth: number) => {
-    if (screenWidth < 400) {
-      const compactWidth = screenWidth - 160;
-      const compactHeight = (compactWidth * 150) / 200;
-      return {
-        width: compactWidth,
-        height: compactHeight,
-        borderRadius: 8,
-        marginTop: 4,
-        backgroundColor: '#f3f4f6'
-      };
-    }
-    return {
-      width: 200,
-      height: 150,
-      borderRadius: 8,
-      marginTop: 4,
-      backgroundColor: '#f3f4f6'
-    };
-  };
+  // Using imported utility functions from lib/utils.ts
   
   // Helper to detect mobile web
   function isMobileWeb() {
@@ -608,34 +577,21 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     const isRepost = threadData?.type === 'repost';
     const itemType = isRepost ? 'repost' : 'thread';
     
-    Alert.alert(
-      `Delete ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`,
-      `Are you sure you want to delete this ${itemType}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              if (isRepost) {
-                // Delete repost
-                const { error } = await supabase.from('reposts').delete().eq('id', threadId);
-                if (error) throw error;
-              } else {
-                // Delete regular thread
-                const { error } = await supabase.from('threads').delete().eq('id', threadId);
-                if (error) throw error;
-              }
-              onClose();
-            } catch (error) {
-              console.error(`Error deleting ${itemType}:`, error);
-              Alert.alert('Error', `Failed to delete ${itemType}`);
-            }
-          },
-        },
-      ]
-    );
+    try {
+      if (isRepost) {
+        // Delete repost
+        const { error } = await supabase.from('reposts').delete().eq('id', threadId);
+        if (error) throw error;
+      } else {
+        // Delete regular thread
+        const { error } = await supabase.from('threads').delete().eq('id', threadId);
+        if (error) throw error;
+      }
+      onClose();
+    } catch (error) {
+      console.error(`Error deleting ${itemType}:`, error);
+      Alert.alert('Error', `Failed to delete ${itemType}`);
+    }
   };
 
   const handleReplyTo = (username: string) => {
@@ -654,6 +610,25 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     // Use a fixed position instead of measuring to avoid positioning issues
     setMenuPos({ top: 100, left: 200 });
     setDeleteMenuVisible(true);
+  };
+
+  const openRepostDeleteMenu = (repostId: string, event: any) => {
+    setSelectedRepostForDelete(repostId);
+    // Calculate position based on event
+    if (event && event.nativeEvent) {
+      const { pageX, pageY } = event.nativeEvent;
+      setRepostMenuPos({ top: pageY + 20, left: pageX - 60 });
+    } else {
+      setRepostMenuPos({ top: 100, left: 200 }); // Fallback position
+    }
+    setRepostDeleteMenuVisible(true);
+  };
+
+  const handleRepostSuccess = () => {
+    // Refresh the thread data to show updated repost count
+    if (thread) {
+      fetchThreadData();
+    }
   };
 
   if (!thread) {
@@ -735,6 +710,18 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                         <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
                           {formatThreadTimestamp(threadData.created_at)}
                         </Text>
+                        {/* More options button for repost owner or admin - moved to top right */}
+                        {session && (threadData.user_id === session.user.id || isCurrentUserAdmin()) && (
+                          <TouchableOpacity 
+                            onPress={(e) => openRepostDeleteMenu(threadData.id, e)}
+                            style={{ 
+                              marginLeft: 'auto',
+                              padding: 4
+                            }}
+                          >
+                            <MoreHorizontal size={20} color="#888" />
+                          </TouchableOpacity>
+                        )}
                       </View>
 
                       {/* Repost content */}
@@ -748,13 +735,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                       {threadData.image_url && (
                         <Image
                           source={{ uri: threadData.image_url }}
-                          style={{ 
-                            width: screenWidth < 400 ? screenWidth - 80 : 280, 
-                            height: screenWidth < 400 ? ((screenWidth - 80) * 200) / 280 : 200, 
-                            borderRadius: 12,
-                            marginBottom: 12,
-                            backgroundColor: '#f3f4f6'
-                          }}
+                          style={getResponsiveImageStyle(screenWidth)}
                           resizeMode="cover"
                         />
                       )}
@@ -798,7 +779,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                                 <View style={{ alignItems: 'center', marginTop: 4 }}>
                                   <Image
                                     source={{ uri: threadData.original_thread.image_url }}
-                                    style={getCompactImageStyle(screenWidth)}
+                                    style={getVeryCompactImageStyle(screenWidth)}
                                     resizeMode="cover"
                                   />
                                 </View>
@@ -861,6 +842,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                 likes={threadData.likeCount || 0}
                 comments={threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
                 views={threadData.view_count || 0}
+                reposts={threadData.repostCount || 0}
                 isLiked={threadData.isLiked}
                 isBookmarked={threadData.isBookmarked || false}
                 favoriteTeam={threadData.profiles?.favorite_team}
@@ -869,6 +851,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                 onCommentPress={() => {}} // No action needed in thread view
                 onLikePress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked)}
                 onBookmarkPress={handleBookmarkToggle}
+                onRepostPress={() => onRepostPress?.(threadData)}
                 onDeletePress={() => handleDeleteThread(threadData.id)}
                 onProfilePress={onProfilePress}
                 canDelete={session && (threadData.user_id === session.user.id || isCurrentUserAdmin())}
@@ -1043,6 +1026,52 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
           </View>
         </Pressable>
       </Modal>
+
+      {/* Repost Delete Menu Modal */}
+      <Modal
+        visible={repostDeleteMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRepostDeleteMenuVisible(false)}
+      >
+        <Pressable style={{ flex: 1 }} onPress={() => setRepostDeleteMenuVisible(false)}>
+          <View style={{ 
+            position: 'absolute', 
+            top: repostMenuPos.top, 
+            left: repostMenuPos.left, 
+            backgroundColor: '#fff', 
+            borderRadius: 8, 
+            elevation: 4, 
+            shadowColor: '#000', 
+            shadowOpacity: 0.1, 
+            shadowRadius: 8, 
+            padding: 8, 
+            minWidth: 120 
+          }}>
+            <TouchableOpacity 
+              onPress={() => { 
+                setRepostDeleteMenuVisible(false); 
+                if (selectedRepostForDelete) {
+                  handleDeleteThread(selectedRepostForDelete);
+                  setSelectedRepostForDelete(null);
+                }
+              }} 
+              style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+            >
+              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Repost Modal */}
+      <RepostModal
+        visible={showRepostModal}
+        onClose={() => setShowRepostModal(false)}
+        originalThread={selectedThreadForRepost}
+        session={session}
+        onRepostSuccess={handleRepostSuccess}
+      />
     </View>
   );
 }

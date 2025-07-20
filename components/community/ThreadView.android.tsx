@@ -327,20 +327,24 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
   };
 
   const handleDeleteThread = async (threadId: string) => {
-    Alert.alert("Delete Thread", "Are you sure you want to delete this thread?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete", style: "destructive", onPress: async () => {
-          try {
-            await supabase.from('threads').delete().eq('id', threadId);
-            onClose();
-          } catch (error) {
-            console.error('Error deleting thread:', error);
-            Alert.alert('Error', 'Failed to delete thread.');
-          }
-        }
+    const isRepost = threadData?.type === 'repost';
+    const itemType = isRepost ? 'repost' : 'thread';
+    
+    try {
+      if (isRepost) {
+        // Delete repost
+        const { error } = await supabase.from('reposts').delete().eq('id', threadId);
+        if (error) throw error;
+      } else {
+        // Delete regular thread
+        const { error } = await supabase.from('threads').delete().eq('id', threadId);
+        if (error) throw error;
       }
-    ]);
+      onClose();
+    } catch (error) {
+      console.error(`Error deleting ${itemType}:`, error);
+      Alert.alert('Error', `Failed to delete ${itemType}`);
+    }
   };
 
   const pickReplyImage = async () => {

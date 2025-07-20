@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, Dimensions } from 'react-native';
-import { Pencil, ArrowLeft, AlertCircle, Heart, MessageCircle, Repeat2, Trash2, LogOut, LogIn, UserPlus, UserMinus, BarChart3 } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, Dimensions, Pressable } from 'react-native';
+import { Pencil, ArrowLeft, AlertCircle, Heart, MessageCircle, Repeat2, LogOut, LogIn, UserPlus, UserMinus, BarChart3, MoreHorizontal } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { EditProfileModal } from './EditProfileModal';
 import PostCard from '../PostCard';  // Import PostCard
 import ReplyCard from '../community/ReplyCard';  // Import ReplyCard
 import TwitterStyleReplyCard from '../community/TwitterStyleReplyCard';  // Import TwitterStyleReplyCard
 import { ThreadView } from '../community/ThreadView';  // Import ThreadView
+import RepostModal from '../RepostModal';  // Import RepostModal
+import { getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 
 // Team logos and admin constants
 const TEAM_LOGOS: { [key: string]: any } = {
@@ -26,47 +28,7 @@ const TEAM_LOGOS: { [key: string]: any } = {
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
-// Helper function to calculate responsive image dimensions
-const getResponsiveImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    // More aggressive margin for very narrow screens
-    const responsiveWidth = screenWidth - 120; // 60px margin each side
-    const responsiveHeight = (responsiveWidth * 200) / 280;
-    return {
-      width: responsiveWidth,
-      height: responsiveHeight,
-      borderRadius: 12,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 280,
-    height: 200,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6'
-  };
-};
-
-const getCompactImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    const compactWidth = screenWidth - 160;
-    const compactHeight = (compactWidth * 150) / 200;
-    return {
-      width: compactWidth,
-      height: compactHeight,
-      borderRadius: 8,
-      marginTop: 4,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 200,
-    height: 150,
-    borderRadius: 8,
-    marginTop: 4,
-    backgroundColor: '#f3f4f6'
-  };
-};
+// Using imported utility functions from lib/utils.ts
 
 // Placeholder for favorite team/admin icon
 const AdminOrTeamIcon = ({ isAdmin, team }: { isAdmin: boolean; team?: string }) => (
@@ -116,14 +78,59 @@ export default function ProfileContainer({
   const [followingLoading, setFollowingLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false); // New state for follow/unfollow loading
 
+  // Add state for repost delete menu
+  const [repostDeleteMenuVisible, setRepostDeleteMenuVisible] = useState(false);
+  const [selectedRepostForDelete, setSelectedRepostForDelete] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+
+  // Add state for repost modal
+  const [showRepostModal, setShowRepostModal] = useState(false);
+  const [selectedThreadForRepost, setSelectedThreadForRepost] = useState<any>(null);
+
   // Helper function to check if user is admin
   const isUserAdmin = (userProfile: any, userSession: any) => {
     return userProfile?.is_admin || userSession?.user?.email === ADMIN_EMAIL;
   };
 
+  const openRepostDeleteMenu = (repostId: string, event: any) => {
+    setSelectedRepostForDelete(repostId);
+    // Calculate position based on event
+    if (event && event.nativeEvent) {
+      const { pageX, pageY } = event.nativeEvent;
+      setMenuPos({ top: pageY + 20, left: pageX - 60 });
+    } else {
+      setMenuPos({ top: 100, left: 200 }); // Fallback position
+    }
+    setRepostDeleteMenuVisible(true);
+  };
+
   useEffect(() => {
     fetchAllData();
   }, [userId, session]);
+
+  // Prevent auto-refresh when switching browser tabs
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Only refresh if the page becomes visible AND we have data to refresh
+      if (!document.hidden && threads.length > 0) {
+        // Don't auto-refresh, let user manually refresh if needed
+        return;
+      }
+    };
+
+    const handleFocus = () => {
+      // Don't refresh on focus
+      return;
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [threads.length]);
 
   const fetchAllData = async (showLoader = true) => {
     try {
@@ -509,20 +516,16 @@ export default function ProfileContainer({
       return;
     }
     
-    // Use confirm for web platform as it's more reliable
-    const confirmed = window.confirm('Are you sure you want to delete this repost?');
-    if (confirmed) {
-      try {
-        const { error } = await supabase.from('reposts').delete().eq('id', repostId);
-        if (error) {
-          throw error;
-        }
-        
-        await fetchAllData();
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        alert(`Failed to delete repost: ${errorMessage}`);
+    try {
+      const { error } = await supabase.from('reposts').delete().eq('id', repostId);
+      if (error) {
+        throw error;
       }
+      
+      await fetchAllData();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to delete repost: ${errorMessage}`);
     }
   };
 
@@ -991,10 +994,15 @@ export default function ProfileContainer({
     }
   };
 
-  const handleRepostRepost = (repost: any) => {
-    // This would open the repost modal
-    console.log('Repost repost clicked:', repost.id);
-    // You can implement repost functionality here
+  const handleRepostRepost = (thread: any) => {
+    console.log('Repost button pressed for thread:', thread.id);
+    setSelectedThreadForRepost(thread);
+    setShowRepostModal(true);
+  };
+
+  const handleRepostSuccess = () => {
+    // Refresh data to show new repost
+    fetchAllData(false);
   };
 
   const handleLogout = async () => {
@@ -1126,7 +1134,7 @@ return (
         alignItems: 'center', 
         justifyContent: 'space-between', 
         paddingHorizontal: 16, 
-        paddingVertical: 12, 
+        paddingVertical: 16, 
         borderBottomWidth: 1, 
         borderBottomColor: '#e5e5e5',
         backgroundColor: '#ffffff',
@@ -1139,55 +1147,58 @@ return (
         <TouchableOpacity 
           onPress={onBack} 
           style={{ 
-            marginRight: 16, 
-            padding: 8, 
-            borderRadius: 20,
-            backgroundColor: 'rgba(0, 0, 0, 0.05)'
+            padding: 10, 
+            borderRadius: 25,
+            backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1
           }}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={20} color="#1a1a1a" />
+          <ArrowLeft size={22} color="#1a1a1a" />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 20, color: '#1a1a1a' }}>{profile.username}</Text>
-            {(isUserAdmin(profile, session) || profile.favorite_team) && (
-              <View style={{ marginLeft: 8 }}>
-                {isUserAdmin(profile, session) ? (
-                  <Image source={ADMIN_LOGO} style={{ width: 28, height: 24 }} resizeMode="contain" />
-                ) : profile.favorite_team ? (
-                  <Image source={TEAM_LOGOS[profile.favorite_team]} style={{ width: 28, height: 24 }} resizeMode="contain" />
-                ) : null}
-              </View>
-            )}
-          </View>
-          <Text style={{ color: '#657786', fontSize: 14, marginTop: 2 }}>{threads.length} posts • {replies.length} replies</Text>
+          <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#1a1a1a', marginBottom: 2 }}>{profile.username}</Text>
+          <Text style={{ color: '#657786', fontSize: 13 }}>{threads.length} posts • {replies.length} replies</Text>
         </View>
         {session?.user?.id === userId ? (
           <TouchableOpacity 
             onPress={() => setEditModal(true)} 
             style={{ 
               paddingHorizontal: 16, 
-              paddingVertical: 8,
-              borderRadius: 20,
+              paddingVertical: 10,
+              borderRadius: 25,
               borderWidth: 1,
-              borderColor: '#e5e5e5',
-              backgroundColor: '#ffffff'
+              borderColor: '#dc2626',
+              backgroundColor: '#dc2626',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 1
             }}
             activeOpacity={0.8}
           >
-            <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 14 }}>Edit Profile</Text>
+            <Text style={{ fontWeight: '600', color: '#ffffff', fontSize: 14 }}>Edit Profile</Text>
           </TouchableOpacity>
         ) : session && (
           <TouchableOpacity 
             onPress={handleFollowToggle} 
             style={{ 
-              paddingHorizontal: 16, 
-              paddingVertical: 8,
-              borderRadius: 20,
+              paddingHorizontal: 20, 
+              paddingVertical: 10,
+              borderRadius: 25,
               borderWidth: 1,
               borderColor: isFollowing ? '#e5e5e5' : '#dc2626',
-              backgroundColor: isFollowing ? '#ffffff' : '#dc2626'
+              backgroundColor: isFollowing ? '#ffffff' : '#dc2626',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 1
             }}
             activeOpacity={0.8}
           >
@@ -1203,36 +1214,159 @@ return (
       </View>
       {/* Profile Header with Avatar and Edit Icon */}
       <View style={{ 
-        flexDirection: 'row', 
-        alignItems: 'flex-start', 
-        justifyContent: 'space-between', 
-        padding: 20, 
-        backgroundColor: '#ffffff'
+        padding: 16, 
+        backgroundColor: '#ffffff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0'
       }}>
-        <View style={{ position: 'relative' }}>
-          <Image 
-            source={{ uri: profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.username?.charAt(0) || 'U'}&background=f5f5f5&color=666` }} 
-            style={{ 
-              width: 80, 
-              height: 80, 
-              borderRadius: 40, 
-              backgroundColor: '#f5f5f5',
-              borderWidth: 4,
-              borderColor: '#ffffff'
-            }} 
-          />
-          {session?.user?.id === userId && (
-            <TouchableOpacity 
-              onPress={() => setEditModal(true)} 
+        {/* Avatar and Edit Icon */}
+        <View style={{ 
+          alignItems: 'center', 
+          marginBottom: 16 
+        }}>
+          <View style={{ position: 'relative' }}>
+            <Image 
+              source={{ uri: profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.username?.charAt(0) || 'U'}&background=f5f5f5&color=666` }} 
               style={{ 
-                position: 'absolute', 
-                bottom: 0, 
-                right: 0, 
-                backgroundColor: '#ffffff', 
-                borderRadius: 12, 
-                padding: 4, 
-                borderWidth: 1, 
-                borderColor: '#e5e5e5',
+                width: 100, 
+                height: 100, 
+                borderRadius: 50, 
+                backgroundColor: '#f5f5f5',
+                borderWidth: 3,
+                borderColor: '#ffffff',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4
+              }} 
+            />
+            {session?.user?.id === userId && (
+              <TouchableOpacity 
+                onPress={() => setEditModal(true)} 
+                style={{ 
+                  position: 'absolute', 
+                  bottom: 2, 
+                  right: 2, 
+                  backgroundColor: '#ffffff', 
+                  borderRadius: 16, 
+                  padding: 6, 
+                  borderWidth: 2, 
+                  borderColor: '#e5e5e5',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 3,
+                  elevation: 3
+                }}
+                activeOpacity={0.8}
+              >
+                <Pencil size={16} color="#1a1a1a" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Profile Info */}
+        <View style={{ alignItems: 'center', marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={{ 
+              fontWeight: 'bold', 
+              fontSize: 24, 
+              color: '#1a1a1a', 
+              marginRight: 8 
+            }}>
+              {profile.full_name || profile.username}
+            </Text>
+            <AdminOrTeamIcon isAdmin={isUserAdmin(profile, session)} team={profile.favorite_team} />
+          </View>
+          <Text style={{ 
+            color: '#657786', 
+            fontSize: 16, 
+            marginBottom: 8 
+          }}>
+            @{profile.username}
+          </Text>
+          {profile.bio && (
+            <Text style={{ 
+              color: '#1a1a1a', 
+              fontSize: 16, 
+              lineHeight: 22, 
+              textAlign: 'center',
+              paddingHorizontal: 20
+            }}>
+              {profile.bio}
+            </Text>
+          )}
+        </View>
+      </View>
+      {/* Followers/Following Counts with Logout Button */}
+      <View style={{ 
+        paddingHorizontal: 16, 
+        paddingVertical: 20, 
+        backgroundColor: '#ffffff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0'
+      }}>
+        {/* Stats Row */}
+        <View style={{ 
+          flexDirection: 'row', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          marginBottom: 16
+        }}>
+          <TouchableOpacity 
+            onPress={() => {
+              setShowFollowersModal(true);
+              fetchFollowers();
+            }}
+            style={{ 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              marginRight: 32,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              borderRadius: 20,
+              backgroundColor: '#f8f9fa'
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#1a1a1a' }}>{followersCount}</Text>
+            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 6 }}>Followers</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => {
+              setShowFollowingModal(true);
+              fetchFollowing();
+            }}
+            style={{ 
+              flexDirection: 'row', 
+              alignItems: 'center',
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              borderRadius: 20,
+              backgroundColor: '#f8f9fa'
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#1a1a1a' }}>{followingCount}</Text>
+            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 6 }}>Following</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Logout Button - only show for current user's profile */}
+        {session?.user?.id === userId && (
+          <View style={{ alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={handleLogout}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#fff5f5',
+                paddingHorizontal: 20,
+                paddingVertical: 12,
+                borderRadius: 25,
+                borderWidth: 1,
+                borderColor: '#fecaca',
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.1,
@@ -1241,70 +1375,10 @@ return (
               }}
               activeOpacity={0.8}
             >
-              <Pencil size={14} color="#1a1a1a" />
+              <LogOut size={18} color="#dc2626" style={{ marginRight: 8 }} />
+              <Text style={{ color: '#dc2626', fontSize: 14, fontWeight: '600' }}>Logout</Text>
             </TouchableOpacity>
-          )}
-        </View>
-        <View style={{ flex: 1, marginLeft: 16 }}>
-          <Text style={{ fontWeight: 'bold', fontSize: 22, color: '#1a1a1a', marginBottom: 2 }}>{profile.full_name || profile.username}</Text>
-          <Text style={{ color: '#657786', fontSize: 14, marginBottom: 8 }}>@{profile.username}</Text>
-          {profile.bio && (
-            <Text style={{ color: '#1a1a1a', fontSize: 15, lineHeight: 20, marginBottom: 12 }}>{profile.bio}</Text>
-          )}
-        </View>
-        <AdminOrTeamIcon isAdmin={isUserAdmin(profile, session)} team={profile.favorite_team} />
-      </View>
-      {/* Followers/Following Counts with Logout Button */}
-      <View style={{ 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        paddingHorizontal: 20, 
-        paddingVertical: 16, 
-        backgroundColor: '#ffffff'
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity 
-            onPress={() => {
-              setShowFollowersModal(true);
-              fetchFollowers();
-            }}
-            style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-          >
-            <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#1a1a1a' }}>{followersCount}</Text>
-            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 4 }}>Followers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => {
-              setShowFollowingModal(true);
-              fetchFollowing();
-            }}
-            style={{ flexDirection: 'row', alignItems: 'center' }}
-          >
-            <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#1a1a1a' }}>{followingCount}</Text>
-            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 4 }}>Following</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Logout Button - only show for current user's profile */}
-        {session?.user?.id === userId && (
-          <TouchableOpacity
-            onPress={handleLogout}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: '#f8f9fa',
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 20,
-              borderWidth: 1,
-              borderColor: '#e5e5e5',
-            }}
-            activeOpacity={0.8}
-          >
-            <LogOut size={16} color="#dc2626" style={{ marginRight: 4 }} />
-            <Text style={{ color: '#dc2626', fontSize: 12, fontWeight: '600' }}>Logout</Text>
-          </TouchableOpacity>
+          </View>
         )}
       </View>
       {/* Tabs for Posts and Replies */}
@@ -1408,6 +1482,18 @@ return (
                                     resizeMode="contain"
                                   />
                                 )}
+                                {/* More options button for repost owner or admin - moved to top right */}
+                                {session && (item.user_id === session.user.id || isUserAdmin(item.profiles, session)) && (
+                                  <TouchableOpacity 
+                                    onPress={(e) => openRepostDeleteMenu(item.id, e)}
+                                    style={{ 
+                                      marginLeft: 'auto',
+                                      padding: 4
+                                    }}
+                                  >
+                                    <MoreHorizontal size={20} color="#888" />
+                                  </TouchableOpacity>
+                                )}
                               </View>
                               <Text style={{ fontSize: 11, color: '#888' }}>
                                 {new Date(item.created_at).toLocaleDateString()}
@@ -1479,7 +1565,7 @@ return (
                                     <View style={{ alignItems: 'center', marginTop: 4 }}>
                                       <Image
                                         source={{ uri: item.original_thread.image_url }}
-                                        style={getCompactImageStyle(screenWidth)}
+                                        style={getVeryCompactImageStyle(screenWidth)}
                                         resizeMode="cover"
                                       />
                                     </View>
@@ -1526,23 +1612,6 @@ return (
                                   {item.likeCount || 0}
                                 </Text>
                               </TouchableOpacity>
-
-                              {/* Delete button for reposts */}
-                              {session && (item.user_id === session.user.id || isUserAdmin(item.profiles, session)) && (
-                                <TouchableOpacity 
-                                  onPress={() => handleRepostDeletePress(item.id)}
-                                  style={{ 
-                                    flexDirection: 'row', 
-                                    alignItems: 'center', 
-                                    marginLeft: 'auto',
-                                    padding: 8,
-                                    backgroundColor: '#fef2f2',
-                                    borderRadius: 4
-                                  }}
-                                >
-                                  <Trash2 size={16} color="#dc2626" />
-                                </TouchableOpacity>
-                              )}
                             </View>
                           </View>
                         </View>
@@ -1559,6 +1628,7 @@ return (
                         likes={item.likeCount || 0}
                         comments={item.replyCount || 0}
                         views={item.view_count || 0}
+                        reposts={item.repostCount || 0}
                         isLiked={item.isLiked || false}
                         isBookmarked={item.isBookmarked || false}
                         favoriteTeam={item.profiles?.favorite_team || profile.favorite_team}
@@ -1567,6 +1637,7 @@ return (
                         onCommentPress={() => handleThreadClick(item.id)}
                         onLikePress={() => handleLikeToggle(item.id, item.isLiked || false)}
                         onBookmarkPress={() => handleBookmarkToggle(item.id, item.isBookmarked || false)}
+                        onRepostPress={() => handleRepostRepost(item)}
                         onDeletePress={() => handleDeleteThread(item.id)}
                         onProfilePress={() => {}} // Already in profile view
                         canDelete={session?.user?.id === item.user_id}
@@ -1905,8 +1976,52 @@ return (
           </View>
         </View>
       </Modal>
+
+      {/* Repost Delete Menu Modal */}
+      <Modal
+        visible={repostDeleteMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRepostDeleteMenuVisible(false)}
+      >
+        <Pressable style={{ flex: 1 }} onPress={() => setRepostDeleteMenuVisible(false)}>
+          <View style={{ 
+            position: 'absolute', 
+            top: menuPos.top, 
+            left: menuPos.left, 
+            backgroundColor: '#fff', 
+            borderRadius: 8, 
+            elevation: 4, 
+            shadowColor: '#000', 
+            shadowOpacity: 0.1, 
+            shadowRadius: 8, 
+            padding: 8, 
+            minWidth: 120 
+          }}>
+            <TouchableOpacity 
+              onPress={() => { 
+                setRepostDeleteMenuVisible(false); 
+                if (selectedRepostForDelete) {
+                  handleRepostDeletePress(selectedRepostForDelete);
+                  setSelectedRepostForDelete(null);
+                }
+              }} 
+              style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+            >
+              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Repost Modal */}
+      <RepostModal
+        visible={showRepostModal}
+        onClose={() => setShowRepostModal(false)}
+        originalThread={selectedThreadForRepost}
+        session={session}
+        onRepostSuccess={handleRepostSuccess}
+      />
     </View>
   );
-};
-
-export default ProfileContainer; 
+}; 

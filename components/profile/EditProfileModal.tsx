@@ -367,6 +367,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       onChangeText={setUsername}
                       placeholder="Enter username"
                       placeholderTextColor="#999"
+                      autoCapitalize="none"
+                      autoCorrect={false}
                     />
                   </View>
                 </View>
@@ -382,6 +384,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       onChangeText={setFullName}
                       placeholder="Enter full name"
                       placeholderTextColor="#999"
+                      autoCapitalize="words"
+                      autoCorrect={false}
                     />
                   </View>
                 </View>
@@ -399,6 +403,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       placeholderTextColor="#999"
                       multiline
                       numberOfLines={3}
+                      autoCapitalize="sentences"
+                      autoCorrect={true}
                     />
                   </View>
                 </View>
@@ -593,6 +599,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#e9ecef',
+    outlineStyle: 'none',
+    outlineWidth: 0,
+    outlineColor: 'transparent',
+    boxShadow: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
   },
   inputIcon: {
     marginRight: 12,
@@ -601,6 +613,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#333',
+    outlineStyle: 'none',
+    outlineWidth: 0,
+    outlineColor: 'transparent',
+    borderWidth: 0,
+    backgroundColor: 'transparent',
   },
   bioInput: {
     minHeight: 80,

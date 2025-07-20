@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Heart, MessageCircle, Bookmark, BarChart3, MoreHorizontal, Repeat2 } from 'lucide-react-native';
-import { formatThreadTimestamp } from '@/lib/utils';
+import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { Modal, Pressable } from 'react-native';
 
 const TEAM_LOGOS: { [key: string]: any } = {
@@ -24,26 +24,7 @@ const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const USERNAME_FONT_SIZE = 18;
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
-// Helper function to calculate responsive image dimensions
-const getResponsiveImageStyle = (screenWidth: number) => {
-  if (screenWidth < 400) {
-    // More aggressive margin for very narrow screens
-    const responsiveWidth = screenWidth - 120; // 60px margin each side
-    const responsiveHeight = (responsiveWidth * 200) / 280;
-    return {
-      width: responsiveWidth,
-      height: responsiveHeight,
-      borderRadius: 12,
-      backgroundColor: '#f3f4f6'
-    };
-  }
-  return {
-    width: 280,
-    height: 200,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6'
-  };
-};
+// Using imported utility functions from lib/utils.ts
 
 export type PostCardProps = {
   username: string;
