@@ -30,6 +30,7 @@ import RepostModal from '@/components/RepostModal';
 
 
 import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, BarChart3, Search } from 'lucide-react-native';
+import EngagementButton from '@/components/engagement-button';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
 import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
@@ -1832,6 +1833,98 @@ export default function CommunityScreen() {
     triggerOnboarding();
   };
 
+  // Helper function to render engagement buttons in correct order for reposts
+  const renderRepostEngagementButtons = (item: any) => {
+    const buttons = [
+      // Likes
+      <View key="likes" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+        <EngagementButton
+          icon={Heart}
+          active={item.isLiked || false}
+          onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
+          type="like"
+          size={14}
+          accessibilityLabel="Like repost"
+        />
+        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+          {item.likeCount || 0}
+        </Text>
+      </View>,
+      // Comments
+      <TouchableOpacity 
+        key="comments"
+        onPress={() => handleThreadPress(item)}
+        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+      >
+        <MessageCircle size={14} color="#666666" />
+        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
+      </TouchableOpacity>,
+      // Reposts
+      <TouchableOpacity 
+        key="reposts"
+        onPress={() => handleRepostPress(item)}
+        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+      >
+        <Repeat2 size={14} color="#666666" />
+        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
+      </TouchableOpacity>
+    ];
+
+    // For web platform, return in correct order: Like, Comment, Repost
+    if (Platform.OS === 'web') {
+      return buttons;
+    }
+
+    // For native platforms, return in original order: Comment, Repost, Like
+    return [buttons[1], buttons[2], buttons[0]];
+  };
+
+  // Helper function to render engagement buttons for "For You" tab reposts
+  const renderForYouRepostEngagementButtons = (item: any) => {
+    const buttons = [
+      // Likes
+      <View key="likes" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+        <EngagementButton
+          icon={Heart}
+          active={item.isLiked || false}
+          onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
+          type="like"
+          size={14}
+          accessibilityLabel="Like repost"
+        />
+        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+          {item.likeCount || 0}
+        </Text>
+      </View>,
+      // Comments
+      <TouchableOpacity 
+        key="comments"
+        onPress={() => handleThreadPress(item)}
+        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+      >
+        <MessageCircle size={14} color="#666666" />
+        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
+      </TouchableOpacity>,
+      // Reposts
+      <TouchableOpacity 
+        key="reposts"
+        onPress={() => handleRepostPress(item)}
+        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+      >
+        <Repeat2 size={14} color="#666666" />
+        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
+      </TouchableOpacity>
+    ];
+
+    // For web platform, return in correct order: Like, Comment, Repost
+    if (Platform.OS === 'web') {
+      return buttons;
+    }
+
+    // For native platforms, return in original order: Comment, Repost, Like
+    return [buttons[1], buttons[2], buttons[0]];
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
       {/* Mobile Header */}
@@ -2510,19 +2603,19 @@ export default function CommunityScreen() {
                                             </TouchableOpacity>
 
                                             {/* Likes */}
-                                            <TouchableOpacity 
-                                              onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-                                              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                                            >
-                                              <Heart 
-                                                size={14} 
-                                                color={item.isLiked ? '#dc2626' : '#666666'} 
-                                                fill={item.isLiked ? '#dc2626' : 'none'} 
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                                              <EngagementButton
+                                                icon={Heart}
+                                                active={item.isLiked || false}
+                                                onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
+                                                type="like"
+                                                size={14}
+                                                accessibilityLabel="Like repost"
                                               />
                                               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
                                                 {item.likeCount || 0}
                                               </Text>
-                                            </TouchableOpacity>
+                                            </View>
                                           </View>
                                         </View>
                                       </View>
@@ -2721,19 +2814,19 @@ export default function CommunityScreen() {
                                             </TouchableOpacity>
 
                                             {/* Likes */}
-                                            <TouchableOpacity 
-                                              onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-                                              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                                            >
-                                              <Heart 
-                                                size={14} 
-                                                color={item.isLiked ? '#dc2626' : '#666666'} 
-                                                fill={item.isLiked ? '#dc2626' : 'none'} 
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                                              <EngagementButton
+                                                icon={Heart}
+                                                active={item.isLiked || false}
+                                                onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
+                                                type="like"
+                                                size={14}
+                                                accessibilityLabel="Like repost"
                                               />
                                               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
                                                 {item.likeCount || 0}
                                               </Text>
-                                            </TouchableOpacity>
+                                            </View>
                                           </View>
                                         </View>
                                       </View>

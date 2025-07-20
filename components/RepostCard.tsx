@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, Dimensions, Modal, Pressable } fro
 import { Heart, MessageCircle, Bookmark, BarChart3, Repeat2, MoreHorizontal, Trash2 } from 'lucide-react-native';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import EngagementButton from './engagement-button';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
@@ -218,6 +219,21 @@ export default function RepostCard({
 
           {/* Engagement bar - same as regular posts */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+            {/* Likes */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+              <EngagementButton
+                icon={Heart}
+                active={isLiked}
+                onPress={handleLikePress}
+                type="like"
+                size={14}
+                accessibilityLabel="Like repost"
+              />
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                {likeCount}
+              </Text>
+            </View>
+
             {/* Comments */}
             <TouchableOpacity 
               style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
@@ -227,34 +243,33 @@ export default function RepostCard({
             </TouchableOpacity>
 
             {/* Reposts */}
-            <TouchableOpacity 
-              onPress={handleRepostPress}
-              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-            >
-              <Repeat2 size={14} color="#666666" />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{repostCount}</Text>
-            </TouchableOpacity>
-
-            {/* Likes */}
-            <TouchableOpacity 
-              onPress={handleLikePress}
-              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-            >
-              <Heart 
-                size={14} 
-                color={isLiked ? '#dc2626' : '#666666'} 
-                fill={isLiked ? '#dc2626' : 'none'} 
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+              <EngagementButton
+                icon={Repeat2}
+                active={false} // TODO: Add isReposted prop to RepostCardProps
+                onPress={handleRepostPress}
+                type="repost"
+                size={14}
+                accessibilityLabel="Repost"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                {likeCount}
-              </Text>
-            </TouchableOpacity>
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{repostCount}</Text>
+            </View>
 
             {/* Views */}
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
               <BarChart3 size={14} color="#666666" />
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>-</Text>
             </View>
+
+            {/* Bookmarks */}
+            <EngagementButton
+              icon={Bookmark}
+              active={false} // TODO: Add isBookmarked prop to RepostCardProps
+              onPress={() => {}} // TODO: Add bookmark handler
+              type="bookmark"
+              size={14}
+              accessibilityLabel="Bookmark repost"
+            />
           </View>
         </View>
       </View>

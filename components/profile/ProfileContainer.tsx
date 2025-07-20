@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, Dimensions, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, RefreshControl, Modal, Dimensions, Pressable, Platform } from 'react-native';
 import { Pencil, ArrowLeft, AlertCircle, Heart, MessageCircle, Repeat2, LogOut, LogIn, UserPlus, UserMinus, BarChart3, MoreHorizontal } from 'lucide-react-native';
+import EngagementButton from '../engagement-button';
 import { supabase } from '@/lib/supabase';
 import { EditProfileModal } from './EditProfileModal';
 import PostCard from '../PostCard';  // Import PostCard
@@ -1810,38 +1811,85 @@ return (
 
                             {/* Engagement bar */}
                             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                              {/* Comments */}
-                              <TouchableOpacity 
-                                onPress={() => handleThreadClick(item.id)}
-                                style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                              >
-                                <MessageCircle size={14} color="#666666" />
-                                <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
-                              </TouchableOpacity>
+                              {Platform.OS === 'web' ? (
+                                <>
+                                  {/* Likes */}
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                                    <EngagementButton
+                                      icon={Heart}
+                                      active={item.isLiked || false}
+                                      onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
+                                      type="like"
+                                      size={14}
+                                      accessibilityLabel="Like repost"
+                                    />
+                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                                      {item.likeCount || 0}
+                                    </Text>
+                                  </View>
 
-                              {/* Reposts */}
-                              <TouchableOpacity 
-                                onPress={() => handleRepostRepost(item)}
-                                style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                              >
-                                <Repeat2 size={14} color="#666666" />
-                                <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
-                              </TouchableOpacity>
+                                  {/* Comments */}
+                                  <TouchableOpacity 
+                                    onPress={() => handleThreadClick(item.id)}
+                                    style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+                                  >
+                                    <MessageCircle size={14} color="#666666" />
+                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
+                                  </TouchableOpacity>
 
-                              {/* Likes */}
-                              <TouchableOpacity 
-                                onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-                                style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                              >
-                                <Heart 
-                                  size={14} 
-                                  color={item.isLiked ? '#dc2626' : '#666666'} 
-                                  fill={item.isLiked ? '#dc2626' : 'none'} 
-                                />
-                                <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                                  {item.likeCount || 0}
-                                </Text>
-                              </TouchableOpacity>
+                                  {/* Reposts */}
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                                    <EngagementButton
+                                      icon={Repeat2}
+                                      active={false} // TODO: Add isReposted prop to track repost state
+                                      onPress={() => handleRepostRepost(item)}
+                                      type="repost"
+                                      size={14}
+                                      accessibilityLabel="Repost"
+                                    />
+                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
+                                  </View>
+                                </>
+                              ) : (
+                                <>
+                                  {/* Comments */}
+                                  <TouchableOpacity 
+                                    onPress={() => handleThreadClick(item.id)}
+                                    style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+                                  >
+                                    <MessageCircle size={14} color="#666666" />
+                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
+                                  </TouchableOpacity>
+
+                                  {/* Reposts */}
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                                    <EngagementButton
+                                      icon={Repeat2}
+                                      active={false} // TODO: Add isReposted prop to track repost state
+                                      onPress={() => handleRepostRepost(item)}
+                                      type="repost"
+                                      size={14}
+                                      accessibilityLabel="Repost"
+                                    />
+                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
+                                  </View>
+
+                                  {/* Likes */}
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                                    <EngagementButton
+                                      icon={Heart}
+                                      active={item.isLiked || false}
+                                      onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
+                                      type="like"
+                                      size={14}
+                                      accessibilityLabel="Like repost"
+                                    />
+                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                                      {item.likeCount || 0}
+                                    </Text>
+                                  </View>
+                                </>
+                              )}
                             </View>
                           </View>
                         </View>

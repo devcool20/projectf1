@@ -16,6 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X } from 'lucide-react-native';
 import PostCard from '@/components/post-card/index.android';
 import * as ImagePicker from 'expo-image-picker';
+import EngagementButton from '../engagement-button';
 import { ThreadViewProps, Thread, Reply, Profile } from './ThreadView.types.android';
 import { styles } from './ThreadView.styles.android';
 import { formatThreadTimestamp } from '@/lib/utils';
@@ -501,10 +502,17 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
           />
         )}
           <View style={styles.commentActions}>
-            <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked || false)} style={styles.actionButton}>
-              <Heart size={16} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
+            <View style={styles.actionButton}>
+              <EngagementButton
+                icon={Heart}
+                active={reply.isLiked || false}
+                onPress={() => handleLikeToggle(reply.id, reply.isLiked || false)}
+                type="like"
+                size={16}
+                accessibilityLabel="Like reply"
+              />
               {(reply.likeCount || 0) > 0 && <Text style={styles.actionText}>{reply.likeCount || 0}</Text>}
-            </TouchableOpacity>
+            </View>
             {session && session.user && (reply.user_id === session.user.id || isCurrentUserAdmin()) && (
               <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={styles.actionButton}>
                 <Trash2 size={16} color="#505050" />

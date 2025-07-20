@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Heart, MessageCircle, Trash2, BarChart3 } from 'lucide-react-native';
 import { PostCardProps } from './types.android';
 import styles from './styles.android';
+import EngagementButton from '../engagement-button';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
@@ -98,10 +99,17 @@ const PostCard: FC<PostCardProps> = ({
       )}
       <View style={styles.actions}>
         <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={onLikePress} style={styles.actionButton}>
-            <Heart size={20} color={isLiked ? '#dc2626' : '#505050'} fill={isLiked ? '#dc2626' : 'none'} />
+          <View style={styles.actionButton}>
+            <EngagementButton
+              icon={Heart}
+              active={isLiked || false}
+              onPress={onLikePress}
+              type="like"
+              size={20}
+              accessibilityLabel="Like post"
+            />
             {likes > 0 && <Text style={styles.actionText}>{likes}</Text>}
-          </TouchableOpacity>
+          </View>
           <TouchableOpacity onPress={onCommentPress} style={styles.actionButton}>
             <MessageCircle size={20} color="#505050" />
             {comments > 0 && <Text style={styles.actionText}>{comments}</Text>}

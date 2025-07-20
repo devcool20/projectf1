@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Trash2, Heart, Camera, X, MessageCircle, Repeat2, BarChart3, MoreHorizontal } from 'lucide-react-native';
 import PostCard from '../PostCard';
 import RepostModal from '../RepostModal';
+import EngagementButton from '../engagement-button';
 import * as ImagePicker from 'expo-image-picker';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 
@@ -789,37 +790,75 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
 
                 {/* Engagement bar - moved below preview for reposts */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 76 }}>
-                  {/* Comments */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                    <MessageCircle size={14} color="#666666" />
-                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                      {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
-                    </Text>
-                  </View>
+                  {Platform.OS === 'web' ? (
+                    <>
+                      {/* Likes */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                        <EngagementButton
+                          icon={Heart}
+                          active={threadData.isLiked || false}
+                          onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false)}
+                          type="like"
+                          size={14}
+                          accessibilityLabel="Like thread"
+                        />
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                          {threadData.likeCount || 0}
+                        </Text>
+                      </View>
 
-                  {/* Reposts */}
-                  <TouchableOpacity 
-                    onPress={() => onRepostPress?.(threadData)}
-                    style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                  >
-                    <Repeat2 size={14} color="#666666" />
-                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
-                  </TouchableOpacity>
+                      {/* Comments */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                        <MessageCircle size={14} color="#666666" />
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                          {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
+                        </Text>
+                      </View>
 
-                  {/* Likes */}
-                  <TouchableOpacity 
-                    onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false)}
-                    style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                  >
-                    <Heart 
-                      size={14} 
-                      color={threadData.isLiked ? '#dc2626' : '#666666'} 
-                      fill={threadData.isLiked ? '#dc2626' : 'none'} 
-                    />
-                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                      {threadData.likeCount || 0}
-                    </Text>
-                  </TouchableOpacity>
+                      {/* Reposts */}
+                      <TouchableOpacity 
+                        onPress={() => onRepostPress?.(threadData)}
+                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+                      >
+                        <Repeat2 size={14} color="#666666" />
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      {/* Comments */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                        <MessageCircle size={14} color="#666666" />
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                          {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
+                        </Text>
+                      </View>
+
+                      {/* Reposts */}
+                      <TouchableOpacity 
+                        onPress={() => onRepostPress?.(threadData)}
+                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+                      >
+                        <Repeat2 size={14} color="#666666" />
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
+                      </TouchableOpacity>
+
+                      {/* Likes */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                        <EngagementButton
+                          icon={Heart}
+                          active={threadData.isLiked || false}
+                          onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false)}
+                          type="like"
+                          size={14}
+                          accessibilityLabel="Like thread"
+                        />
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                          {threadData.likeCount || 0}
+                        </Text>
+                      </View>
+                    </>
+                  )}
                 </View>
               </View>
             ) : (
@@ -960,10 +999,17 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                         </View>
                       )}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                        <TouchableOpacity onPress={() => handleLikeToggle(reply.id, reply.isLiked)} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
-                          <Heart size={14} color={reply.isLiked ? '#dc2626' : '#505050'} fill={reply.isLiked ? '#dc2626' : 'none'} />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+                          <EngagementButton
+                            icon={Heart}
+                            active={reply.isLiked || false}
+                            onPress={() => handleLikeToggle(reply.id, reply.isLiked)}
+                            type="like"
+                            size={14}
+                            accessibilityLabel="Like reply"
+                          />
                           {reply.likeCount > 0 && <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12 }}>{reply.likeCount}</Text>}
-                        </TouchableOpacity>
+                        </View>
                         {session && (reply.user_id === session.user.id || isCurrentUserAdmin()) && (
                           <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                             <Trash2 size={14} color="#505050" />
