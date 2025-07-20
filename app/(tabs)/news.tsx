@@ -272,14 +272,14 @@ export default function NewsScreen() {
         borderBottomColor: '#e5e5e5',
       }}>
         <View style={{ maxWidth: 800, alignSelf: 'center', width: '100%' }}>
-          <Text style={{
-            fontSize: 24,
-            fontWeight: 'bold',
-            color: '#1a1a1a',
-            marginBottom: 12,
-          }}>
-            F1 News
-          </Text>
+        <Text style={{
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: '#1a1a1a',
+          marginBottom: 12,
+        }}>
+          F1 News
+        </Text>
         </View>
       </View>
 
@@ -292,80 +292,80 @@ export default function NewsScreen() {
         borderBottomColor: '#e5e5e5',
       }}>
         <View style={{ maxWidth: 800, alignSelf: 'center', width: '100%' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{
-              flex: 1,
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: '#f8f9fa',
-              borderRadius: 12,
-              paddingHorizontal: 12,
-              marginRight: 12,
-            }}>
-              <Search size={16} color="#666" style={{ marginRight: 8 }} />
-              <TextInput
-                style={{
-                  flex: 1,
-                  fontSize: 16,
-                  color: '#1a1a1a',
-                  paddingVertical: 12,
-                }}
-                placeholder="Search articles..."
-                placeholderTextColor="#999"
-                value={searchQuery}
-                onChangeText={handleSearch}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <X size={16} color="#666" />
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            <TouchableOpacity
-              onPress={() => setShowFilters(!showFilters)}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#f8f9fa',
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            marginRight: 12,
+          }}>
+            <Search size={16} color="#666" style={{ marginRight: 8 }} />
+            <TextInput
               style={{
-                padding: 12,
-                backgroundColor: selectedSource !== 'all' ? '#dc2626' : '#f8f9fa',
-                borderRadius: 12,
+                flex: 1,
+                fontSize: 16,
+                color: '#1a1a1a',
+                paddingVertical: 12,
               }}
-            >
-              <Filter size={16} color={selectedSource !== 'all' ? '#ffffff' : '#666'} />
-            </TouchableOpacity>
+              placeholder="Search articles..."
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <X size={16} color="#666" />
+              </TouchableOpacity>
+            )}
           </View>
+          
+          <TouchableOpacity
+            onPress={() => setShowFilters(!showFilters)}
+            style={{
+              padding: 12,
+              backgroundColor: selectedSource !== 'all' ? '#dc2626' : '#f8f9fa',
+              borderRadius: 12,
+            }}
+          >
+            <Filter size={16} color={selectedSource !== 'all' ? '#ffffff' : '#666'} />
+          </TouchableOpacity>
+        </View>
 
-          {/* Filter Options */}
-          {showFilters && (
-            <View style={{
-              marginTop: 12,
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              gap: 8,
-            }}>
-              {sources.map((source) => (
-                <TouchableOpacity
-                  key={source}
-                  onPress={() => handleSourceFilter(source)}
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 16,
-                    backgroundColor: selectedSource === source ? '#dc2626' : '#f8f9fa',
-                    borderWidth: 1,
-                    borderColor: selectedSource === source ? '#dc2626' : '#e5e5e5',
-                  }}
-                >
-                  <Text style={{
-                    fontSize: 12,
-                    fontWeight: '600',
-                    color: selectedSource === source ? '#ffffff' : '#666',
-                  }}>
-                    {source === 'all' ? 'All Sources' : source}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+        {/* Filter Options */}
+        {showFilters && (
+          <View style={{
+            marginTop: 12,
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 8,
+          }}>
+            {sources.map((source) => (
+              <TouchableOpacity
+                key={source}
+                onPress={() => handleSourceFilter(source)}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 16,
+                  backgroundColor: selectedSource === source ? '#dc2626' : '#f8f9fa',
+                  borderWidth: 1,
+                  borderColor: selectedSource === source ? '#dc2626' : '#e5e5e5',
+                }}
+              >
+                <Text style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: selectedSource === source ? '#ffffff' : '#666',
+                }}>
+                  {source === 'all' ? 'All Sources' : source}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
         </View>
       </View>
 
@@ -384,48 +384,48 @@ export default function NewsScreen() {
         showsVerticalScrollIndicator={true}
       >
         <View style={{ maxWidth: 800, alignSelf: 'center', width: '100%' }}>
-          {loading ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
-              <ActivityIndicator size="large" color="#dc2626" />
-              <Text style={{ marginTop: 16, fontSize: 16, color: '#666', textAlign: 'center' }}>
-                Loading latest news...
-              </Text>
-              <Text style={{ fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' }}>
-                This may take a few moments as we fetch full articles
+        {loading ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+            <ActivityIndicator size="large" color="#dc2626" />
+            <Text style={{ marginTop: 16, fontSize: 16, color: '#666', textAlign: 'center' }}>
+              Loading latest news...
+            </Text>
+            <Text style={{ fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' }}>
+              This may take a few moments as we fetch full articles
+            </Text>
+          </View>
+        ) : filteredArticles.length > 0 ? (
+          <>
+            <View style={{ marginBottom: 8, paddingHorizontal: 16 }}>
+              <Text style={{ fontSize: 14, color: '#666' }}>
+                {`${filteredArticles.length} article${filteredArticles.length !== 1 ? 's' : ''} found`}
               </Text>
             </View>
-          ) : filteredArticles.length > 0 ? (
-            <>
-              <View style={{ marginBottom: 8, paddingHorizontal: 16 }}>
-                <Text style={{ fontSize: 14, color: '#666' }}>
-                  {`${filteredArticles.length} article${filteredArticles.length !== 1 ? 's' : ''} found`}
-                </Text>
-              </View>
-              {filteredArticles.map(renderArticleCard)}
-            </>
-          ) : (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
-              <Text style={{ fontSize: 18, color: '#666', textAlign: 'center', marginBottom: 8 }}>
-                {searchQuery ? 'No articles found' : 'No news available'}
+            {filteredArticles.map(renderArticleCard)}
+          </>
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+            <Text style={{ fontSize: 18, color: '#666', textAlign: 'center', marginBottom: 8 }}>
+              {searchQuery ? 'No articles found' : 'No news available'}
+            </Text>
+            <Text style={{ fontSize: 14, color: '#999', textAlign: 'center', marginBottom: 16 }}>
+              {searchQuery ? 'Try adjusting your search or filters' : 'Check back later for updates'}
+            </Text>
+            <TouchableOpacity
+              onPress={() => fetchNews(false)}
+              style={{
+                backgroundColor: '#dc2626',
+                paddingHorizontal: 20,
+                paddingVertical: 12,
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontWeight: '600' }}>
+                Retry Loading News
               </Text>
-              <Text style={{ fontSize: 14, color: '#999', textAlign: 'center', marginBottom: 16 }}>
-                {searchQuery ? 'Try adjusting your search or filters' : 'Check back later for updates'}
-              </Text>
-              <TouchableOpacity
-                onPress={() => fetchNews(false)}
-                style={{
-                  backgroundColor: '#dc2626',
-                  paddingHorizontal: 20,
-                  paddingVertical: 12,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: '#ffffff', fontWeight: '600' }}>
-                  Retry Loading News
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+            </TouchableOpacity>
+          </View>
+        )}
         </View>
       </ScrollView>
 

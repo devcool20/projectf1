@@ -50,7 +50,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
       if (supported) {
         await Linking.openURL(article.url);
       } else {
-        Alert.alert(
+    Alert.alert(
           'Cannot Open Link',
           'This link cannot be opened in your browser.',
           [{ text: 'OK', style: 'default' }]
@@ -62,7 +62,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
         'Failed to open the article in your browser.',
         [{ text: 'OK', style: 'default' }]
       );
-    }
+          }
   };
 
   const formatDate = (dateString: string) => {
@@ -147,64 +147,64 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
           maxWidth: 800, 
           alignSelf: 'center', 
           width: '100%',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-        }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {onBack && (
-              <TouchableOpacity
-                onPress={onBack}
-                style={{
-                  padding: 8,
-                  marginRight: 12,
-                  borderRadius: 20,
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                }}
-              >
-                <ArrowLeft size={20} color="#1a1a1a" />
-              </TouchableOpacity>
-            )}
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#1a1a1a' }}>
-              {article.source}
-            </Text>
-          </View>
-          
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {onBack && (
             <TouchableOpacity
-              onPress={handleShare}
+              onPress={onBack}
               style={{
                 padding: 8,
-                marginRight: 8,
+                marginRight: 12,
                 borderRadius: 20,
                 backgroundColor: 'rgba(0, 0, 0, 0.05)',
               }}
             >
-              <Share2 size={18} color="#1a1a1a" />
+              <ArrowLeft size={20} color="#1a1a1a" />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleOpenExternal}
-              style={{
-                padding: 8,
-                marginRight: 8,
-                borderRadius: 20,
-                backgroundColor: 'rgba(0, 0, 0, 0.05)',
-              }}
-            >
-              <ExternalLink size={18} color="#1a1a1a" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onClose}
-              style={{
-                padding: 8,
-                borderRadius: 20,
-                backgroundColor: 'rgba(220, 38, 38, 0.1)',
-              }}
-            >
-              <X size={18} color="#dc2626" />
-            </TouchableOpacity>
+          )}
+          <Text style={{ fontSize: 16, fontWeight: '600', color: '#1a1a1a' }}>
+            {article.source}
+          </Text>
+        </View>
+        
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity
+            onPress={handleShare}
+            style={{
+              padding: 8,
+              marginRight: 8,
+              borderRadius: 20,
+              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            }}
+          >
+            <Share2 size={18} color="#1a1a1a" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleOpenExternal}
+            style={{
+              padding: 8,
+              marginRight: 8,
+              borderRadius: 20,
+              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+            }}
+          >
+            <ExternalLink size={18} color="#1a1a1a" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={onClose}
+            style={{
+              padding: 8,
+              borderRadius: 20,
+              backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            }}
+          >
+            <X size={18} color="#dc2626" />
+          </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -216,70 +216,70 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
         showsVerticalScrollIndicator={true}
       >
         <View style={{ maxWidth: 800, alignSelf: 'center', width: '100%' }}>
-          {/* Hero Image */}
-          {article.image_url && (
-            <View style={{ marginBottom: 20 }}>
-              <Image
-                source={{ uri: article.image_url }}
-                style={{
+        {/* Hero Image */}
+        {article.image_url && (
+          <View style={{ marginBottom: 20 }}>
+            <Image
+              source={{ uri: article.image_url }}
+              style={{
                   width: '100%',
-                  height: 250,
-                  backgroundColor: '#f5f5f5',
+                height: 250,
+                backgroundColor: '#f5f5f5',
                   borderRadius: 12,
-                }}
-                resizeMode="cover"
-              />
+              }}
+              resizeMode="cover"
+            />
+          </View>
+        )}
+
+        {/* Article Header */}
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <Text style={{
+            fontSize: 24,
+            fontWeight: 'bold',
+            color: '#1a1a1a',
+            lineHeight: 32,
+            marginBottom: 16,
+          }}>
+            {article.title}
+          </Text>
+
+          {/* Meta Information */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+              <Calendar size={14} color="#666" style={{ marginRight: 4 }} />
+              <Text style={{ fontSize: 12, color: '#666' }}>
+                {formatDate(article.published_at)}
+              </Text>
             </View>
-          )}
-
-          {/* Article Header */}
-          <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-            <Text style={{
-              fontSize: 24,
-              fontWeight: 'bold',
-              color: '#1a1a1a',
-              lineHeight: 32,
-              marginBottom: 16,
-            }}>
-              {article.title}
-            </Text>
-
-            {/* Meta Information */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
-                <Calendar size={14} color="#666" style={{ marginRight: 4 }} />
+            {article.author && (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <User size={14} color="#666" style={{ marginRight: 4 }} />
                 <Text style={{ fontSize: 12, color: '#666' }}>
-                  {formatDate(article.published_at)}
-                </Text>
-              </View>
-              {article.author && (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <User size={14} color="#666" style={{ marginRight: 4 }} />
-                  <Text style={{ fontSize: 12, color: '#666' }}>
-                    {article.author}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Category Badge */}
-            {article.category && (
-              <View style={{
-                backgroundColor: '#dc2626',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 16,
-                alignSelf: 'flex-start',
-                marginBottom: 16,
-              }}>
-                <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '600' }}>
-                  {article.category}
+                  {article.author}
                 </Text>
               </View>
             )}
           </View>
 
-          {/* Article Content */}
+          {/* Category Badge */}
+          {article.category && (
+            <View style={{
+              backgroundColor: '#dc2626',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 16,
+              alignSelf: 'flex-start',
+              marginBottom: 16,
+            }}>
+              <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '600' }}>
+                {article.category}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Article Content */}
           <View style={{ paddingHorizontal: 20 }}>
             <Text style={{
               fontSize: 16,
@@ -290,23 +290,23 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
             </Text>
           </View>
 
-          {/* Source Attribution */}
-          <View style={{
-            marginTop: 32,
-            paddingHorizontal: 20,
-            paddingVertical: 16,
-            backgroundColor: '#f8f9fa',
-            borderTopWidth: 1,
-            borderTopColor: '#e5e5e5',
+        {/* Source Attribution */}
+        <View style={{
+          marginTop: 32,
+          paddingHorizontal: 20,
+          paddingVertical: 16,
+          backgroundColor: '#f8f9fa',
+          borderTopWidth: 1,
+          borderTopColor: '#e5e5e5',
             borderRadius: 12,
             marginHorizontal: 20,
-          }}>
-            <Text style={{ fontSize: 14, color: '#666', textAlign: 'center' }}>
-              Source: {article.source}
-            </Text>
-            <Text style={{ fontSize: 12, color: '#999', textAlign: 'center', marginTop: 4 }}>
-              Published on {formatDate(article.published_at)}
-            </Text>
+        }}>
+          <Text style={{ fontSize: 14, color: '#666', textAlign: 'center' }}>
+            Source: {article.source}
+          </Text>
+          <Text style={{ fontSize: 12, color: '#999', textAlign: 'center', marginTop: 4 }}>
+            Published on {formatDate(article.published_at)}
+          </Text>
           </View>
         </View>
       </ScrollView>
