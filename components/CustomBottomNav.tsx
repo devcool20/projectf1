@@ -6,6 +6,7 @@ import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-na
 
 const TABS = [
   { name: 'Community', path: '/community', icon: '💬' },
+  { name: 'News', path: '/news', icon: '📰' },
   { name: 'Screenings', path: '/screenings', icon: '🎬' },
   { name: 'Shop', path: '/shop', icon: '🛍️' },
   { name: 'Drivers', path: '/drivers', icon: '🏆' },

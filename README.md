@@ -38,3 +38,37 @@ Project F1 is more than just a website – it’s a digital pit lane where fans 
 This project is a true reflection of my imagination, dedication, and countless hours of hard work. Every feature, every detail, and every pixel is crafted with passion to create a unique space for the F1 community. Thank you for being a part of this journey – together, we drive the future of fandom!
 
 *Keep racing, keep dreaming.*
+
+---
+
+## Environment Setup
+
+To run this project, you'll need to set up the following environment variables:
+
+### Required Environment Variables
+
+1. **Supabase Configuration:**
+   - `EXPO_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+
+2. **News API Configuration:**
+   - `EXPO_PUBLIC_NEWS_API_KEY`: Your News API key from [newsapi.org](https://newsapi.org)
+
+### How to Get Your News API Key
+
+1. Visit [newsapi.org](https://newsapi.org)
+2. Sign up for a free account
+3. Get your API key from the dashboard
+4. Add it to your environment variables as `EXPO_PUBLIC_NEWS_API_KEY`
+
+### Environment File Setup
+
+Create a `.env` file in the root directory with the following structure:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url_here
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+EXPO_PUBLIC_NEWS_API_KEY=your_news_api_key_here
+```
+
+**Note:** Make sure to add `.env` to your `.gitignore` file to keep your API keys secure.

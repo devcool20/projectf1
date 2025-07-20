@@ -3,6 +3,7 @@ import { useFonts, RacingSansOne_400Regular } from '@expo-google-fonts/racing-sa
 import { Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { useEffect } from 'react';
 import { SplashScreen } from 'expo-router';
+import { globalNewsService } from '@/lib/globalNewsService';
 import './globals.css';
 
 SplashScreen.preventAutoHideAsync();
@@ -19,6 +20,11 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  // Initialize global news service on app startup
+  useEffect(() => {
+    globalNewsService.initialize();
+  }, []);
 
   if (!fontsLoaded && !fontError) {
     return null;
