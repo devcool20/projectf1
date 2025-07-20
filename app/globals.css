@@ -203,4 +203,86 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(215, 20%, 40%) transparent;
   }
+
+  /* Remove focus outlines from all input elements */
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible,
+  button:focus,
+  button:focus-visible,
+  [contenteditable]:focus,
+  [contenteditable]:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove focus outlines from all interactive elements */
+  *:focus,
+  *:focus-visible {
+    outline: none !important;
+  }
+
+  /* Remove focus rings from all elements */
+  *:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Custom focus styles for better accessibility (optional) */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--color-ring) !important;
+    box-shadow: 0 0 0 2px rgba(160, 160, 160, 0.2) !important;
+  }
+
+  /* Remove default browser styling */
+  input,
+  textarea,
+  select,
+  button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+
+  /* Remove default button styling */
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  /* Remove default input styling */
+  input,
+  textarea {
+    border: 1px solid white !important;
+    background: transparent;
+    font: inherit;
+  }
+
+  /* Ensure all input elements have white borders */
+  input,
+  textarea,
+  select {
+    border-color: white !important;
+  }
+
+  /* Remove borders on focus to make them completely invisible */
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible {
+    border-color: white !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
