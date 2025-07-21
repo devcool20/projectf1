@@ -217,9 +217,9 @@ export default function RepostCard({
             </View>
           </TouchableOpacity>
 
-          {/* Engagement bar - same as regular posts */}
+          {/* Engagement bar - fixed order: Like, Comment, Repost, Bookmark */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-            {/* Likes */}
+            {/* Like */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
               <EngagementButton
                 icon={Heart}
@@ -234,19 +234,24 @@ export default function RepostCard({
               </Text>
             </View>
 
-            {/* Comments */}
-            <TouchableOpacity 
-              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-            >
-              <MessageCircle size={14} color="#666666" />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>0</Text>
-            </TouchableOpacity>
+            {/* Comment */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+              <EngagementButton
+                icon={MessageCircle}
+                active={false}
+                onPress={() => onThreadPress?.(repost.id)}
+                type="comment"
+                size={14}
+                accessibilityLabel="Comment"
+              />
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{repost.replyCount || 0}</Text>
+            </View>
 
-            {/* Reposts */}
+            {/* Repost */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
               <EngagementButton
                 icon={Repeat2}
-                active={false} // TODO: Add isReposted prop to RepostCardProps
+                active={false}
                 onPress={handleRepostPress}
                 type="repost"
                 size={14}
@@ -255,15 +260,15 @@ export default function RepostCard({
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{repostCount}</Text>
             </View>
 
-            {/* Bookmarks */}
-            <EngagementButton
+            {/* Bookmark (if reposts should be bookmarkable, otherwise remove this block) */}
+            {/* <EngagementButton
               icon={Bookmark}
               active={false} // TODO: Add isBookmarked prop to RepostCardProps
               onPress={() => {}} // TODO: Add bookmark handler
               type="bookmark"
               size={14}
               accessibilityLabel="Bookmark repost"
-            />
+            /> */}
           </View>
         </View>
       </View>

@@ -1121,8 +1121,7 @@ export default function CommunityScreen() {
         .from('reposts')
         .select(`
           *,
-          profiles:user_id (*),
-          original_thread:original_thread_id (*)
+          profiles:user_id (*)
         `)
         .ilike('content', `%${searchTerm}%`)
         .order('created_at', { ascending: false })
@@ -1188,8 +1187,6 @@ export default function CommunityScreen() {
       setShowAuth(true);
       return;
     }
-
-    // Optimistic UI update for both threads and followingThreads
     setThreads(prevThreads => prevThreads.map(t => {
       if (t.id === repostId && t.type === 'repost') {
         const newLikeCount = isLiked ? (t.likeCount || 0) - 1 : (t.likeCount || 0) + 1;
@@ -1197,8 +1194,6 @@ export default function CommunityScreen() {
       }
       return t;
     }));
-
-    // Also update followingThreads state
     setFollowingThreads(prevThreads => prevThreads.map(t => {
       if (t.id === repostId && t.type === 'repost') {
         const newLikeCount = isLiked ? (t.likeCount || 0) - 1 : (t.likeCount || 0) + 1;
@@ -1206,7 +1201,6 @@ export default function CommunityScreen() {
       }
       return t;
     }));
-
     try {
       if (isLiked) {
         // Remove like from repost
@@ -1220,11 +1214,28 @@ export default function CommunityScreen() {
         const { error } = await supabase
           .from('likes')
           .insert({ repost_id: repostId, user_id: session.user.id });
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505' || error.code === '409') {
+            // Already liked, just set isLiked true
+            setThreads(prevThreads => prevThreads.map(t => {
+              if (t.id === repostId && t.type === 'repost') {
+                return { ...t, isLiked: true };
+              }
+              return t;
+            }));
+            setFollowingThreads(prevThreads => prevThreads.map(t => {
+              if (t.id === repostId && t.type === 'repost') {
+                return { ...t, isLiked: true };
+              }
+              return t;
+            }));
+            return;
+          }
+          throw error;
+        }
       }
     } catch (error) {
       console.error("Error toggling repost like:", error);
-      // Revert optimistic update on error for both states
       setThreads(prevThreads => prevThreads.map(t => {
         if (t.id === repostId && t.type === 'repost') {
           const revertedLikeCount = isLiked ? (t.likeCount || 0) + 1 : (t.likeCount || 0) - 1;
@@ -1880,48 +1891,44 @@ export default function CommunityScreen() {
   };
 
   // Helper function to render engagement buttons in correct order for reposts
-  const renderRepostEngagementButtons = (item: any) => {
-    const buttons = [
-      // Likes
-      <View key="likes" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-        <EngagementButton
-          icon={Heart}
-          active={item.isLiked || false}
-          onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-          type="like"
-          size={14}
-          accessibilityLabel="Like repost"
-        />
-        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-          {item.likeCount || 0}
-        </Text>
-      </View>,
-      // Comments
-      <TouchableOpacity 
-        key="comments"
+  const renderRepostEngagementButtons = (item: any) => [
+    // Like
+    <View key="likes" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+      <EngagementButton
+        icon={Heart}
+        active={item.isLiked || false}
+        onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
+        type="like"
+        size={14}
+        accessibilityLabel="Like repost"
+      />
+      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.likeCount || 0}</Text>
+    </View>,
+    // Comment
+    <View key="comments" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+      <EngagementButton
+        icon={MessageCircle}
+        active={false}
         onPress={() => handleThreadPress(item)}
-        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-      >
-        <MessageCircle size={14} color="#666666" />
-        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
-      </TouchableOpacity>,
-      // Reposts
-      <TouchableOpacity 
-        key="reposts"
+        type="comment"
+        size={14}
+        accessibilityLabel="Comment"
+      />
+      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
+    </View>,
+    // Repost
+    <View key="reposts" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+      <EngagementButton
+        icon={Repeat2}
+        active={false}
         onPress={() => handleRepostPress(item)}
-        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-      >
-        <Repeat2 size={14} color="#666666" />
-        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
-      </TouchableOpacity>,
-      // Bookmarks
-      <TouchableOpacity key="bookmark" onPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}>
-        <Bookmark size={14} color={item.isBookmarked ? "#dc2626" : "#666666"} fill={item.isBookmarked ? "#dc2626" : "none"} />
-      </TouchableOpacity>
-    ];
-    // Always use the same order for web and native
-    return buttons;
-  };
+        type="repost"
+        size={14}
+        accessibilityLabel="Repost"
+      />
+      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
+    </View>
+  ];
 
   // Helper function to render engagement buttons for "For You" tab reposts
   const renderForYouRepostEngagementButtons = (item: any) => {
@@ -1964,7 +1971,7 @@ export default function CommunityScreen() {
       </TouchableOpacity>
     ];
     // Always use the same order for web and native
-    return buttons;
+      return buttons;
   };
 
   return (
@@ -2044,7 +2051,7 @@ export default function CommunityScreen() {
                         >
                           <Image
                             source={{
-                              uri: profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.username?.charAt(0)}&background=random`
+                              uri: profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.username?.charAt(0) || 'U'}&background=random`
                             }}
                             style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }}
                           />
@@ -2103,7 +2110,7 @@ export default function CommunityScreen() {
                           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                             <Image
                               source={{
-                                uri: item.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0)}&background=random`
+                                uri: item.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0) || 'U'}&background=random`
                               }}
                               style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
                             />
@@ -2273,7 +2280,7 @@ export default function CommunityScreen() {
                                           <Image
                                             source={{ 
                                               uri: item.profiles?.avatar_url || 
-                                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0)}&background=random` 
+                                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0) || 'U'}&background=random` 
                                             }}
                                             style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12, backgroundColor: '#f3f4f6' }}
                                           />
@@ -2336,7 +2343,7 @@ export default function CommunityScreen() {
                                             <Image
                                               source={{ 
                                                 uri: item.original_thread?.profiles?.avatar_url || 
-                                                     `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0)}&background=random` 
+                                                     `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0) || 'U'}&background=random` 
                                               }}
                                               style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
                                             />
@@ -2535,7 +2542,7 @@ export default function CommunityScreen() {
                                           <Image
                                             source={{ 
                                               uri: item.profiles?.avatar_url || 
-                                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0)}&background=random` 
+                                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0) || 'U'}&background=random` 
                                             }}
                                             style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
                                           />
@@ -2612,7 +2619,7 @@ export default function CommunityScreen() {
                                               <Image
                                                 source={{ 
                                                   uri: item.original_thread?.profiles?.avatar_url || 
-                                                       `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0)}&background=random` 
+                                                       `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0) || 'U'}&background=random` 
                                                 }}
                                                 style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
                                               />
@@ -2646,40 +2653,9 @@ export default function CommunityScreen() {
                                             </View>
                                           </TouchableOpacity>
 
-                                          {/* Engagement bar - removed views and bookmarks for reposts */}
+                                          {/* Engagement bar - use helper for correct order */}
                                           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                                            {/* Comments */}
-                                            <TouchableOpacity 
-                                              onPress={() => handleThreadPress(item)}
-                                              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                                            >
-                                              <MessageCircle size={14} color="#666666" />
-                                              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
-                                            </TouchableOpacity>
-
-                                            {/* Reposts */}
-                                            <TouchableOpacity 
-                                              onPress={() => handleRepostPress(item)}
-                                              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                                            >
-                                              <Repeat2 size={14} color="#666666" />
-                                              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
-                                            </TouchableOpacity>
-
-                                            {/* Likes */}
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                                              <EngagementButton
-                                                icon={Heart}
-                                                active={item.isLiked || false}
-                                                onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-                                                type="like"
-                                                size={14}
-                                                accessibilityLabel="Like repost"
-                                              />
-                                              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                                                {item.likeCount || 0}
-                                              </Text>
-                                            </View>
+                                            {renderRepostEngagementButtons(item)}
                                           </View>
                                         </View>
                                       </View>
@@ -2739,7 +2715,7 @@ export default function CommunityScreen() {
                                           <Image
                                             source={{ 
                                               uri: item.profiles?.avatar_url || 
-                                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0)}&background=random` 
+                                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0) || 'U'}&background=random` 
                                             }}
                                             style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
                                           />
@@ -2820,7 +2796,7 @@ export default function CommunityScreen() {
                                               <Image
                                                 source={{ 
                                                   uri: item.original_thread?.profiles?.avatar_url || 
-                                                       `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0)}&background=random` 
+                                                       `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0) || 'U'}&background=random` 
                                                 }}
                                                 style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
                                               />
@@ -2854,40 +2830,9 @@ export default function CommunityScreen() {
                                             </View>
                                           </TouchableOpacity>
 
-                                          {/* Engagement bar - removed views and bookmarks for reposts */}
+                                          {/* Engagement bar - use helper for correct order */}
                                           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                                            {/* Comments */}
-                                            <TouchableOpacity 
-                                              onPress={() => handleThreadPress(item)}
-                                              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                                            >
-                                              <MessageCircle size={14} color="#666666" />
-                                              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
-                                            </TouchableOpacity>
-
-                                            {/* Reposts */}
-                                            <TouchableOpacity 
-                                              onPress={() => handleRepostPress(item)}
-                                              style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                                            >
-                                              <Repeat2 size={14} color="#666666" />
-                                              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
-                                            </TouchableOpacity>
-
-                                            {/* Likes */}
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                                              <EngagementButton
-                                                icon={Heart}
-                                                active={item.isLiked || false}
-                                                onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-                                                type="like"
-                                                size={14}
-                                                accessibilityLabel="Like repost"
-                                              />
-                                              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                                                {item.likeCount || 0}
-                                              </Text>
-                                            </View>
+                                            {renderRepostEngagementButtons(item)}
                                           </View>
                                         </View>
                                       </View>

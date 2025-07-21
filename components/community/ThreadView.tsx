@@ -364,7 +364,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
       likeCount: isLiked ? prevThread.likeCount - 1 : prevThread.likeCount + 1
     }));
     try {
-      if (isRepost) {
+        if (isRepost) {
         if (isLiked) {
           const { error } = await supabase.from('likes').delete().match({ repost_id: threadId, user_id: session.user.id });
           if (error) throw error;
@@ -746,21 +746,21 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                 {/* Engagement bar for reposts (replace the current bar for both web and native) */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 76 }}>
                   {/* Like */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                    <EngagementButton
-                      icon={Heart}
-                      active={threadData.isLiked || false}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                        <EngagementButton
+                          icon={Heart}
+                          active={threadData.isLiked || false}
                       onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false, true)}
-                      type="like"
-                      size={14}
+                          type="like"
+                          size={14}
                       accessibilityLabel="Like repost"
-                    />
-                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                      {threadData.likeCount || 0}
-                    </Text>
-                  </View>
+                        />
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                          {threadData.likeCount || 0}
+                        </Text>
+                      </View>
                   {/* Comment */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
                     <EngagementButton
                       icon={MessageCircle}
                       active={false}
@@ -769,29 +769,29 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                       size={14}
                       accessibilityLabel="Comment"
                     />
-                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                      {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
-                    </Text>
-                  </View>
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                          {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
+                        </Text>
+                      </View>
                   {/* Repost */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
                     <EngagementButton
                       icon={Repeat2}
                       active={false}
-                      onPress={() => onRepostPress?.(threadData)}
+                        onPress={() => onRepostPress?.(threadData)}
                       type="repost"
                       size={14}
                       accessibilityLabel="Repost"
                     />
-                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
                   </View>
                   {/* Bookmark */}
-                  <EngagementButton
+                        <EngagementButton
                     icon={Bookmark}
                     active={threadData.isBookmarked || false}
                     onPress={handleBookmarkToggle}
                     type="bookmark"
-                    size={14}
+                          size={14}
                     accessibilityLabel="Bookmark repost"
                   />
                 </View>
