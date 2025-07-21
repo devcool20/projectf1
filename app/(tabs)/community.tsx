@@ -39,6 +39,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-na
 import ProfileContainer from '@/components/profile/ProfileContainer';
 import { useAuth } from '@/contexts/AuthContext';
 import { LockedScreen } from '@/components/auth/LockedScreen';
+import { useEngagementStore } from '@/components/community/engagementStore';
 
 // Wrapper to handle web compatibility for useColorScheme
 function useColorScheme(): ColorSchemeName {
@@ -158,6 +159,7 @@ export default function CommunityScreen() {
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
 
   const { session, triggerOnboarding } = useAuth();
+  const { likes, bookmarks, setLike, setBookmark, replyCounts } = useEngagementStore();
 
   const openRepostDeleteMenu = (repostId: string, event: any) => {
     setSelectedRepostForDelete(repostId);
@@ -1910,11 +1912,11 @@ export default function CommunityScreen() {
         icon={MessageCircle}
         active={false}
         onPress={() => handleThreadPress(item)}
-        type="comment"
+        type="like"
         size={14}
         accessibilityLabel="Comment"
       />
-      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
+      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{replyCounts[item.id] ?? item.replyCount}</Text>
     </View>,
     // Repost
     <View key="reposts" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
@@ -1954,7 +1956,7 @@ export default function CommunityScreen() {
         style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
       >
         <MessageCircle size={14} color="#666666" />
-        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
+        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{replyCounts[item.id] ?? item.replyCount}</Text>
       </TouchableOpacity>,
       // Reposts
       <TouchableOpacity 
@@ -1966,13 +1968,49 @@ export default function CommunityScreen() {
         <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
       </TouchableOpacity>,
       // Bookmarks
-      <TouchableOpacity key="bookmark" onPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}>
-        <Bookmark size={14} color={item.isBookmarked ? "#dc2626" : "#666666"} fill={item.isBookmarked ? "#dc2626" : "none"} />
-      </TouchableOpacity>
+      <EngagementButton
+        icon={Bookmark}
+        active={item.isBookmarked}
+        onPress={() => handleBookmarkToggleInBookmarks(item.id, item.isBookmarked)}
+        type="bookmark"
+        size={14}
+        activeColor="#fbbf24"
+        accessibilityLabel="Bookmark post"
+      />
     ];
     // Always use the same order for web and native
       return buttons;
   };
+
+  const handleRepostSuccessNoArg = () => handleRepostSuccess(undefined);
+
+  useEffect(() => {
+    const channel = supabase.channel('threads-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'threads' }, (payload) => {
+        setHasNewThreads(true);
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const newPostsBarTranslateY = useSharedValue(-50);
+  useEffect(() => {
+    if (hasNewThreads) {
+      newPostsBarTranslateY.value = withTiming(0, { duration: 400 });
+    } else {
+      newPostsBarTranslateY.value = withTiming(-50, { duration: 400 });
+    }
+  }, [hasNewThreads]);
+  const newPostsBarStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: newPostsBarTranslateY.value }],
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+  }));
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
@@ -2388,7 +2426,15 @@ export default function CommunityScreen() {
                                           onPress={() => handleBookmarkToggleInBookmarks(item.id, item.isBookmarked)}
                                           style={{ alignSelf: 'flex-start' }}
                                         >
-                                          <Bookmark size={14} color="#dc2626" fill="#dc2626" />
+                                          <EngagementButton
+                                            icon={Bookmark}
+                                            active={item.isBookmarked}
+                                            onPress={() => handleBookmarkToggleInBookmarks(item.id, item.isBookmarked)}
+                                            type="bookmark"
+                                            size={14}
+                                            activeColor="#fbbf24"
+                                            accessibilityLabel="Bookmark post"
+                                          />
                                         </TouchableOpacity>
                                       </View>
                                     </View>
@@ -2397,6 +2443,7 @@ export default function CommunityScreen() {
                               ) : (
                               <BookmarkCard
                                   key={item.id}
+                                  threadId={item.id}
                                   username={item.profiles?.username || 'Anonymous'}
                                   avatarUrl={item.profiles?.avatar_url}
                                   content={item.content}
@@ -2427,52 +2474,33 @@ export default function CommunityScreen() {
                       </View>
 
                       {/* Fetch New Threads Button */}
-                      {hasNewThreads && (
-                        <View style={{ padding: 16, backgroundColor: '#f0f9ff', borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
-                          <TouchableOpacity 
-                            onPress={fetchNewThreads}
-                            disabled={refreshing}
-                            style={{
-                              backgroundColor: '#dc2626',
-                              borderRadius: 20,
-                              paddingVertical: 8,
-                              paddingHorizontal: 16,
-                              alignItems: 'center',
-                              flexDirection: 'row',
-                              justifyContent: 'center',
-                              opacity: refreshing ? 0.7 : 1
-                            }}
-                          >
-                            {refreshing ? (
-                              <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
-                            ) : (
-                              <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 14 }}>
-                                🔄 Fetch New Threads
-                              </Text>
-                            )}
+                      <Animated.View style={[{ backgroundColor: 'rgba(255,255,255,0.95)', padding: 0, alignItems: 'center', justifyContent: 'center', height: 44, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' }, newPostsBarStyle]} pointerEvents={hasNewThreads ? 'auto' : 'none'}>
+                        {hasNewThreads && (
+                          <TouchableOpacity onPress={fetchNewThreads} style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ color: '#dc2626', fontWeight: 'bold', fontSize: 16, letterSpacing: 0.5 }}>Show new posts</Text>
                           </TouchableOpacity>
-                        </View>
-                      )}
+                        )}
+                      </Animated.View>
                       {/* Create a new thread */}
                       <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
                         <View className="flex-row space-x-4">
-                          <Image
-                            source={{
-                              uri:
-                                currentAvatarUrl ||
-                                `https://ui-avatars.com/api/?name=${session?.user?.user_metadata?.username?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}&background=f5f5f5&color=666`
-                            }}
-                            style={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: 20,
-                              backgroundColor: '#f5f5f5',
-                              borderWidth: 1,
-                              borderColor: '#e5e5e5',
-                            }}
-                            alt="Your avatar"
-                          />
-                          <View className="flex-1">
+                          {currentAvatarUrl || session?.user?.user_metadata?.avatar_url ? (
+                            <Image
+                              source={{
+                                uri: currentAvatarUrl || session?.user?.user_metadata?.avatar_url
+                              }}
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 20,
+                                backgroundColor: '#f5f5f5',
+                                borderWidth: 1,
+                                borderColor: '#e5e5e5',
+                              }}
+                              alt="Your avatar"
+                            />
+                          ) : null}
+                          <View style={{ flex: 1, marginLeft: 12 }}>
                             <TextInput
                               placeholder="What's happening?"
                               placeholderTextColor="gray"
@@ -2484,14 +2512,13 @@ export default function CommunityScreen() {
                                 cursor: 'text',
                                 caretColor: 'auto',
                                 backgroundColor: 'transparent',
-                                borderWidth: 1,
-                                borderColor: '#e5e5e5',
-                                borderRadius: 8,
-                                outline: 'none',
-                                boxShadow: 'none',
+                                borderWidth: 0,
+                                outlineStyle: 'none',
+                                outlineWidth: 0,
+                                outlineColor: 'transparent',
+                                borderColor: 'transparent',
                                 minHeight: 40,
                                 maxHeight: 120,
-                                padding: 8,
                               } as any}
                               value={content}
                               onChangeText={setContent}
@@ -2670,7 +2697,7 @@ export default function CommunityScreen() {
                                       imageUrl={item.image_url}
                                       timestamp={item.created_at}
                                       likes={item.likeCount || 0}
-                                      comments={item.replyCount || 0}
+                                      comments={replyCounts[item.id] ?? item.replyCount}
 
                                       reposts={item.repostCount || 0}
                                       isLiked={item.isLiked}
@@ -2847,7 +2874,7 @@ export default function CommunityScreen() {
                                       imageUrl={item.image_url}
                                       timestamp={item.created_at}
                                       likes={item.likeCount || 0}
-                                      comments={item.replyCount || 0}
+                                      comments={replyCounts[item.id] ?? item.replyCount}
 
                                       reposts={item.repostCount || 0}
                                       isLiked={item.isLiked}
@@ -2973,7 +3000,7 @@ export default function CommunityScreen() {
         }}
         originalThread={selectedThreadForRepost}
         session={session}
-        onRepostSuccess={handleRepostSuccess}
+        onRepostSuccess={handleRepostSuccessNoArg}
       />
 
 
@@ -3001,7 +3028,7 @@ export default function CommunityScreen() {
               {currentAvatarUrl || session?.user?.user_metadata?.avatar_url ? (
                 <Image
                   source={{
-                    uri: currentAvatarUrl || session?.user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${session?.user?.user_metadata?.username?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}&background=f5f5f5&color=666`
+                    uri: currentAvatarUrl || session?.user?.user_metadata?.avatar_url
                   }}
                   style={{
                     width: 40,

@@ -580,10 +580,13 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     }
   };
 
-  if (!thread) {
+  if (!threadData) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" style={{ marginTop: 50 }} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 40, left: 20, padding: 8 }}>
+          <Text style={{ color: '#dc2626', fontWeight: 'bold', fontSize: 18 }}>{'< Back'}</Text>
+        </TouchableOpacity>
+        <Text style={{ fontSize: 18, color: '#888', textAlign: 'center', marginTop: 60 }}>This thread is not available.</Text>
       </View>
     );
   }

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Bookmark, X } from 'lucide-react-native';
 import { formatThreadTimestamp } from '@/lib/utils';
+import { useEngagementStore } from './engagementStore';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
@@ -21,6 +22,7 @@ const TEAM_LOGOS: { [key: string]: any } = {
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 
 interface BookmarkCardProps {
+  threadId: string;
   username: string;
   avatarUrl?: string;
   content: string;
@@ -33,6 +35,7 @@ interface BookmarkCardProps {
 }
 
 export default function BookmarkCard({
+  threadId,
   username,
   avatarUrl,
   content,
@@ -60,6 +63,10 @@ export default function BookmarkCard({
   const contentLines = content.split('\n');
   const shouldTruncate = contentLines.length > 4 && !expanded;
   const displayedContent = shouldTruncate ? contentLines.slice(0, 4).join('\n') : content;
+
+  const { bookmarks, setBookmark } = useEngagementStore();
+
+  const isBookmarked = bookmarks[threadId];
 
   return (
     <TouchableOpacity 

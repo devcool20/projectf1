@@ -28,6 +28,7 @@ import Animated, {
   Easing,
   withSpring
 } from 'react-native-reanimated';
+import { useEngagementStore } from './engagementStore';
 
 const TEAM_LOGOS = {
   'ferrari': require('@/team-logos/ferrari.png'),
@@ -157,6 +158,8 @@ export function AnimatedThreadView({
   const translateX = useSharedValue(screenWidth);
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.95);
+
+  const { setReplyCount } = useEngagementStore();
 
   // Helper to detect mobile web
   function isMobileWeb() {
@@ -518,10 +521,12 @@ export function AnimatedThreadView({
         ...prev,
         replyCount: (prev.replyCount || 0) + 1
       } : prev);
+      setReplyCount(threadData.id, (threadData.replyCount || 0) + 1);
       setRepostReplyCount((prev) => threadData.type === 'repost' ? (prev || 0) + 1 : prev);
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
+      await fetchReplies();
     } catch (error) {
       console.error('Error posting reply:', error);
       Alert.alert('Error', 'Failed to post reply');
@@ -545,6 +550,8 @@ export function AnimatedThreadView({
         ...prev,
         replyCount: (prev.replyCount || 1) - 1
       } : prev);
+      setReplyCount(threadData.id, (threadData.replyCount || 1) - 1);
+      await fetchReplies();
     } catch (error) {
       console.error('Error deleting reply:', error);
       Alert.alert('Error', 'Failed to delete reply');
@@ -667,7 +674,14 @@ export function AnimatedThreadView({
   }, [session]);
 
   if (!thread || !threadData) {
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 40, left: 20, padding: 8 }}>
+          <Text style={{ color: '#dc2626', fontWeight: 'bold', fontSize: 18 }}>{'< Back'}</Text>
+        </TouchableOpacity>
+        <Text style={{ fontSize: 18, color: '#888', textAlign: 'center', marginTop: 60 }}>This thread is not available.</Text>
+      </View>
+    );
   }
 
   return (
