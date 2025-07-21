@@ -311,6 +311,9 @@ export function AnimatedThreadView({
         })
       );
       setReplies(repliesWithLikes);
+      if (thread.type === 'repost') {
+        setRepostReplyCount(repliesWithLikes.length);
+      }
     } catch (error) {
       console.error('Error fetching replies:', error);
     } finally {

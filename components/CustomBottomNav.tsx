@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 
 const TABS = [
-  { name: 'Community', path: '/community', icon: '💬' },
+  { name: 'Threads', path: '/community', icon: '💬' },
   { name: 'News', path: '/news', icon: '📰' },
   { name: 'Screenings', path: '/screenings', icon: '🎬' },
   { name: 'Shop', path: '/shop', icon: '🛍️' },

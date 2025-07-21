@@ -27,6 +27,8 @@
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "color-thief-browser": "^2.0.2",
+    "color-thief-react": "^2.1.0",
     "expo": "~52.0.42",
     "expo-blur": "~14.0.3",
     "expo-camera": "~16.0.18",

@@ -49,13 +49,13 @@ function useColorScheme(): ColorSchemeName {
 
 const NAV_ITEMS = [
   { href: '/community', icon: MessageCircle, name: 'Threads' },
-  { href: '/home', icon: Home, name: 'Home' },
+  { href: '/news', icon: Newspaper, name: 'News' },
   { href: '/screenings', icon: Clapperboard, name: 'Screenings' },
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
   { href: '/drivers', icon: Trophy, name: 'Drivers' },
-  { href: '/news', icon: Newspaper, name: 'News' },
+  { href: '/home', icon: Home, name: 'Home' },
   { href: '/profile', icon: User, name: 'Profile' },
-  { href: '/bookmarks', icon: Bookmark, name: 'Bookmarks' },
+  { href: '/bookmarks', icon: Bookmark, name: 'Bookmarks' }
 ];
 
 const RSS_TO_JSON_URL = 'https://feedtojson.vercel.app/https%3A%2F%2Fwww.formula1.com%2Fen%2Flatest%2Fall.xml';
@@ -903,6 +903,7 @@ export default function CommunityScreen() {
 
     // Optimistically remove the thread from bookmarked threads
     setBookmarkedThreads(prev => prev.filter(t => t.id !== threadId));
+    setBookmark(threadId, !isBookmarked); // <-- Update zustand store immediately
 
     try {
       if (isBookmarked) {
@@ -2484,23 +2485,8 @@ export default function CommunityScreen() {
                       {/* Create a new thread */}
                       <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
                         <View className="flex-row space-x-4">
-                          {currentAvatarUrl || session?.user?.user_metadata?.avatar_url ? (
-                            <Image
-                              source={{
-                                uri: currentAvatarUrl || session?.user?.user_metadata?.avatar_url
-                              }}
-                              style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 20,
-                                backgroundColor: '#f5f5f5',
-                                borderWidth: 1,
-                                borderColor: '#e5e5e5',
-                              }}
-                              alt="Your avatar"
-                            />
-                          ) : null}
-                          <View style={{ flex: 1, marginLeft: 12 }}>
+                          {/* Avatar removed as per user request */}
+                          <View style={{ flex: 1, marginLeft: 0 }}>
                             <TextInput
                               placeholder="What's happening?"
                               placeholderTextColor="gray"
@@ -2701,7 +2687,7 @@ export default function CommunityScreen() {
 
                                       reposts={item.repostCount || 0}
                                       isLiked={item.isLiked}
-                                      isBookmarked={item.isBookmarked}
+                                      isBookmarked={typeof bookmarks[item.id] === 'boolean' ? bookmarks[item.id] : item.isBookmarked}
                                       favoriteTeam={item.profiles?.favorite_team}
                                       userId={item.user_id}
                                       onCommentPress={() => handleThreadPress(item)}
@@ -2878,7 +2864,7 @@ export default function CommunityScreen() {
 
                                       reposts={item.repostCount || 0}
                                       isLiked={item.isLiked}
-                                      isBookmarked={item.isBookmarked}
+                                      isBookmarked={typeof bookmarks[item.id] === 'boolean' ? bookmarks[item.id] : item.isBookmarked}
                                       favoriteTeam={item.profiles?.favorite_team}
                                       userId={item.user_id}
                                       onCommentPress={() => handleThreadPress(item)}
@@ -3025,37 +3011,7 @@ export default function CommunityScreen() {
             {/* Post Input */}
             <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626', marginBottom: 16, textAlign: 'center' }}>Create Post</Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
-              {currentAvatarUrl || session?.user?.user_metadata?.avatar_url ? (
-                <Image
-                  source={{
-                    uri: currentAvatarUrl || session?.user?.user_metadata?.avatar_url
-                  }}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: '#f5f5f5',
-                    borderWidth: 1,
-                    borderColor: '#e5e5e5',
-                  }}
-                  alt="Your avatar"
-                />
-              ) : (
-                <Image
-                  source={{
-                    uri: `https://ui-avatars.com/api/?name=${session?.user?.user_metadata?.username?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}&background=f5f5f5&color=666`
-                  }}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: '#f5f5f5',
-                    borderWidth: 1,
-                    borderColor: '#e5e5e5',
-                  }}
-                  alt="Your avatar"
-                />
-              )}
+              {/* Avatar removed as per user request */}
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <TextInput
                   placeholder="What's happening?"

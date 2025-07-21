@@ -13,7 +13,7 @@ import './globals.css';
 SplashScreen.preventAutoHideAsync();
 
 function AppContent() {
-  const { session, showOnboarding, setShowOnboarding, setHasSeenOnboarding } = useAuth();
+  const { session, showOnboarding, setShowOnboarding, setHasSeenOnboarding, loading } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
 
   const handleOnboardingClose = () => {
@@ -30,6 +30,11 @@ function AppContent() {
   const handleAuthSuccess = () => {
     setShowAuth(false);
   };
+
+  if (loading) {
+    // Optionally show a splash/loading screen here
+    return null;
+  }
 
   return (
     <>
