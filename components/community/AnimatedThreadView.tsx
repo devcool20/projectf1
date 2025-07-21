@@ -362,31 +362,43 @@ export function AnimatedThreadView({
   }, [thread, fetchReplies]);
 
   // Handle like toggle for replies
-  const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
+  const handleLikeToggle = async (replyId: string, isLiked: boolean, isRepostReply: boolean = false) => {
     if (!session) return;
 
     try {
-      if (isLiked) {
-        // Unlike
-        const { error } = await supabase
-          .from('reply_likes')
-          .delete()
-          .eq('reply_id', replyId)
-          .eq('user_id', session.user.id);
-
-        if (error) throw error;
+      if (isRepostReply) {
+        if (isLiked) {
+          // Unlike repost reply
+          const { error } = await supabase
+            .from('repost_reply_likes')
+            .delete()
+            .eq('repost_reply_id', replyId)
+            .eq('user_id', session.user.id);
+          if (error) throw error;
+        } else {
+          // Like repost reply
+          const { error } = await supabase
+            .from('repost_reply_likes')
+            .insert({ repost_reply_id: replyId, user_id: session.user.id });
+          if (error) throw error;
+        }
       } else {
-        // Like
-        const { error } = await supabase
-          .from('reply_likes')
-          .insert({
-            reply_id: replyId,
-            user_id: session.user.id
-          });
-
-        if (error) throw error;
+        if (isLiked) {
+          // Unlike
+          const { error } = await supabase
+            .from('reply_likes')
+            .delete()
+            .eq('reply_id', replyId)
+            .eq('user_id', session.user.id);
+          if (error) throw error;
+        } else {
+          // Like
+          const { error } = await supabase
+            .from('reply_likes')
+            .insert({ reply_id: replyId, user_id: session.user.id });
+          if (error) throw error;
+        }
       }
-
       // Update local state with like count
       setReplies(prev => prev.map(reply => 
         reply.id === replyId ? { 
@@ -401,31 +413,36 @@ export function AnimatedThreadView({
   };
 
   // Handle thread like toggle
-  const handleThreadLikeToggle = async (threadId: string, isLiked: boolean) => {
+  const handleThreadLikeToggle = async (threadId: string, isLiked: boolean, isRepost: boolean = false) => {
     if (!session) return;
-
     try {
-      if (isLiked) {
-        // Unlike
-        const { error } = await supabase
-          .from('likes')
-          .delete()
-          .eq('thread_id', threadId)
-          .eq('user_id', session.user.id);
-
+      if (isRepost) {
+        if (isLiked) {
+          const { error } = await supabase
+            .from('likes')
+            .delete()
+            .match({ repost_id: threadId, user_id: session.user.id });
         if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('likes')
+            .insert({ repost_id: threadId, user_id: session.user.id });
+        if (error) throw error;
+        }
       } else {
-        // Like
-        const { error } = await supabase
-          .from('likes')
-          .insert({
-            thread_id: threadId,
-            user_id: session.user.id
-          });
-
+        if (isLiked) {
+          const { error } = await supabase
+            .from('likes')
+            .delete()
+            .match({ thread_id: threadId, user_id: session.user.id });
         if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('likes')
+            .insert({ thread_id: threadId, user_id: session.user.id });
+        if (error) throw error;
+        }
       }
-
       // Update local state
       setThreadData(prev => prev ? {
         ...prev,
@@ -761,7 +778,7 @@ export function AnimatedThreadView({
                       <EngagementButton
                         icon={Heart}
                         active={threadData.isLiked || false}
-                        onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false)}
+                        onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false, true)}
                         type="like"
                         size={14}
                       />
@@ -771,7 +788,13 @@ export function AnimatedThreadView({
                     </View>
 
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                      <MessageCircle size={14} color="#666666" />
+                      <EngagementButton
+                        icon={MessageCircle}
+                        active={false}
+                        onPress={() => {}}
+                        type="comment"
+                        size={14}
+                      />
                       <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
                         {repostReplyCount || 0}
                       </Text>
@@ -781,14 +804,26 @@ export function AnimatedThreadView({
                       onPress={() => onRepostPress?.(threadData)}
                       style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
                     >
-                      <Repeat2 size={14} color="#666666" />
+                      <EngagementButton
+                        icon={Repeat2}
+                        active={false}
+                        onPress={() => onRepostPress?.(threadData)}
+                        type="repost"
+                        size={14}
+                      />
                       <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
                         0
                       </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={handleBookmarkToggle}>
-                      <Bookmark size={14} color={threadData.isBookmarked ? "#dc2626" : "#666666"} fill={threadData.isBookmarked ? "#dc2626" : "none"} />
+                      <EngagementButton
+                        icon={Bookmark}
+                        active={threadData.isBookmarked || false}
+                        onPress={handleBookmarkToggle}
+                        type="bookmark"
+                        size={14}
+                      />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -848,11 +883,12 @@ export function AnimatedThreadView({
 
                   {/* Engagement buttons for regular thread */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 60 }}>
+                    {/* Like */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
                       <EngagementButton
                         icon={Heart}
                         active={threadData.isLiked || false}
-                        onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false)}
+                        onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false, false)}
                         type="like"
                         size={14}
                       />
@@ -860,27 +896,40 @@ export function AnimatedThreadView({
                         {threadData.likeCount || 0}
                       </Text>
                     </View>
-
+                    {/* Comment */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                      <MessageCircle size={14} color="#666666" />
+                      <EngagementButton
+                        icon={MessageCircle}
+                        active={false}
+                        onPress={() => {}}
+                        type="comment"
+                        size={14}
+                      />
                       <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
                         {threadData.replyCount || 0}
                       </Text>
                     </View>
-
-                    <TouchableOpacity 
-                      onPress={() => onRepostPress?.(threadData)}
-                      style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                    >
-                      <Repeat2 size={14} color="#666666" />
+                    {/* Repost */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                      <EngagementButton
+                        icon={Repeat2}
+                        active={false}
+                        onPress={() => onRepostPress?.(threadData)}
+                        type="repost"
+                        size={14}
+                      />
                       <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
                         0
                       </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={handleBookmarkToggle}>
-                      <Bookmark size={14} color={threadData.isBookmarked ? "#dc2626" : "#666666"} fill={threadData.isBookmarked ? "#dc2626" : "none"} />
-                    </TouchableOpacity>
+                    </View>
+                    {/* Bookmark */}
+                    <EngagementButton
+                      icon={Bookmark}
+                      active={threadData.isBookmarked || false}
+                      onPress={handleBookmarkToggle}
+                      type="bookmark"
+                      size={14}
+                    />
                   </View>
                 </View>
               )}
@@ -1009,15 +1058,30 @@ export function AnimatedThreadView({
                           resizeMode="cover"
                         />
                       )}
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <AnimatedLikeButton 
-                          isLiked={reply.isLiked}
-                          likeCount={reply.likeCount || 0}
-                          onPress={() => handleLikeToggle(reply.id, reply.isLiked)}
-                        />
-                        <TouchableOpacity onPress={() => handleReplyTo(reply.profiles?.username || 'user')}>
-                          <MessageCircle size={14} color="#666666" />
-                        </TouchableOpacity>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                        {/* Like */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+                          <EngagementButton
+                            icon={Heart}
+                            active={reply.isLiked || false}
+                            onPress={() => handleLikeToggle(reply.id, reply.isLiked, reply.isRepostReply)}
+                            type="like"
+                            size={14}
+                            accessibilityLabel="Like reply"
+                          />
+                          <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12, minWidth: 16, textAlign: 'left' }}>{reply.likeCount || 0}</Text>
+                        </View>
+                        {/* Comment */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+                          <EngagementButton
+                            icon={MessageCircle}
+                            active={false}
+                            onPress={() => handleReplyTo(reply.profiles?.username || 'user')}
+                            type="comment"
+                            size={14}
+                            accessibilityLabel="Reply"
+                          />
+                        </View>
                       </View>
                     </View>
                   </View>

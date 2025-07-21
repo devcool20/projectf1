@@ -15,7 +15,7 @@ import {
   Pressable,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Trash2, Heart, Camera, X, MessageCircle, Repeat2, MoreHorizontal } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Heart, Camera, X, MessageCircle, Repeat2, MoreHorizontal, Bookmark } from 'lucide-react-native';
 import PostCard from '../PostCard';
 import RepostModal from '../RepostModal';
 import EngagementButton from '../engagement-button';
@@ -320,24 +320,10 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
 
 
 
-  const handleLikeToggle = async (replyId: string, isLiked: boolean) => {
-    if (!session?.user) {
-      console.log('No session, cannot like reply');
-      return;
-    }
-
-    // Optimistic update
-    setReplies(prevReplies => prevReplies.map(r => {
-      if (r.id === replyId) {
-        const newLikeCount = isLiked ? r.likeCount - 1 : r.likeCount + 1;
-        return { ...r, isLiked: !isLiked, likeCount: newLikeCount };
-      }
-      return r;
-    }));
-
+  const handleLikeToggle = async (replyId: string, isLiked: boolean, isRepostReply: boolean = false) => {
+    if (!session) return;
     try {
-      if (threadData?.type === 'repost') {
-        // Handle likes for repost replies
+      if (isRepostReply) {
         if (isLiked) {
           const { error } = await supabase.from('repost_reply_likes').delete().match({ repost_reply_id: replyId, user_id: session.user.id });
           if (error) throw error;
@@ -346,7 +332,6 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
           if (error) throw error;
         }
       } else {
-        // Handle likes for regular thread replies
         if (isLiked) {
           const { error } = await supabase.from('reply_likes').delete().match({ reply_id: replyId, user_id: session.user.id });
           if (error) throw error;
@@ -355,48 +340,41 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
           if (error) throw error;
         }
       }
-    } catch (error) {
-      console.error('Error toggling like:', error);
-      // Revert optimistic update on error
       setReplies(prevReplies => prevReplies.map(r => {
         if (r.id === replyId) {
           const revertedLikeCount = isLiked ? r.likeCount + 1 : r.likeCount - 1;
-          return { ...r, isLiked: isLiked, likeCount: revertedLikeCount };
+          return { ...r, isLiked: !isLiked, likeCount: revertedLikeCount };
         }
         return r;
       }));
+    } catch (error) {
+      console.error('Error toggling like:', error);
       Alert.alert('Failed to update like');
     }
   };
 
-  const handleThreadLikeToggle = async (threadId: string, isLiked: boolean) => {
+  const handleThreadLikeToggle = async (threadId: string, isLiked: boolean, isRepost: boolean = false) => {
     if (!session?.user) {
       console.log('No session, cannot like thread');
       return;
     }
-
-    // Check if this is a repost or regular thread
-    const isRepost = threadData?.type === 'repost';
-
-    // Optimistic update
     setThreadData(prevThread => ({
       ...prevThread,
       isLiked: !isLiked,
       likeCount: isLiked ? prevThread.likeCount - 1 : prevThread.likeCount + 1
     }));
-
     try {
-      if (isLiked) {
-        if (isRepost) {
+      if (isRepost) {
+        if (isLiked) {
           const { error } = await supabase.from('likes').delete().match({ repost_id: threadId, user_id: session.user.id });
           if (error) throw error;
         } else {
-          const { error } = await supabase.from('likes').delete().match({ thread_id: threadId, user_id: session.user.id });
+          const { error } = await supabase.from('likes').insert({ repost_id: threadId, user_id: session.user.id });
           if (error) throw error;
         }
       } else {
-        if (isRepost) {
-          const { error } = await supabase.from('likes').insert({ repost_id: threadId, user_id: session.user.id });
+        if (isLiked) {
+          const { error } = await supabase.from('likes').delete().match({ thread_id: threadId, user_id: session.user.id });
           if (error) throw error;
         } else {
           const { error } = await supabase.from('likes').insert({ thread_id: threadId, user_id: session.user.id });
@@ -405,7 +383,6 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
       }
     } catch (error) {
       console.error('Error toggling thread like:', error);
-      // Revert optimistic update on error
       setThreadData(prevThread => ({
         ...prevThread,
         isLiked: isLiked,
@@ -766,76 +743,57 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                 </View>
 
                 {/* Engagement bar - moved below preview for reposts */}
+                {/* Engagement bar for reposts (replace the current bar for both web and native) */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 76 }}>
-                  {Platform.OS === 'web' ? (
-                    <>
-                      {/* Likes */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                        <EngagementButton
-                          icon={Heart}
-                          active={threadData.isLiked || false}
-                          onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false)}
-                          type="like"
-                          size={14}
-                          accessibilityLabel="Like thread"
-                        />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                          {threadData.likeCount || 0}
-                        </Text>
-                      </View>
-
-                      {/* Comments */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                        <MessageCircle size={14} color="#666666" />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                          {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
-                        </Text>
-                      </View>
-
-                      {/* Reposts */}
-                      <TouchableOpacity 
-                        onPress={() => onRepostPress?.(threadData)}
-                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                      >
-                        <Repeat2 size={14} color="#666666" />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <>
-                      {/* Comments */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                        <MessageCircle size={14} color="#666666" />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                          {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
-                        </Text>
-                      </View>
-
-                      {/* Reposts */}
-                      <TouchableOpacity 
-                        onPress={() => onRepostPress?.(threadData)}
-                        style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                      >
-                        <Repeat2 size={14} color="#666666" />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
-                      </TouchableOpacity>
-
-                      {/* Likes */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                        <EngagementButton
-                          icon={Heart}
-                          active={threadData.isLiked || false}
-                          onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false)}
-                          type="like"
-                          size={14}
-                          accessibilityLabel="Like thread"
-                        />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                          {threadData.likeCount || 0}
-                        </Text>
-                      </View>
-                    </>
-                  )}
+                  {/* Like */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                    <EngagementButton
+                      icon={Heart}
+                      active={threadData.isLiked || false}
+                      onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false, true)}
+                      type="like"
+                      size={14}
+                      accessibilityLabel="Like repost"
+                    />
+                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      {threadData.likeCount || 0}
+                    </Text>
+                  </View>
+                  {/* Comment */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                    <EngagementButton
+                      icon={MessageCircle}
+                      active={false}
+                      onPress={() => {}}
+                      type="comment"
+                      size={14}
+                      accessibilityLabel="Comment"
+                    />
+                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
+                    </Text>
+                  </View>
+                  {/* Repost */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                    <EngagementButton
+                      icon={Repeat2}
+                      active={false}
+                      onPress={() => onRepostPress?.(threadData)}
+                      type="repost"
+                      size={14}
+                      accessibilityLabel="Repost"
+                    />
+                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
+                  </View>
+                  {/* Bookmark */}
+                  <EngagementButton
+                    icon={Bookmark}
+                    active={threadData.isBookmarked || false}
+                    onPress={handleBookmarkToggle}
+                    type="bookmark"
+                    size={14}
+                    accessibilityLabel="Bookmark repost"
+                  />
                 </View>
               </View>
             ) : (
@@ -980,7 +938,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                           <EngagementButton
                             icon={Heart}
                             active={reply.isLiked || false}
-                            onPress={() => handleLikeToggle(reply.id, reply.isLiked)}
+                            onPress={() => handleLikeToggle(reply.id, reply.isLiked, false)}
                             type="like"
                             size={14}
                             accessibilityLabel="Like reply"

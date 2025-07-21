@@ -13,7 +13,7 @@ const TABS = [
   { name: 'Home', path: '/home', icon: '🏠' },
 ];
 
-export default function CustomBottomNav() {
+export default function CustomBottomNav({ state, descriptors, navigation }) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -24,39 +24,67 @@ export default function CustomBottomNav() {
       style={{ backgroundColor: 'transparent' }}
     >
       <View className="mx-auto mb-1 w-[96%] max-w-2xl rounded-xl bg-gradient-to-br from-[#e7dbc7] to-[#e2d3be] shadow-kodama-lg flex-row justify-between items-center px-1 py-0.5 border border-[#e0d2b7]/70 backdrop-blur-sm">
-        {TABS.map((tab, idx) => {
-          const isActive =
-            tab.path === '/'
-              ? pathname === '/' || pathname === '/index'
-              : pathname.startsWith(tab.path);
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key];
+          const label = options.tabBarLabel !== undefined
+              ? options.tabBarLabel
+              : options.title !== undefined
+              ? options.title
+              : route.name;
+
+          const isFocused = state.index === index;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name, route.params);
+            }
+          };
+
+          const onLongPress = () => {
+            navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            });
+          };
+
+          const tab = TABS.find(t => t.path.includes(route.name));
+
+          if (!tab) return null;
 
           return (
             <TouchableOpacity
-              key={tab.name}
-              onPress={() => router.push(tab.path as any)}
+              key={route.key}
+              onPress={onPress}
+              onLongPress={onLongPress}
               activeOpacity={0.8}
               className="flex-1 items-center py-1.5"
             >
               <Animated.View
                 style={{
-                  transform: [{ scale: isActive ? 1.1 : 1 }],
-                  shadowColor: isActive ? '#d32f2f' : 'transparent',
-                  shadowOpacity: isActive ? 0.2 : 0,
-                  shadowRadius: isActive ? 6 : 0,
+                  transform: [{ scale: isFocused ? 1.1 : 1 }],
+                  shadowColor: isFocused ? '#d32f2f' : 'transparent',
+                  shadowOpacity: isFocused ? 0.2 : 0,
+                  shadowRadius: isFocused ? 6 : 0,
                   shadowOffset: { width: 0, height: 1 },
                 }}
-                className={`rounded-lg ${isActive ? 'bg-[#f9e6e1]/80' : ''} px-1.5 py-0.5 mb-0.5`}
+                className={`rounded-lg ${isFocused ? 'bg-[#f9e6e1]/80' : ''} px-1.5 py-0.5 mb-0.5`}
               >
                 <Text className="text-lg" style={{
-                  color: isActive ? 'hsl(var(--f1-red))' : '#a08c6b',
-                  fontWeight: isActive ? 'bold' : 'normal',
+                  color: isFocused ? 'hsl(var(--f1-red))' : '#a08c6b',
+                  fontWeight: isFocused ? 'bold' : 'normal',
                 }}>{tab.icon}</Text>
               </Animated.View>
               <Text
-                className={`text-[10px] ${isActive ? 'font-bold text-[hsl(var(--f1-red))]' : 'text-[#7c6a4d]'}`}
+                className={`text-[10px] ${isFocused ? 'font-bold text-[hsl(var(--f1-red))]' : 'text-[#7c6a4d]'}`}
                 style={{
-                  textShadowColor: isActive ? '#fff' : 'transparent',
-                  textShadowRadius: isActive ? 1 : 0,
+                  textShadowColor: isFocused ? '#fff' : 'transparent',
+                  textShadowRadius: isFocused ? 1 : 0,
                 }}
                 numberOfLines={1}
               >
@@ -68,4 +96,4 @@ export default function CustomBottomNav() {
       </View>
     </SafeAreaView>
   );
-} 
+}

@@ -208,7 +208,7 @@ export default function PostCard({
           )}
           {/* Engagement Bar */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-            {/* Likes */}
+            {/* Like */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
               <EngagementButton
                 icon={Heart}
@@ -220,16 +220,23 @@ export default function PostCard({
               />
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{likes}</Text>
             </View>
-            {/* Comments */}
-            <TouchableOpacity onPress={onCommentPress} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-              <MessageCircle size={14} color="#666666" />
+            {/* Comment */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+              <EngagementButton
+                icon={MessageCircle}
+                active={false}
+                onPress={onCommentPress}
+                type="comment"
+                size={14}
+                accessibilityLabel="Comment"
+              />
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{comments}</Text>
-            </TouchableOpacity>
-            {/* Reposts */}
+            </View>
+            {/* Repost */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
               <EngagementButton
                 icon={Repeat2}
-                active={false} // TODO: Add isReposted prop to PostCardProps
+                active={false}
                 onPress={onRepostPress || (() => {})}
                 type="repost"
                 size={14}
@@ -237,8 +244,7 @@ export default function PostCard({
               />
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{reposts}</Text>
             </View>
-
-            {/* Bookmarks */}
+            {/* Bookmark */}
             <EngagementButton
               icon={Bookmark}
               active={isBookmarked || false}

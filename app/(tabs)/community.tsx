@@ -1913,16 +1913,14 @@ export default function CommunityScreen() {
       >
         <Repeat2 size={14} color="#666666" />
         <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
+      </TouchableOpacity>,
+      // Bookmarks
+      <TouchableOpacity key="bookmark" onPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}>
+        <Bookmark size={14} color={item.isBookmarked ? "#dc2626" : "#666666"} fill={item.isBookmarked ? "#dc2626" : "none"} />
       </TouchableOpacity>
     ];
-
-    // For web platform, return in correct order: Like, Comment, Repost
-    if (Platform.OS === 'web') {
-      return buttons;
-    }
-
-    // For native platforms, return in original order: Comment, Repost, Like
-    return [buttons[1], buttons[2], buttons[0]];
+    // Always use the same order for web and native
+    return buttons;
   };
 
   // Helper function to render engagement buttons for "For You" tab reposts
@@ -1959,16 +1957,14 @@ export default function CommunityScreen() {
       >
         <Repeat2 size={14} color="#666666" />
         <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
+      </TouchableOpacity>,
+      // Bookmarks
+      <TouchableOpacity key="bookmark" onPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}>
+        <Bookmark size={14} color={item.isBookmarked ? "#dc2626" : "#666666"} fill={item.isBookmarked ? "#dc2626" : "none"} />
       </TouchableOpacity>
     ];
-
-    // For web platform, return in correct order: Like, Comment, Repost
-    if (Platform.OS === 'web') {
-      return buttons;
-    }
-
-    // For native platforms, return in original order: Comment, Repost, Like
-    return [buttons[1], buttons[2], buttons[0]];
+    // Always use the same order for web and native
+    return buttons;
   };
 
   return (

@@ -255,8 +255,6 @@ export default function RepostCard({
               <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{repostCount}</Text>
             </View>
 
-
-
             {/* Bookmarks */}
             <EngagementButton
               icon={Bookmark}
