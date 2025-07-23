@@ -1890,7 +1890,7 @@ export default function CommunityScreen() {
   };
 
   const handleGetStarted = () => {
-    triggerOnboarding();
+    setShowAuth(true);
   };
 
   // Helper function to render engagement buttons in correct order for reposts
