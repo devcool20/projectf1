@@ -61,6 +61,11 @@ const NAV_ITEMS = [
 const RSS_TO_JSON_URL = 'https://feedtojson.vercel.app/https%3A%2F%2Fwww.formula1.com%2Fen%2Flatest%2Fall.xml';
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 
+// Pagination and UI constants
+const FEED_LIMIT = 15;
+const SCROLL_THRESHOLD = 300;
+const PLACEHOLDER_PROFILE_IMAGE = require('../../assets/images/icon.png');
+
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
   'Scuderia Ferrari': require('@/team-logos/ferrari.png'),
@@ -91,8 +96,8 @@ export default function CommunityScreen() {
   const router = useRouter();
   const { thread: threadId, profile: profileId } = useLocalSearchParams();
   const { width: screenWidth } = Dimensions.get('window');
-  
-  // Mobile web detection for animations
+
+// Mobile web detection for animations
   const isMobileWeb = () => {
     if (Platform.OS !== 'web') return false;
     if (typeof navigator !== 'undefined') {
@@ -106,6 +111,9 @@ export default function CommunityScreen() {
   const [threads, setThreads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [showPostModal, setShowPostModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -184,7 +192,7 @@ export default function CommunityScreen() {
         .single();
       if (!error && data) {
         setCurrentAvatarUrl(data.avatar_url || null);
-      } else {
+    } else {
         setCurrentAvatarUrl(null);
       }
     } catch (err) {
@@ -544,9 +552,9 @@ export default function CommunityScreen() {
       
       if (error) {
         console.error('Error loading admin users:', error);
-        return;
-      }
-      
+          return;
+        }
+
       if (data && data.length > 0) {
         // Set the first admin user ID found (there should only be one)
         setAdminUserId(data[0].id);
@@ -581,8 +589,18 @@ export default function CommunityScreen() {
     }
   };
 
-  const fetchThreads = useCallback(async (userSession: any) => {
+  const fetchThreads = useCallback(async (userSession: any, offset: number = 0, limit: number = FEED_LIMIT, isInitialLoad: boolean = true) => {
+    if (loadingMore && !isInitialLoad) return;
+
+    if (isInitialLoad) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
+      const fetchLimitWithBuffer = limit + 1; // Fetch one extra item for hasMore detection
+
       // Fetch regular threads
       const { data: threadsData, error: threadsError } = await supabase
         .from('threads')
@@ -592,7 +610,8 @@ export default function CommunityScreen() {
           likes:likes!thread_id(count),
           replies:replies!thread_id(count)
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + fetchLimitWithBuffer - 1);
 
       if (threadsError) throw threadsError;
 
@@ -600,7 +619,8 @@ export default function CommunityScreen() {
       const { data: repostsData, error: repostsError } = await supabase
         .from('reposts')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + fetchLimitWithBuffer - 1);
 
       if (repostsError) {
         console.error('Error fetching reposts:', repostsError);
@@ -765,20 +785,36 @@ export default function CommunityScreen() {
           original_thread: repost.original_thread,
       }));
 
-      // Combine threads and reposts, sort by creation date
-      const combinedFeed = [...processedThreads, ...processedReposts]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Combine, sort, and slice the feed items
+      let combinedItemsBuffer = [
+        ...processedThreads.map(t => ({ ...t, type: 'thread' })),
+        ...processedReposts.map(r => ({ ...r, type: 'repost' }))
+      ];
+      combinedItemsBuffer.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      setThreads(combinedFeed);
+      const fetchedEnoughForNextPage = combinedItemsBuffer.length > limit;
+      const itemsForCurrentPage = combinedItemsBuffer.slice(0, limit);
+
+      if (isInitialLoad) {
+        setThreads(itemsForCurrentPage);
+      } else {
+        setThreads(prevItems => [...prevItems, ...itemsForCurrentPage.filter(newItem => !prevItems.some(existing => existing.id === newItem.id))]);
+      }
+
+      setCurrentPage(prev => prev + 1);
+      setHasMore(fetchedEnoughForNextPage); 
       setLastFetchTime(new Date());
 
 
     } catch (error) {
       console.error('Error fetching threads:', error);
+      setHasMore(false);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
     }
-  }, []);
+  }, [loadingMore]);
 
 
   
@@ -815,8 +851,8 @@ export default function CommunityScreen() {
       if (isLiked) {
         if (isRepost) {
           const { error } = await supabase.from('likes').delete().match({ repost_id: threadId, user_id: session.user.id });
-          if (error) throw error;
-        } else {
+        if (error) throw error;
+      } else {
           const { error } = await supabase.from('likes').delete().match({ thread_id: threadId, user_id: session.user.id });
           if (error) throw error;
         }
@@ -871,8 +907,8 @@ export default function CommunityScreen() {
       if (isBookmarked) {
         if (isRepost) {
           const { error } = await supabase.from('bookmarks').delete().match({ repost_id: threadId, user_id: session.user.id });
-          if (error) throw error;
-        } else {
+        if (error) throw error;
+      } else {
         const { error } = await supabase.from('bookmarks').delete().match({ thread_id: threadId, user_id: session.user.id });
         if (error) throw error;
         }
@@ -909,11 +945,11 @@ export default function CommunityScreen() {
       if (isBookmarked) {
         if (isRepost) {
           const { error } = await supabase.from('bookmarks').delete().match({ repost_id: threadId, user_id: session.user.id });
-          if (error) throw error;
-        } else {
+        if (error) throw error;
+      } else {
         const { error } = await supabase.from('bookmarks').delete().match({ thread_id: threadId, user_id: session.user.id });
-      if (error) throw error;
-        }
+        if (error) throw error;
+      }
       } else {
         if (isRepost) {
           const { error } = await supabase.from('bookmarks').insert({ repost_id: threadId, user_id: session.user.id });
@@ -953,7 +989,7 @@ export default function CommunityScreen() {
   const handleThreadIdPress = async (threadId: string) => {
     // First check if we already have this thread in our state
     const existingThread = threads.find(t => t.id === threadId) || followingThreads.find(t => t.id === threadId);
-    
+
     if (existingThread) {
       // Use existing thread data for instant response
       setSelectedThread(existingThread);
@@ -962,7 +998,7 @@ export default function CommunityScreen() {
       return;
     }
 
-    // If not found in state, fetch from database
+      // If not found in state, fetch from database
     try {
       const { data: threadData, error } = await supabase
         .from('threads')
@@ -1067,7 +1103,7 @@ export default function CommunityScreen() {
       
       setThreads(prev => [processedNewRepost, ...prev]);
       setFollowingThreads(prev => [processedNewRepost, ...prev]);
-      // Update last fetch time since we just added a new repost
+    // Update last fetch time since we just added a new repost
       setLastFetchTime(new Date());
     }
   };
@@ -1076,7 +1112,7 @@ export default function CommunityScreen() {
   const handleSearchToggle = () => {
     setShowSearch(!showSearch);
     if (showSearch) {
-      setSearchQuery('');
+    setSearchQuery('');
       setSearchResults({ threads: [], profiles: [] });
     }
   };
@@ -1267,15 +1303,15 @@ export default function CommunityScreen() {
       
       if (fetchError) {
         Alert.alert('Error', 'Could not find repost');
-        return;
-      }
-      
+      return;
+    }
+
       // Check if user has permission to delete
       if (repostData.user_id !== session?.user?.id && !isCurrentUserAdmin()) {
         Alert.alert('Error', 'You do not have permission to delete this repost');
-        return;
-      }
-      
+      return;
+    }
+
       try {
         const { error } = await supabase.from('reposts').delete().eq('id', repostId);
         if (error) {
@@ -1307,14 +1343,20 @@ export default function CommunityScreen() {
 
 
 
-  const fetchFollowingThreads = useCallback(async (currentSession: any) => {
+  const fetchFollowingThreads = useCallback(async (currentSession: any, offset: number = 0, limit: number = FEED_LIMIT, isInitialLoad: boolean = true) => {
     if (!currentSession) {
       setFollowingThreads([]);
       setFollowingLoading(false);
       return;
     }
 
-    setFollowingLoading(true);
+    if (loadingMore && !isInitialLoad) return;
+
+    if (isInitialLoad) {
+      setFollowingLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
     try {
       // First, get the list of users the current user is following
       const { data: followsData, error: followsError } = await supabase
@@ -1341,6 +1383,8 @@ export default function CommunityScreen() {
         return;
       }
 
+      const fetchLimitWithBuffer = limit + 1;
+
       // Fetch threads from followed users
       const { data: threadsData, error: threadsError } = await supabase
         .from('threads')
@@ -1355,7 +1399,8 @@ export default function CommunityScreen() {
           replies:replies!thread_id(count)
         `)
         .in('user_id', followingUserIds)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + fetchLimitWithBuffer - 1);
 
       if (threadsError) throw threadsError;
 
@@ -1364,7 +1409,8 @@ export default function CommunityScreen() {
         .from('reposts')
         .select('*')
         .in('user_id', followingUserIds)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + fetchLimitWithBuffer - 1);
 
       if (repostsError) {
         console.error('Error fetching reposts from followed users:', repostsError);
@@ -1518,20 +1564,36 @@ export default function CommunityScreen() {
         original_thread: repost.original_thread,
       }));
 
-      // Combine and sort by creation date
-      const combinedFeed = [...processedThreads, ...processedReposts]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Combine, sort, and slice the feed items
+      let combinedItemsBuffer = [
+        ...processedThreads.map(t => ({ ...t, type: 'thread' })),
+        ...processedReposts.map(r => ({ ...r, type: 'repost' }))
+      ];
+      combinedItemsBuffer.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      setFollowingThreads(combinedFeed);
+      const fetchedEnoughForNextPage = combinedItemsBuffer.length > limit;
+      const itemsForCurrentPage = combinedItemsBuffer.slice(0, limit);
+
+      if (isInitialLoad) {
+        setFollowingThreads(itemsForCurrentPage);
+              } else {
+        setFollowingThreads(prevItems => [...prevItems, ...itemsForCurrentPage.filter(newItem => !prevItems.some(existing => existing.id === newItem.id))]);
+      }
+
+      setHasMore(fetchedEnoughForNextPage);
 
 
     } catch (error) {
       console.error('Error fetching following threads:', error);
-      setFollowingThreads([]);
+      if (isInitialLoad) {
+        setFollowingThreads([]);
+      }
+      setHasMore(false);
     } finally {
       setFollowingLoading(false);
+      setLoadingMore(false);
     }
-  }, []);
+  }, [loadingMore]);
 
   const handleTabPress = (tab: 'for-you' | 'following') => {
     setActiveTab(tab);
@@ -1543,12 +1605,12 @@ export default function CommunityScreen() {
 
   // Function to handle follow/unfollow updates without refetching
   const handleFollowUpdate = (userId: string, isFollowing: boolean) => {
-    if (isFollowing) {
-      // User started following someone - add their threads to following feed
+      if (isFollowing) {
+        // User started following someone - add their threads to following feed
       const userThreads = threads.filter(t => t.user_id === userId);
       setFollowingThreads(prev => [...userThreads, ...prev]);
-    } else {
-      // User unfollowed someone - remove their threads from following feed
+      } else {
+        // User unfollowed someone - remove their threads from following feed
       setFollowingThreads(prev => prev.filter(t => t.user_id !== userId));
     }
   };
@@ -1572,7 +1634,7 @@ export default function CommunityScreen() {
                     setSelectedProfile(null);
                     fetchBookmarkedThreads(session);
                   } else if (item.href === '/profile') {
-                    if (session) {
+    if (session) {
                       setSelectedProfile({ id: session.user.id });
                       setIsViewingProfile(true);
                       setShowBookmarks(false);
@@ -1590,7 +1652,7 @@ export default function CommunityScreen() {
                     setSelectedProfile(null);
                     setIsViewingThread(false);
                     setSelectedThread(null);
-                  } else {
+    } else {
                     setShowBookmarks(false);
                     setIsViewingProfile(false);
                     setSelectedProfile(null);
@@ -1710,15 +1772,33 @@ export default function CommunityScreen() {
     }
   }, [profileId]);
 
+  const handleScroll = useCallback((event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - SCROLL_THRESHOLD;
+    if (isCloseToBottom && !loadingMore && hasMore) {
+      if (activeTab === 'for-you') {
+        fetchThreads(session, threads.length, FEED_LIMIT, false);
+      } else {
+        fetchFollowingThreads(session, followingThreads.length, FEED_LIMIT, false);
+      }
+    }
+  }, [loadingMore, hasMore, threads.length, followingThreads.length, activeTab, session, fetchThreads, fetchFollowingThreads]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchThreads(session);
+    setCurrentPage(0);
+    setHasMore(true);
+    if (activeTab === 'for-you') {
+      fetchThreads(session, 0, FEED_LIMIT, true);
+    } else {
+      fetchFollowingThreads(session, 0, FEED_LIMIT, true);
+    }
     // Refresh news on refresh
     fetchNews();
     
     // Reset new threads indicator
     setHasNewThreads(false);
-  }, [session, fetchNews]);
+  }, [session, fetchNews, activeTab, fetchThreads, fetchFollowingThreads]);
 
   const handleCreateThread = async () => {
     if (!session) {
@@ -1755,7 +1835,7 @@ export default function CommunityScreen() {
 
       const { data: newThread, error } = await supabase.from('threads').insert({
         content: content.trim(),
-        user_id: session.user.id,
+          user_id: session.user.id,
         image_url: imageUrl,
       }).select(`
         *,
@@ -1768,7 +1848,7 @@ export default function CommunityScreen() {
 
       setContent('');
       setImage(null);
-      
+
       // Add new thread to state instead of refetching
       if (newThread) {
         const processedNewThread = {
@@ -1938,12 +2018,12 @@ export default function CommunityScreen() {
     const buttons = [
       // Likes
       <View key="likes" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-        <EngagementButton
-          icon={Heart}
+      <EngagementButton
+        icon={Heart}
           active={item.isLiked || false}
           onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-          type="like"
-          size={14}
+        type="like"
+        size={14}
           accessibilityLabel="Like repost"
         />
         <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
@@ -2013,25 +2093,25 @@ export default function CommunityScreen() {
     zIndex: 100,
   }));
 
-  return (
+    return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
       {/* Mobile Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="md:hidden">
         <TouchableOpacity onPress={toggleSidebar}>
           <Menu size={24} color="#000000" />
-        </TouchableOpacity>
+          </TouchableOpacity>
         <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626' }} selectable={false}>projectF1</Text>
         <TouchableOpacity onPress={handleSearchToggle}>
           <Search size={24} color="#000000" />
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </View>
 
       {/* Search Bar */}
       {showSearch && (
         <View style={{ padding: 16, backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Search size={20} color="#666666" style={{ marginRight: 8 }} />
-            <TextInput
+          <TextInput
               placeholder="Search threads and people..."
               placeholderTextColor="#999999"
               style={{
@@ -2045,7 +2125,7 @@ export default function CommunityScreen() {
                 borderWidth: 1,
                 borderColor: '#ffffff',
               }}
-              value={searchQuery}
+            value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus
             />
@@ -2058,25 +2138,25 @@ export default function CommunityScreen() {
                 style={{ marginLeft: 8, padding: 4 }}
               >
                 <X size={16} color="#666666" />
-              </TouchableOpacity>
-            )}
+          </TouchableOpacity>
+      )}
           </View>
 
-          {/* Search Results */}
+      {/* Search Results */}
           {searchQuery.length > 0 && (
             <View style={{ marginTop: 16 }}>
               {searchLoading ? (
                 <ActivityIndicator style={{ marginVertical: 20 }} />
               ) : (
                 <ScrollView style={{ maxHeight: 400 }}>
-                  {/* Profiles Results */}
+          {/* Profiles Results */}
                   {searchResults.profiles.length > 0 && (
                     <View style={{ marginBottom: 16 }}>
                       <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000000', marginBottom: 8 }}>People</Text>
                       {searchResults.profiles.map((profile) => (
-                        <TouchableOpacity
-                          key={profile.id}
-                          onPress={() => handleSearchProfilePress(profile.id)}
+                <TouchableOpacity
+                  key={profile.id}
+                  onPress={() => handleSearchProfilePress(profile.id)}
                           style={{
                             flexDirection: 'row',
                             alignItems: 'center',
@@ -2087,8 +2167,8 @@ export default function CommunityScreen() {
                             borderWidth: 1,
                             borderColor: '#ffffff',
                           }}
-                        >
-                          <Image
+                >
+                  <Image
                             source={{
                               uri: profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.username?.charAt(0) || 'U'}&background=random`
                             }}
@@ -2119,18 +2199,18 @@ export default function CommunityScreen() {
                               </Text>
                             )}
                           </View>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
-                  {/* Threads and Reposts Results */}
+          {/* Threads and Reposts Results */}
                   {searchResults.threads.length > 0 && (
-                    <View>
+            <View>
                       <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#000000', marginBottom: 8 }}>Threads & Reposts</Text>
                       {searchResults.threads.map((item) => (
                         <TouchableOpacity
-                          key={item.id}
+                  key={item.id}
                           onPress={() => {
                             setShowSearch(false);
                             setSearchQuery('');
@@ -2200,9 +2280,9 @@ export default function CommunityScreen() {
                             </View>
                           )}
                         </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
+              ))}
+            </View>
+          )}
 
                   {/* No Results */}
                   {searchResults.profiles.length === 0 && searchResults.threads.length === 0 && searchQuery.length > 0 && !searchLoading && (
@@ -2210,8 +2290,8 @@ export default function CommunityScreen() {
                       <Text style={{ fontSize: 16, color: '#666666' }}>No results found</Text>
                       <Text style={{ fontSize: 14, color: '#999999', marginTop: 4 }}>Try searching for something else</Text>
                     </View>
-                  )}
-                </ScrollView>
+          )}
+        </ScrollView>
               )}
             </View>
           )}
@@ -2224,7 +2304,7 @@ export default function CommunityScreen() {
         <TouchableOpacity onPress={handleSearchToggle} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f9fa', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#ffffff' }}>
           <Search size={20} color="#666666" style={{ marginRight: 8 }} />
           <Text style={{ color: '#666666', fontSize: 16 }}>Search</Text>
-        </TouchableOpacity>
+            </TouchableOpacity>
       </View>
 
       {
@@ -2247,7 +2327,12 @@ export default function CommunityScreen() {
           </View>
           {/* Main Content */}
           <View style={{ flex: 1, borderLeftWidth: 0, borderRightWidth: 0, borderLeftColor: '#e5e5e5', borderRightColor: '#e5e5e5' }} className="md:border-x">
-            <ScrollView ref={scrollViewRef}>
+            <ScrollView 
+              ref={scrollViewRef}
+              onScroll={handleScroll}
+              scrollEventThrottle={400}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
               <View className="flex-col lg:flex-row justify-center p-0 md:p-4">
                 <View className="w-full lg:max-w-2xl">
                   {isViewingProfile && selectedProfile ? (
@@ -2282,10 +2367,10 @@ export default function CommunityScreen() {
                           setSelectedProfile(null);
                         }}>
                           <X size={24} color="#dc2626" />
-                        </TouchableOpacity>
+            </TouchableOpacity>
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#3a3a3a' }}>Bookmarks</Text>
                         <View style={{ width: 24 }} />
-                      </View>
+          </View>
                       {/* Bookmarks Content */}
                       {!session ? (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, minHeight: 200 }}>
@@ -2295,7 +2380,7 @@ export default function CommunityScreen() {
                           <TouchableOpacity onPress={() => setShowAuth(true)} style={{ backgroundColor: '#dc2626', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 8 }}>
                             <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>Sign In</Text>
                           </TouchableOpacity>
-                        </View>
+        </View>
                       ) : (
                         <View>
                           {bookmarksLoading ? (
@@ -2344,7 +2429,7 @@ export default function CommunityScreen() {
                                                   />
                                                 )}
 
-                                          </View>
+            </View>
                                           <Text style={{ fontSize: 11, color: '#888' }}>
                                             {formatThreadTimestamp(item.created_at) || ''}
                                           </Text>
@@ -2420,7 +2505,7 @@ export default function CommunityScreen() {
 
                                             </View>
                                           </View>
-                                        </TouchableOpacity>
+              </TouchableOpacity>
 
                                         {/* Bookmark button */}
                                         <TouchableOpacity 
@@ -2436,31 +2521,31 @@ export default function CommunityScreen() {
                                             activeColor="#fbbf24"
                                             accessibilityLabel="Bookmark post"
                                           />
-                                        </TouchableOpacity>
+              </TouchableOpacity>
                                       </View>
                                     </View>
                                   </View>
-                                </TouchableOpacity>
+              </TouchableOpacity>
                               ) : (
-                              <BookmarkCard
-                                  key={item.id}
-                                  threadId={item.id}
+                      <BookmarkCard
+                        key={item.id}
+                        threadId={item.id}
                                   username={item.profiles?.username || 'Anonymous'}
                                   avatarUrl={item.profiles?.avatar_url}
-                                  content={item.content}
-                                  imageUrl={item.image_url}
-                                  timestamp={item.created_at}
-                                  favoriteTeam={item.profiles?.favorite_team}
+                        content={item.content}
+                        imageUrl={item.image_url}
+                        timestamp={item.created_at}
+                        favoriteTeam={item.profiles?.favorite_team}
                                   isAdmin={item.profiles?.is_admin || false}
                                   onBookmarkPress={() => handleBookmarkToggleInBookmarks(item.id, item.isBookmarked)}
-                                  onThreadPress={() => handleThreadPress(item)}
-                                />
+                        onThreadPress={() => handleThreadPress(item)}
+                      />
                               )
                             ))
-                          )}
-                        </View>
+                )}
+              </View>
                       )}
-                    </View>
+            </View>
                   ) : (
                     // Regular Threads Container
                     <>
@@ -2521,8 +2606,8 @@ export default function CommunityScreen() {
                                 <TouchableOpacity onPress={() => setImage(null)} className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
                                   <X size={20} color="white" />
                                 </TouchableOpacity>
-                              </View>
-                            )}
+          </View>
+        )}
                             <View className="flex-row justify-between items-center mt-4">
                               <TouchableOpacity onPress={pickImage}>
                                 <Camera size={24} color="#1DA1F2" />
@@ -2541,358 +2626,202 @@ export default function CommunityScreen() {
                           loading && threads.length === 0 ? (
                             <ActivityIndicator className="mt-8" />
                           ) : (
-                                                        threads.map((item) => (
-                              <View key={item.id} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
-                                {item.type === 'repost' ? (
-                                  <TouchableOpacity onPress={() => handleThreadPress(item)}>
-                                    <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
-                                      {/* Repost content using PostCard structure */}
-                                      <View style={{ flexDirection: 'row' }}>
-                                        <TouchableOpacity 
-                                          onPress={() => handleProfilePress(item.user_id)}
-                                          style={{ marginRight: 12 }}
-                                        >
-                                          <Image
-                                            source={{ 
-                                              uri: item.profiles?.avatar_url || 
-                                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0) || 'U'}&background=random` 
-                                            }}
-                                            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
-                                          />
-                                        </TouchableOpacity>
-
-                                        <View style={{ flex: 1 }}>
-                                          {/* Repost user info */}
-                                          <View style={{ marginBottom: 4 }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                              <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
-                                                {item.profiles?.username || 'Unknown User'}
-                                              </Text>
-                                              {item.profiles?.is_admin ? (
-                                                <Image 
-                                                  source={require('@/assets/images/favicon.png')} 
-                                                  style={{ width: 24, height: 22, marginLeft: 4 }}
-                                                  resizeMode="contain"
-                                                />
-                                              ) : item.profiles?.favorite_team && TEAM_LOGOS[item.profiles.favorite_team] && (
-                                                <Image 
-                                                  source={TEAM_LOGOS[item.profiles.favorite_team]} 
-                                                  style={{ width: 24, height: 22, marginLeft: 4 }}
-                                                  resizeMode="contain"
-                                                />
-                                              )}
-                                              {/* More options button for repost owner or admin - moved to top right */}
-                                              {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
-                                                <TouchableOpacity 
-                                                  onPress={(e) => openRepostDeleteMenu(item.id, e)}
-                                                  style={{ 
-                                                    marginLeft: 'auto',
-                                                    padding: 4
-                                                  }}
-                                                >
-                                                  <MoreHorizontal size={20} color="#888" />
-                                                </TouchableOpacity>
-                                              )}
-                                            </View>
-                                            <Text style={{ fontSize: 11, color: '#888' }}>
-                                              {formatThreadTimestamp(item.created_at) || ''}
-                                            </Text>
-                                          </View>
-
-                                          {/* Repost content */}
-                                          {item.content && (
-                                            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
-                                              {item.content}
-                                            </Text>
-                                          )}
-
-                                          {/* Repost image */}
-                                          {item.image_url && (
-                                            <Image
-                                              source={{ uri: item.image_url }}
-                                              style={getResponsiveImageStyle(screenWidth)}
-                                              resizeMode="cover"
-                                            />
-                                          )}
-
-                                          {/* Original thread preview - embedded like Twitter */}
-                                          <TouchableOpacity 
-                                            onPress={() => handleThreadPress(item.original_thread)}
-                                            style={{
-                                              borderWidth: 1,
-                                              borderColor: '#e5e5e5',
-                                              borderRadius: 12,
-                                              padding: 12,
-                                              backgroundColor: '#f8f9fa',
-                                              marginTop: 16,
-                                              marginBottom: 12
-                                            }}
+                            <>
+                              {threads.map((item) => (
+                                <View key={item.id} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
+                                  {item.type === 'repost' ? (
+                                    <TouchableOpacity onPress={() => handleThreadPress(item)}>
+                                      <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
+                                        {/* Repost content using PostCard structure */}
+                                        <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity
+                                            onPress={() => handleProfilePress(item.user_id)}
+                                            style={{ marginRight: 12 }}
                                           >
-                                            <View style={{ flexDirection: 'row' }}>
-                                              <Image
-                                                source={{ 
-                                                  uri: item.original_thread?.profiles?.avatar_url || 
-                                                       `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0) || 'U'}&background=random` 
-                                                }}
-                                                style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
-                                              />
-                                              <View style={{ flex: 1 }}>
-                                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                  <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
-                                                    {item.original_thread?.profiles?.username || 'Unknown User'}
-                                                  </Text>
-                                                  {item.original_thread?.profiles?.favorite_team && TEAM_LOGOS[item.original_thread.profiles.favorite_team] && (
-                                                    <Image 
-                                                      source={TEAM_LOGOS[item.original_thread.profiles.favorite_team]} 
-                                                      style={{ width: 16, height: 14, marginLeft: 2 }}
-                                                      resizeMode="contain"
-                                                    />
-                                                  )}
-                                                </View>
-                                                <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
-                                                  {item.original_thread?.content || ''}
-                                                </Text>
-                                                {item.original_thread?.image_url && (
-                                                  <View style={{ alignItems: 'center', marginTop: 4 }}>
-                                                    <Image
-                                                      source={{ uri: item.original_thread.image_url }}
-                                                      style={getVeryCompactImageStyle(screenWidth)}
-                                                      resizeMode="cover"
-                                                    />
-                                                  </View>
-                                                )}
-
-                                              </View>
-                                            </View>
-                                          </TouchableOpacity>
-
-                                          {/* Engagement bar - use helper for correct order */}
-                                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                                            {renderRepostEngagementButtons(item)}
-                                          </View>
-                                        </View>
-                                      </View>
-                                    </View>
-                                  </TouchableOpacity>
-                                ) : (
-                                  <TouchableOpacity onPress={() => handleThreadPress(item)}>
-                                    <PostCard
-                                      username={item.profiles?.username || 'Anonymous'}
-                                      avatarUrl={item.profiles?.avatar_url}
-                                      content={item.content}
-                                      imageUrl={item.image_url}
-                                      timestamp={item.created_at}
-                                      likes={item.likeCount || 0}
-                                      comments={replyCounts[item.id] ?? item.replyCount}
-
-                                      reposts={item.repostCount || 0}
-                                      isLiked={item.isLiked}
-                                      isBookmarked={typeof bookmarks[item.id] === 'boolean' ? bookmarks[item.id] : item.isBookmarked}
-                                      favoriteTeam={item.profiles?.favorite_team}
-                                      userId={item.user_id}
-                                      onCommentPress={() => handleThreadPress(item)}
-                                      onLikePress={() => handleLikeToggle(item.id, item.isLiked)}
-                                      onBookmarkPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}
-                                      onRepostPress={() => handleRepostPress(item)}
-                                      onDeletePress={() => handleDeleteThread(item.id)}
-                                      onProfilePress={(userId) => {
-                                        handleProfilePress(userId);
-                                      }}
-                                      canDelete={session && (item.user_id === session.user.id || isCurrentUserAdmin())}
-                                      canAdminDelete={isCurrentUserAdmin()}
-                                      isAdmin={isUserAdmin(item.user_id)}
-                                      showReadMore={true}
-                                      userEmail={session?.user?.email || ''}
-                                    />
-                                  </TouchableOpacity>
-                                )}
-                              </View>
-                            ))
-                          )
-                        ) : (
-                          // Following tab
-                          followingLoading ? (
-                            <ActivityIndicator className="mt-8" />
-                          ) : followingThreads.length > 0 ? (
-                            followingThreads.map((item) => (
-                              <View key={item.id} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
-                                {item.type === 'repost' ? (
-                                  <TouchableOpacity onPress={() => handleThreadPress(item)}>
-                                    <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
-                                      {/* Repost content using PostCard structure */}
-                                      <View style={{ flexDirection: 'row' }}>
-                                        <TouchableOpacity 
-                                          onPress={() => handleProfilePress(item.user_id)}
-                                          style={{ marginRight: 12 }}
-                                        >
-                                          <Image
-                                            source={{ 
-                                              uri: item.profiles?.avatar_url || 
-                                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0) || 'U'}&background=random` 
-                                            }}
-                                            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
-                                          />
-                                        </TouchableOpacity>
-
-                                        <View style={{ flex: 1 }}>
-                                          {/* Repost user info */}
-                                          <View style={{ marginBottom: 4 }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                              <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
-                                                {item.profiles?.username || 'Unknown User'}
-                                              </Text>
-                                              {item.profiles?.is_admin ? (
-                                                <Image 
-                                                  source={require('@/assets/images/favicon.png')} 
-                                                  style={{ width: 24, height: 22, marginLeft: 4 }}
-                                                  resizeMode="contain"
-                                                />
-                                              ) : item.profiles?.favorite_team && TEAM_LOGOS[item.profiles.favorite_team] && (
-                                                <Image 
-                                                  source={TEAM_LOGOS[item.profiles.favorite_team]} 
-                                                  style={{ width: 24, height: 22, marginLeft: 4 }}
-                                                  resizeMode="contain"
-                                                />
-                                              )}
-                                              {/* More options button for repost owner or admin - moved to top right */}
-                                              {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
-                                                <TouchableOpacity 
-                                                  onPress={(e) => openRepostDeleteMenu(item.id, e)}
-                                                  style={{ 
-                                                    marginLeft: 'auto',
-                                                    padding: 4
-                                                  }}
-                                                >
-                                                  <MoreHorizontal size={20} color="#888" />
-                                                </TouchableOpacity>
-                                              )}
-                                            </View>
-                                            <Text style={{ fontSize: 11, color: '#888' }}>
-                                              {formatThreadTimestamp(item.created_at) || ''}
-                                            </Text>
-                                          </View>
-
-                                          {/* Repost content */}
-                                          {item.content && (
-                                            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
-                                              {item.content}
-                                            </Text>
-                                          )}
-
-                                          {/* Repost image */}
-                                          {item.image_url && (
                                             <Image
-                                              source={{ uri: item.image_url }}
-                                              style={{ 
-                                                ...getResponsiveImageStyle(screenWidth),
-                                                borderRadius: 6,
+                                              source={{ 
+                                                uri: item.profiles?.avatar_url || 
+                                                     `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0) || 'U'}&background=random` 
+                                              }}
+                                              style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
+                                            />
+            </TouchableOpacity>
+
+                                          <View style={{ flex: 1 }}>
+                                            {/* Repost user info */}
+                                            <View style={{ marginBottom: 4 }}>
+                                              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                                <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+                                                  {item.profiles?.username || 'Unknown User'}
+                                                </Text>
+                                                {item.profiles?.is_admin ? (
+                                                  <Image 
+                                                    source={require('@/assets/images/favicon.png')} 
+                                                    style={{ width: 24, height: 22, marginLeft: 4 }}
+                                                    resizeMode="contain"
+                                                  />
+                                                ) : item.profiles?.favorite_team && TEAM_LOGOS[item.profiles.favorite_team] && (
+                                                  <Image 
+                                                    source={TEAM_LOGOS[item.profiles.favorite_team]} 
+                                                    style={{ width: 24, height: 22, marginLeft: 4 }}
+                                                    resizeMode="contain"
+                                                  />
+                                                )}
+                                                {/* More options button for repost owner or admin - moved to top right */}
+                                                {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
+            <TouchableOpacity
+                                                    onPress={(e) => openRepostDeleteMenu(item.id, e)}
+                                                    style={{ 
+                                                      marginLeft: 'auto',
+                                                      padding: 4
+                                                    }}
+                                                  >
+                                                    <MoreHorizontal size={20} color="#888" />
+            </TouchableOpacity>
+                                                )}
+                                              </View>
+                                              <Text style={{ fontSize: 11, color: '#888' }}>
+                                                {formatThreadTimestamp(item.created_at) || ''}
+                                              </Text>
+          </View>
+
+                                            {/* Repost content */}
+                                            {item.content && (
+                                              <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
+                                                {item.content}
+                                              </Text>
+                                            )}
+
+                                            {/* Repost image */}
+                                            {item.image_url && (
+                                              <Image
+                                                source={{ uri: item.image_url }}
+                                                style={getResponsiveImageStyle(screenWidth)}
+                                                resizeMode="cover"
+                                              />
+                                            )}
+
+                                            {/* Original thread preview - embedded like Twitter */}
+                                            <TouchableOpacity 
+                                              onPress={() => handleThreadPress(item.original_thread)}
+                                              style={{
+                                                borderWidth: 1,
+                                                borderColor: '#e5e5e5',
+                                                borderRadius: 12,
+                                                padding: 12,
+                                                backgroundColor: '#f8f9fa',
+                                                marginTop: 16,
                                                 marginBottom: 12
                                               }}
-                                              resizeMode="contain"
-                                            />
-                                          )}
-
-                                          {/* Original thread preview - embedded like Twitter */}
-                                          <TouchableOpacity 
-                                            onPress={() => handleThreadPress(item.original_thread)}
-                                            style={{
-                                              borderWidth: 1,
-                                              borderColor: '#e5e5e5',
-                                              borderRadius: 12,
-                                              padding: 12,
-                                              backgroundColor: '#f8f9fa',
-                                              marginTop: 16,
-                                              marginBottom: 12
-                                            }}
-                                          >
-                                            <View style={{ flexDirection: 'row' }}>
-                                              <Image
-                                                source={{ 
-                                                  uri: item.original_thread?.profiles?.avatar_url || 
-                                                       `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0) || 'U'}&background=random` 
-                                                }}
-                                                style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
-                                              />
-                                              <View style={{ flex: 1 }}>
-                                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                  <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
-                                                    {item.original_thread?.profiles?.username || 'Unknown User'}
+                                            >
+                                              <View style={{ flexDirection: 'row' }}>
+                                                <Image
+                                                  source={{ 
+                                                    uri: item.original_thread?.profiles?.avatar_url || 
+                                                         `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0) || 'U'}&background=random` 
+                                                  }}
+                                                  style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
+                                                />
+                                                <View style={{ flex: 1 }}>
+                                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                                    <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
+                                                      {item.original_thread?.profiles?.username || 'Unknown User'}
+                                                    </Text>
+                                                    {item.original_thread?.profiles?.favorite_team && TEAM_LOGOS[item.original_thread.profiles.favorite_team] && (
+                                                      <Image 
+                                                        source={TEAM_LOGOS[item.original_thread.profiles.favorite_team]} 
+                                                        style={{ width: 16, height: 14, marginLeft: 2 }}
+                                                        resizeMode="contain"
+                                                      />
+                                                    )}
+          </View>
+                                                  <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
+                                                    {item.original_thread?.content || ''}
                                                   </Text>
-                                                  {item.original_thread?.profiles?.favorite_team && TEAM_LOGOS[item.original_thread.profiles.favorite_team] && (
-                                                    <Image 
-                                                      source={TEAM_LOGOS[item.original_thread.profiles.favorite_team]} 
-                                                      style={{ width: 16, height: 14, marginLeft: 2 }}
-                                                      resizeMode="contain"
-                                                    />
+                                                  {item.original_thread?.image_url && (
+                                                    <View style={{ alignItems: 'center', marginTop: 4 }}>
+                                                      <Image
+                                                        source={{ uri: item.original_thread.image_url }}
+                                                        style={getVeryCompactImageStyle(screenWidth)}
+                                                        resizeMode="cover"
+                                                      />
+                                                    </View>
                                                   )}
+
                                                 </View>
-                                                <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
-                                                  {item.original_thread?.content || ''}
-                                                </Text>
-                                                {item.original_thread?.image_url && (
-                                                  <View style={{ alignItems: 'center', marginTop: 4 }}>
-                                                    <Image
-                                                      source={{ uri: item.original_thread.image_url }}
-                                                      style={getVeryCompactImageStyle(screenWidth)}
-                                                      resizeMode="cover"
-                                                    />
-                                                  </View>
-                                                )}
-
                                               </View>
-                                            </View>
-                                          </TouchableOpacity>
+                                            </TouchableOpacity>
 
-                                          {/* Engagement bar - use helper for correct order */}
-                                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                                            {renderRepostEngagementButtons(item)}
+                                            {/* Engagement bar - use helper for correct order */}
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                                              {renderRepostEngagementButtons(item)}
+                                            </View>
                                           </View>
                                         </View>
                                       </View>
-                                    </View>
-                                  </TouchableOpacity>
-                                ) : (
-                                  <TouchableOpacity onPress={() => handleThreadPress(item)}>
-                                    <PostCard
-                                      username={item.profiles?.username || 'Anonymous'}
-                                      avatarUrl={item.profiles?.avatar_url}
-                                      content={item.content}
-                                      imageUrl={item.image_url}
-                                      timestamp={item.created_at}
-                                      likes={item.likeCount || 0}
-                                      comments={replyCounts[item.id] ?? item.replyCount}
+                                    </TouchableOpacity>
+                                  ) : (
+                                    <TouchableOpacity onPress={() => handleThreadPress(item)}>
+              <PostCard
+                                        username={item.profiles?.username || 'Anonymous'}
+                                        avatarUrl={item.profiles?.avatar_url}
+                content={item.content}
+                imageUrl={item.image_url}
+                                        timestamp={item.created_at}
+                                        likes={item.likeCount || 0}
+                                        comments={replyCounts[item.id] ?? item.replyCount}
 
-                                      reposts={item.repostCount || 0}
-                                      isLiked={item.isLiked}
-                                      isBookmarked={typeof bookmarks[item.id] === 'boolean' ? bookmarks[item.id] : item.isBookmarked}
-                                      favoriteTeam={item.profiles?.favorite_team}
-                                      userId={item.user_id}
-                                      onCommentPress={() => handleThreadPress(item)}
-                                      onLikePress={() => handleLikeToggle(item.id, item.isLiked)}
-                                      onBookmarkPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}
-                                      onRepostPress={() => handleRepostPress(item)}
-                                      onDeletePress={() => handleDeleteThread(item.id)}
-                                      onProfilePress={(userId) => {
-                                        handleProfilePress(userId);
-                                      }}
-                                      canDelete={session && (item.user_id === session.user.id || isCurrentUserAdmin())}
-                                      canAdminDelete={isCurrentUserAdmin()}
-                                      isAdmin={isUserAdmin(item.user_id)}
-                                      showReadMore={true}
-                                      userEmail={session?.user?.email || ''}
-                                    />
-                                  </TouchableOpacity>
-                                )}
-                              </View>
-                            ))
-                          ) : (
-                            <View style={{ padding: 20, alignItems: 'center' }}>
-                              <Text style={{ fontSize: 16, color: '#505050', textAlign: 'center' }} selectable={false}>
-                                No posts from people you follow yet.{"\n"}Follow some users to see their posts here!
-                              </Text>
-                            </View>
+                                        reposts={item.repostCount || 0}
+                                        isLiked={item.isLiked}
+                                        isBookmarked={typeof bookmarks[item.id] === 'boolean' ? bookmarks[item.id] : item.isBookmarked}
+                favoriteTeam={item.profiles?.favorite_team}
+                                        userId={item.user_id}
+                onCommentPress={() => handleThreadPress(item)}
+                                        onLikePress={() => handleLikeToggle(item.id, item.isLiked)}
+                                        onBookmarkPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}
+                onRepostPress={() => handleRepostPress(item)}
+                                        onDeletePress={() => handleDeleteThread(item.id)}
+                                        onProfilePress={(userId) => {
+                                          handleProfilePress(userId);
+                                        }}
+                                        canDelete={session && (item.user_id === session.user.id || isCurrentUserAdmin())}
+                                        canAdminDelete={isCurrentUserAdmin()}
+                                        isAdmin={isUserAdmin(item.user_id)}
+                showReadMore={true}
+                                        userEmail={session?.user?.email || ''}
+                                      />
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                              ))}
+                              {/* Loading and end-of-feed indicators here */}
+                              {loadingMore && (
+                                <View style={{ padding: 20, alignItems: 'center', marginTop: 40 }}>
+                                  <ActivityIndicator size="small" color="#dc2626" />
+                                  <Text style={{ marginTop: 8, color: '#666666', fontSize: 14 }}>Loading more posts...</Text>
+                                </View>
+                              )}
+                              {!hasMore && threads.length > 0 && (
+                                <View style={{ padding: 20, alignItems: 'center' }}>
+                                  <Text style={{ color: '#666666', fontSize: 14 }}>You've reached the end of the feed</Text>
+                                </View>
+                              )}
+                            </>
                           )
-                        )}
+                        ) : null}
+                        
+                        {/* Loading Indicators for For You tab 
+          {loadingMore && (
+                          <View style={{ padding: 20, alignItems: 'center', marginTop: 40 }}>
+                            <ActivityIndicator size="small" color="#dc2626" />
+                            <Text style={{ marginTop: 8, color: '#666666', fontSize: 14 }}>Loading more posts...</Text>
+            </View>
+          )}
+                        {!hasMore && threads.length > 0 && (
+                          <View style={{ padding: 20, alignItems: 'center' }}>
+                            <Text style={{ color: '#666666', fontSize: 14 }}></Text>
+            </View>
+          )}*/}
                       </View>
                     </>
                   )}
@@ -2928,8 +2857,8 @@ export default function CommunityScreen() {
                   </View>
                 </View>
               </View>
-            </ScrollView>
-          </View>
+        </ScrollView>
+      </View>
         </View>
         // END main community feed UI
       }
@@ -3013,7 +2942,7 @@ export default function CommunityScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
               {/* Avatar removed as per user request */}
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <TextInput
+              <TextInput
                   placeholder="What's happening?"
                   placeholderTextColor="gray"
                   style={{
@@ -3034,7 +2963,7 @@ export default function CommunityScreen() {
                   } as any}
                   value={modalContent}
                   onChangeText={setModalContent}
-                  multiline
+                multiline
                 />
                 {modalImage && (
                   <View style={{ position: 'relative', marginTop: 8 }}>
@@ -3044,10 +2973,10 @@ export default function CommunityScreen() {
                       resizeMode="contain"
                     />
                     <TouchableOpacity onPress={() => setModalImage(null)} style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#000', opacity: 0.7, borderRadius: 16, padding: 4 }}>
-                      <X size={20} color="#fff" />
-                    </TouchableOpacity>
-                  </View>
-                )}
+                  <X size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            )}
               </View>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
@@ -3087,8 +3016,8 @@ export default function CommunityScreen() {
             padding: 8, 
             minWidth: 120 
           }}>
-            <TouchableOpacity 
-              onPress={() => { 
+            <TouchableOpacity
+              onPress={() => {
                 setRepostDeleteMenuVisible(false); 
                 if (selectedRepostForDelete) {
                   handleRepostDeleteDirect(selectedRepostForDelete);
@@ -3105,10 +3034,10 @@ export default function CommunityScreen() {
 
       {/* Animated Thread View for Mobile Web */}
       {shouldUseAnimatedView && selectedThread && (
-        <AnimatedThreadView 
+        <AnimatedThreadView
           thread={selectedThread} 
-          onClose={handleCloseThread} 
-          session={session} 
+          onClose={handleCloseThread}
+          session={session}
           onProfilePress={handleProfilePress}
           onRepostPress={handleRepostPress}
           onThreadPress={handleThreadPress}
