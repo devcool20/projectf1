@@ -676,6 +676,35 @@ export function AnimatedThreadView({
     fetchCurrentUserProfile();
   }, [session]);
 
+  // Add a helper to get image style based on aspect ratio
+  function getReplyImageStyle(width: number, height: number, screenWidth: number) {
+    if (width > height) {
+      // Landscape
+      const maxWidth = Math.min(screenWidth - 32, 320);
+      const aspectRatio = width / height;
+      return {
+        width: maxWidth,
+        height: maxWidth / aspectRatio,
+        borderRadius: 8,
+        marginBottom: 8,
+        backgroundColor: '#f3f4f6',
+        // alignSelf: 'center', // Remove centering
+      };
+    } else {
+      // Portrait
+      const maxHeight = 320;
+      const aspectRatio = width / height;
+      return {
+        width: maxHeight * aspectRatio,
+        height: maxHeight,
+        borderRadius: 8,
+        marginBottom: 8,
+        backgroundColor: '#f3f4f6',
+        // alignSelf: 'center', // Remove centering
+      };
+    }
+  }
+
   if (!thread || !threadData) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
@@ -1120,11 +1149,7 @@ export function AnimatedThreadView({
                         {reply.content}
                       </Text>
                       {reply.image_url && (
-                        <Image
-                          source={{ uri: reply.image_url }}
-                          style={{ width: '100%', height: 150, borderRadius: 8, marginBottom: 8 }}
-                          resizeMode="cover"
-                        />
+                        <ReplyImageResponsive uri={reply.image_url} screenWidth={screenWidth} />
                       )}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                         {/* Like */}
@@ -1166,5 +1191,55 @@ export function AnimatedThreadView({
         </SafeAreaView>
       </Animated.View>
     </>
+  );
+} 
+
+function ReplyImageResponsive({ uri, screenWidth }: { uri: string, screenWidth: number }) {
+  // On web, Image.getSize is not supported, so use default style
+  if (Platform.OS === 'web') {
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: '100%', height: 200, borderRadius: 8, marginBottom: 8, backgroundColor: '#f3f4f6', objectFit: 'contain', alignSelf: 'flex-start', marginLeft: 0, marginTop: 0 }}
+        resizeMode="contain"
+      />
+    );
+  }
+  const [dimensions, setDimensions] = React.useState<{ width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (uri) {
+      Image.getSize(
+        uri,
+        (width, height) => {
+          if (isMounted) setDimensions({ width, height });
+        },
+        () => {
+          if (isMounted) setDimensions(null);
+        }
+      );
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [uri]);
+
+  if (!dimensions) {
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: '100%', height: 150, borderRadius: 8, marginBottom: 8, backgroundColor: '#f3f4f6', alignSelf: 'flex-start', marginLeft: 0, marginTop: 0 }}
+        resizeMode="cover"
+      />
+    );
+  }
+  const style = { ...getReplyImageStyle(dimensions.width, dimensions.height, screenWidth), alignSelf: 'flex-start', marginLeft: 0, marginTop: 0 };
+  return (
+    <Image
+      source={{ uri }}
+      style={style}
+      resizeMode="cover"
+    />
   );
 } 
