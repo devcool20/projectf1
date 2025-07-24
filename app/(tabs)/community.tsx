@@ -169,6 +169,8 @@ export default function CommunityScreen() {
   const { session, triggerOnboarding } = useAuth();
   const { likes, bookmarks, setLike, setBookmark, replyCounts } = useEngagementStore();
 
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
   const openRepostDeleteMenu = (repostId: string, event: any) => {
     setSelectedRepostForDelete(repostId);
     // Calculate position based on event
@@ -2444,11 +2446,13 @@ export default function CommunityScreen() {
 
                                         {/* Repost image */}
                                         {item.image_url && (
-                                          <Image
-                                            source={{ uri: item.image_url }}
-                                            style={getResponsiveImageStyle(screenWidth)}
-                                            resizeMode="cover"
-                                          />
+                                          <TouchableOpacity onPress={() => setPreviewImageUrl(item.image_url)}>
+                                            <Image
+                                              source={{ uri: item.image_url }}
+                                              style={getResponsiveImageStyle(screenWidth)}
+                                              resizeMode="cover"
+                                            />
+                                          </TouchableOpacity>
                                         )}
 
                                         {/* Original thread preview - embedded like Twitter */}
@@ -2494,13 +2498,15 @@ export default function CommunityScreen() {
                                                 {item.original_thread?.content || ''}
                                               </Text>
                                               {item.original_thread?.image_url && (
-                                                <View style={{ alignItems: 'center', marginTop: 4 }}>
-                                                  <Image
-                                                    source={{ uri: item.original_thread.image_url }}
-                                                    style={getVeryCompactImageStyle(screenWidth)}
-                                                    resizeMode="cover"
-                                                  />
-                                                </View>
+                                                <TouchableOpacity onPress={() => setPreviewImageUrl(item.original_thread.image_url)}>
+                                                  <View style={{ alignItems: 'center', marginTop: 4 }}>
+                                                    <Image
+                                                      source={{ uri: item.original_thread.image_url }}
+                                                      style={getVeryCompactImageStyle(screenWidth)}
+                                                      resizeMode="cover"
+                                                    />
+                                                  </View>
+                                                </TouchableOpacity>
                                               )}
 
                                             </View>
@@ -2694,11 +2700,13 @@ export default function CommunityScreen() {
 
                                             {/* Repost image */}
                                             {item.image_url && (
-                                              <Image
-                                                source={{ uri: item.image_url }}
-                                                style={getResponsiveImageStyle(screenWidth)}
-                                                resizeMode="cover"
-                                              />
+                                              <TouchableOpacity onPress={() => setPreviewImageUrl(item.image_url)}>
+                                                <Image
+                                                  source={{ uri: item.image_url }}
+                                                  style={getResponsiveImageStyle(screenWidth)}
+                                                  resizeMode="cover"
+                                                />
+                                              </TouchableOpacity>
                                             )}
 
                                             {/* Original thread preview - embedded like Twitter */}
@@ -2739,13 +2747,15 @@ export default function CommunityScreen() {
                                                     {item.original_thread?.content || ''}
                                                   </Text>
                                                   {item.original_thread?.image_url && (
-                                                    <View style={{ alignItems: 'center', marginTop: 4 }}>
-                                                      <Image
-                                                        source={{ uri: item.original_thread.image_url }}
-                                                        style={getVeryCompactImageStyle(screenWidth)}
-                                                        resizeMode="cover"
-                                                      />
-                                                    </View>
+                                                    <TouchableOpacity onPress={() => setPreviewImageUrl(item.original_thread.image_url)}>
+                                                      <View style={{ alignItems: 'center', marginTop: 4 }}>
+                                                        <Image
+                                                          source={{ uri: item.original_thread.image_url }}
+                                                          style={getVeryCompactImageStyle(screenWidth)}
+                                                          resizeMode="cover"
+                                                        />
+                                                      </View>
+                                                    </TouchableOpacity>
                                                   )}
 
                                                 </View>
@@ -2789,6 +2799,7 @@ export default function CommunityScreen() {
                                         isAdmin={isUserAdmin(item.user_id)}
                 showReadMore={true}
                                         userEmail={session?.user?.email || ''}
+                                        onImagePress={imageUrl => setPreviewImageUrl(imageUrl)}
                                       />
                                     </TouchableOpacity>
                                   )}
@@ -3047,7 +3058,24 @@ export default function CommunityScreen() {
         />
       )}
 
-
+      {previewImageUrl && (
+        <Modal
+          visible={!!previewImageUrl}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPreviewImageUrl(null)}
+        >
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setPreviewImageUrl(null)}>
+            <Image
+              source={{ uri: previewImageUrl }}
+              style={{ width: '90%', height: '70%', borderRadius: 16, resizeMode: 'contain' }}
+            />
+            <TouchableOpacity onPress={() => setPreviewImageUrl(null)} style={{ position: 'absolute', top: 60, right: 30, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 20, padding: 8 }}>
+              <X size={32} color="#fff" />
+            </TouchableOpacity>
+          </Pressable>
+        </Modal>
+      )}
 
     </SafeAreaView>
   );

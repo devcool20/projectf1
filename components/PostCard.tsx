@@ -51,6 +51,7 @@ export type PostCardProps = {
   canDelete?: boolean; // New prop to control delete button visibility
   isAdmin?: boolean; // Add isAdmin prop
   canAdminDelete?: boolean; // Add admin delete capability
+  onImagePress?: (imageUrl: string) => void;
 };
 
 export default function PostCard({
@@ -78,6 +79,7 @@ export default function PostCard({
   isAdmin = false,
   canAdminDelete = false,
   showReadMore = false, // NEW PROP: only true in community feed
+  onImagePress,
 }: PostCardProps & { showReadMore?: boolean }) {
   
   const { width: screenWidth } = Dimensions.get('window');
@@ -184,27 +186,29 @@ export default function PostCard({
             </TouchableOpacity>
           )}
           {imageUrl && (
-            <Image
-              source={{ uri: imageUrl }}
-              style={(() => {
-                if (!imageDimensions) {
-                  return getResponsiveImageStyle(screenWidth);
-                }
-                const imgW = imageDimensions.width;
-                const imgH = imageDimensions.height;
-                const aspectRatio = imgW / imgH;
-                const maxWidth = screenWidth < 400 ? screenWidth - 120 : 280;
-                const maxHeight = 400;
-                let width = maxWidth;
-                let height = imgH * (maxWidth / imgW);
-                if (height > maxHeight) {
-                  height = maxHeight;
-                  width = imgW * (maxHeight / imgH);
-                }
-                return { borderRadius: 12, width, height, backgroundColor: '#f3f4f6', marginTop: 8 };
-              })()}
-              resizeMode="cover"
-            />
+            <TouchableOpacity onPress={() => onImagePress && imageUrl && onImagePress(imageUrl)}>
+              <Image
+                source={{ uri: imageUrl }}
+                style={(() => {
+                  if (!imageDimensions) {
+                    return getResponsiveImageStyle(screenWidth);
+                  }
+                  const imgW = imageDimensions.width;
+                  const imgH = imageDimensions.height;
+                  const aspectRatio = imgW / imgH;
+                  const maxWidth = screenWidth < 400 ? screenWidth - 120 : 280;
+                  const maxHeight = 400;
+                  let width = maxWidth;
+                  let height = imgH * (maxWidth / imgW);
+                  if (height > maxHeight) {
+                    height = maxHeight;
+                    width = imgW * (maxHeight / imgH);
+                  }
+                  return { borderRadius: 12, width, height, backgroundColor: '#f3f4f6', marginTop: 8 };
+                })()}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
           )}
           {/* Engagement Bar */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>

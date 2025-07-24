@@ -12,6 +12,7 @@ import {
   Dimensions,
   Pressable,
   SafeAreaView,
+  Modal,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
@@ -151,6 +152,9 @@ export function AnimatedThreadView({
 
   // Add state for current user's profile avatar
   const [currentUserProfile, setCurrentUserProfile] = useState<{ avatar_url?: string } | null>(null);
+
+  // Add state for image preview modal
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const { width: screenWidth } = Dimensions.get('window');
   
@@ -835,11 +839,13 @@ export function AnimatedThreadView({
 
                       {/* Repost image */}
                       {threadData.image_url && (
-                        <Image
-                          source={{ uri: threadData.image_url }}
-                          style={getResponsiveImageStyle(screenWidth)}
-                          resizeMode="cover"
-                        />
+                        <TouchableOpacity onPress={() => setPreviewImageUrl(threadData.image_url)}>
+                          <Image
+                            source={{ uri: threadData.image_url }}
+                            style={getResponsiveImageStyle(screenWidth)}
+                            resizeMode="cover"
+                          />
+                        </TouchableOpacity>
                       )}
 
                       {/* Original thread preview */}
@@ -970,11 +976,13 @@ export function AnimatedThreadView({
                       </Text>
 
                       {threadData.image_url && (
-                        <Image
-                          source={{ uri: threadData.image_url }}
-                          style={getResponsiveImageStyle(screenWidth)}
-                          resizeMode="cover"
-                        />
+                        <TouchableOpacity onPress={() => setPreviewImageUrl(threadData.image_url)}>
+                          <Image
+                            source={{ uri: threadData.image_url }}
+                            style={getResponsiveImageStyle(screenWidth)}
+                            resizeMode="cover"
+                          />
+                        </TouchableOpacity>
                       )}
                     </View>
                   </View>
@@ -1190,6 +1198,25 @@ export function AnimatedThreadView({
           </ScrollView>
         </SafeAreaView>
       </Animated.View>
+
+      {previewImageUrl && (
+        <Modal
+          visible={!!previewImageUrl}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPreviewImageUrl(null)}
+        >
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setPreviewImageUrl(null)}>
+            <Image
+              source={{ uri: previewImageUrl }}
+              style={{ width: '90%', height: '70%', borderRadius: 16, resizeMode: 'contain' }}
+            />
+            <TouchableOpacity onPress={() => setPreviewImageUrl(null)} style={{ position: 'absolute', top: 60, right: 30, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 20, padding: 8 }}>
+              <X size={32} color="#fff" />
+            </TouchableOpacity>
+          </Pressable>
+        </Modal>
+      )}
     </>
   );
 } 
