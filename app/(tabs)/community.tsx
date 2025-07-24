@@ -2802,7 +2802,7 @@ export default function CommunityScreen() {
                                 </View>
                               )}
                               {!hasMore && threads.length > 0 && (
-                                <View style={{ padding: 20, alignItems: 'center' }}>
+                                <View style={{ padding: 1, marginBottom: 1, alignItems: 'center' }}>
                                   <Text style={{ color: '#666666', fontSize: 14 }}>You've reached the end of the feed</Text>
                                 </View>
                               )}
