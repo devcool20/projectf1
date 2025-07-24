@@ -42,7 +42,7 @@ export default function ScreeningsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-[#181a20]">
       <ScrollView 
         className="flex-1" 
         showsVerticalScrollIndicator={true} 
@@ -54,11 +54,11 @@ export default function ScreeningsScreen() {
       >
         <View className="w-full max-w-md pb-24">
           {/* Header */}
-          <View className="bg-gradient-card p-6 shadow-kodama-lg">
-            <Text className="text-2xl font-heading font-bold text-foreground">
+          <View className="bg-[#23272f] p-6 shadow-kodama-lg">
+            <Text className="text-2xl font-heading font-bold text-white">
               🎬 F1 Screenings
             </Text>
-            <Text className="text-muted-foreground mt-1">
+            <Text className="text-[#b0b3b8] mt-1">
               Watch Formula 1 races with fellow fans
             </Text>
           </View>
@@ -66,26 +66,26 @@ export default function ScreeningsScreen() {
           {/* Content */}
           <View className="p-6">
             {loading ? (
-              <View className="bg-gradient-card rounded-2xl p-8 items-center shadow-kodama-lg">
+              <View className="bg-[#23272f] rounded-2xl p-8 items-center shadow-kodama-lg">
                 <Text className="text-6xl mb-4">⏳</Text>
-                <Text className="text-xl font-medium text-foreground">
+                <Text className="text-xl font-medium text-white">
                   Loading screenings...
                 </Text>
               </View>
             ) : screenings.length === 0 ? (
-              <View className="bg-gradient-card rounded-2xl p-8 items-center shadow-kodama-lg">
+              <View className="bg-[#23272f] rounded-2xl p-8 items-center shadow-kodama-lg">
                 <Text className="text-6xl mb-4">📺</Text>
-                <Text className="text-2xl font-heading font-bold text-foreground mb-3">
+                <Text className="text-2xl font-heading font-bold text-white mb-3">
                   No Screenings Available
                 </Text>
-                <Text className="text-muted-foreground text-lg leading-relaxed text-center">
+                <Text className="text-[#b0b3b8] text-lg leading-relaxed text-center">
                   Check back soon for upcoming F1 screening events!
                 </Text>
               </View>
             ) : (
               <View className="space-y-4">
                 {screenings.map((screening) => (
-                  <View key={screening.id} className="bg-gradient-card rounded-2xl shadow-kodama-lg overflow-hidden">
+                  <View key={screening.id} className="bg-[#23272f] rounded-2xl shadow-kodama-lg overflow-hidden">
                     {/* Header Image */}
                     {screening.image_url ? (
                       <Image
@@ -102,7 +102,7 @@ export default function ScreeningsScreen() {
                     {/* Content */}
                     <View className="p-4">
                       {/* Grand Prix Name */}
-                      <Text className="text-xl font-heading font-bold text-foreground mb-2">
+                      <Text className="text-xl font-heading font-bold text-white mb-2">
                         {screening.grand_prix_name}
                       </Text>
 
@@ -110,7 +110,7 @@ export default function ScreeningsScreen() {
                       <View className="mb-3">
                         <View className="flex-row items-center mb-1">
                           <Text className="text-base mr-2">📅</Text>
-                          <Text className="text-base font-medium text-foreground">
+                          <Text className="text-base font-medium text-white">
                             {new Date(screening.date).toLocaleDateString('en-US', {
                               weekday: 'long',
                               year: 'numeric',
@@ -121,7 +121,7 @@ export default function ScreeningsScreen() {
                         </View>
                         <View className="flex-row items-center mb-1">
                           <Text className="text-base mr-2">⏰</Text>
-                          <Text className="text-base font-medium text-foreground">
+                          <Text className="text-base font-medium text-white">
                             {new Date(`2000-01-01T${screening.timing}`).toLocaleTimeString('en-US', {
                               hour: 'numeric',
                               minute: '2-digit',
@@ -135,12 +135,12 @@ export default function ScreeningsScreen() {
                       <View className="mb-3">
                         <View className="flex-row items-center mb-1">
                           <Text className="text-base mr-2">📍</Text>
-                          <Text className="text-base font-medium text-foreground">
+                          <Text className="text-base font-medium text-white">
                             {screening.location}
                           </Text>
                         </View>
                         {screening.country && (
-                          <Text className="text-sm text-muted-foreground ml-6">
+                          <Text className="text-sm text-[#b0b3b8] ml-6">
                             {screening.country}
                           </Text>
                         )}
@@ -148,8 +148,8 @@ export default function ScreeningsScreen() {
 
                       {/* Round Number */}
                       {screening.round_number && (
-                        <View className="pt-3 border-t border-border">
-                          <Text className="text-xs text-muted-foreground text-center">
+                        <View className="pt-3 border-t border-[#23272f]">
+                          <Text className="text-xs text-[#b0b3b8] text-center">
                             Round {screening.round_number} • {screening.season}
                           </Text>
                         </View>

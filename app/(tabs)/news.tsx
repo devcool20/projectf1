@@ -201,7 +201,7 @@ export default function NewsScreen() {
     <TouchableOpacity
       key={article.id}
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: '#23272f',
         borderRadius: 12,
         marginHorizontal: 16,
         marginBottom: 16,
@@ -217,7 +217,7 @@ export default function NewsScreen() {
     >
       {/* Hero Image */}
       {article.image_url && (
-        <View style={{ height: 200, backgroundColor: '#f0f0f0' }}>
+        <View style={{ height: 200, backgroundColor: '#181a20' }}>
           <Image
             source={{ uri: article.image_url }}
             style={{ width: '100%', height: '100%' }}
@@ -240,7 +240,7 @@ export default function NewsScreen() {
               {article.source}
             </Text>
           </View>
-          <Text style={{ fontSize: 12, color: '#666' }}>
+          <Text style={{ fontSize: 12, color: '#b0b3b8' }}>
             {formatDate(article.published_at)}
           </Text>
         </View>
@@ -249,7 +249,7 @@ export default function NewsScreen() {
         <Text style={{
           fontSize: 18,
           fontWeight: 'bold',
-          color: '#1a1a1a',
+          color: '#fff',
           marginBottom: 8,
           lineHeight: 24,
         }} numberOfLines={2}>
@@ -259,7 +259,7 @@ export default function NewsScreen() {
         {/* Article Content/Description */}
         <Text style={{
           fontSize: 14,
-          color: '#666',
+          color: '#b0b3b8',
           lineHeight: 20,
           marginBottom: 12,
         }} numberOfLines={4}>
@@ -352,20 +352,20 @@ export default function NewsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#181a20' }}>
       {/* Header */}
       <View style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: '#23272f',
         paddingHorizontal: 16,
         paddingVertical: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e5e5',
+        borderBottomColor: '#23272f',
       }}>
         <View style={{ maxWidth: 800, alignSelf: 'center', width: '100%' }}>
         <Text style={{
           fontSize: 24,
           fontWeight: 'bold',
-          color: '#1a1a1a',
+          color: '#fff',
           marginBottom: 12,
         }}>
           F1 News
@@ -375,11 +375,11 @@ export default function NewsScreen() {
 
       {/* Search and Filter Bar */}
       <View style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: '#23272f',
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e5e5',
+        borderBottomColor: '#23272f',
       }}>
         <View style={{ maxWidth: 800, alignSelf: 'center', width: '100%' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -387,27 +387,27 @@ export default function NewsScreen() {
             flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: '#f8f9fa',
+            backgroundColor: '#181a20',
             borderRadius: 12,
             paddingHorizontal: 12,
             marginRight: 12,
           }}>
-            <Search size={16} color="#666" style={{ marginRight: 8 }} />
+            <Search size={16} color="#b0b3b8" style={{ marginRight: 8 }} />
             <TextInput
               style={{
                 flex: 1,
                 fontSize: 16,
-                color: '#1a1a1a',
+                color: '#fff',
                 paddingVertical: 12,
               }}
               placeholder="Search articles..."
-              placeholderTextColor="#999"
+              placeholderTextColor="#a0a0a0"
               value={searchQuery}
               onChangeText={handleSearch}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <X size={16} color="#666" />
+                <X size={16} color="#b0b3b8" />
               </TouchableOpacity>
             )}
           </View>
@@ -416,11 +416,11 @@ export default function NewsScreen() {
             onPress={() => setShowFilters(!showFilters)}
             style={{
               padding: 12,
-              backgroundColor: selectedSource !== 'all' ? '#dc2626' : '#f8f9fa',
+              backgroundColor: selectedSource !== 'all' ? '#dc2626' : '#181a20',
               borderRadius: 12,
             }}
           >
-            <Filter size={16} color={selectedSource !== 'all' ? '#ffffff' : '#666'} />
+            <Filter size={16} color={selectedSource !== 'all' ? '#fff' : '#b0b3b8'} />
           </TouchableOpacity>
         </View>
 
@@ -440,15 +440,15 @@ export default function NewsScreen() {
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 16,
-                  backgroundColor: selectedSource === source ? '#dc2626' : '#f8f9fa',
+                  backgroundColor: selectedSource === source ? '#dc2626' : '#181a20',
                   borderWidth: 1,
-                  borderColor: selectedSource === source ? '#dc2626' : '#ffffff',
+                  borderColor: selectedSource === source ? '#dc2626' : '#23272f',
                 }}
               >
                 <Text style={{
                   fontSize: 12,
                   fontWeight: '600',
-                  color: selectedSource === source ? '#ffffff' : '#666',
+                  color: selectedSource === source ? '#fff' : '#b0b3b8',
                 }}>
                   {source === 'all' ? 'All Sources' : source}
                 </Text>
@@ -479,17 +479,17 @@ export default function NewsScreen() {
         {loading ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
             <ActivityIndicator size="large" color="#dc2626" />
-            <Text style={{ marginTop: 16, fontSize: 16, color: '#666', textAlign: 'center' }}>
+            <Text style={{ marginTop: 16, fontSize: 16, color: '#b0b3b8', textAlign: 'center' }}>
               Loading latest news...
             </Text>
-            <Text style={{ fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' }}>
+            <Text style={{ fontSize: 14, color: '#a0a0a0', marginTop: 8, textAlign: 'center' }}>
               Loading first 5 articles to get you started
             </Text>
           </View>
         ) : filteredArticles.length > 0 ? (
           <>
             <View style={{ marginBottom: 8, paddingHorizontal: 16 }}>
-              <Text style={{ fontSize: 14, color: '#666' }}>
+              <Text style={{ fontSize: 14, color: '#b0b3b8' }}>
                 {`${filteredArticles.length} article${filteredArticles.length !== 1 ? 's' : ''} loaded`}
               </Text>
             </View>
@@ -498,10 +498,10 @@ export default function NewsScreen() {
           </>
         ) : (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
-            <Text style={{ fontSize: 18, color: '#666', textAlign: 'center', marginBottom: 8 }}>
+            <Text style={{ fontSize: 18, color: '#b0b3b8', textAlign: 'center', marginBottom: 8 }}>
               {searchQuery ? 'No articles found' : 'No news available'}
             </Text>
-            <Text style={{ fontSize: 14, color: '#999', textAlign: 'center', marginBottom: 16 }}>
+            <Text style={{ fontSize: 14, color: '#a0a0a0', textAlign: 'center', marginBottom: 16 }}>
               {searchQuery ? 'Try adjusting your search or filters' : 'Check back later for updates'}
             </Text>
             <TouchableOpacity
@@ -513,7 +513,7 @@ export default function NewsScreen() {
                 borderRadius: 8,
               }}
             >
-              <Text style={{ color: '#ffffff', fontWeight: '600' }}>
+              <Text style={{ color: '#fff', fontWeight: '600' }}>
                 Retry Loading News
               </Text>
             </TouchableOpacity>

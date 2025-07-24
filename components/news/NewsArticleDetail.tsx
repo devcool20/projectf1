@@ -114,7 +114,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
 
   if (error) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#181a20' }}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <Text style={{ fontSize: 18, color: '#dc2626', textAlign: 'center', marginBottom: 16 }}>
             {error}
@@ -128,7 +128,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               borderRadius: 8,
             }}
           >
-            <Text style={{ color: '#ffffff', fontWeight: '600' }}>Close</Text>
+            <Text style={{ color: '#fff', fontWeight: '600' }}>Close</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -136,12 +136,12 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#181a20' }}>
       {/* Header */}
       <View style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: '#23272f',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e5e5',
+        borderBottomColor: '#23272f',
       }}>
         <View style={{ 
           maxWidth: 800, 
@@ -161,13 +161,13 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
                 padding: 8,
                 marginRight: 12,
                 borderRadius: 20,
-                backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                backgroundColor: 'rgba(255,255,255,0.05)',
               }}
             >
-              <ArrowLeft size={20} color="#1a1a1a" />
+              <ArrowLeft size={20} color="#fff" />
             </TouchableOpacity>
           )}
-          <Text style={{ fontSize: 16, fontWeight: '600', color: '#1a1a1a' }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
             {article.source}
           </Text>
         </View>
@@ -179,10 +179,10 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               padding: 8,
               marginRight: 8,
               borderRadius: 20,
-              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              backgroundColor: 'rgba(255,255,255,0.05)',
             }}
           >
-            <Share2 size={18} color="#1a1a1a" />
+            <Share2 size={18} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleOpenExternal}
@@ -190,17 +190,17 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               padding: 8,
               marginRight: 8,
               borderRadius: 20,
-              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              backgroundColor: 'rgba(255,255,255,0.05)',
             }}
           >
-            <ExternalLink size={18} color="#1a1a1a" />
+            <ExternalLink size={18} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={onClose}
             style={{
               padding: 8,
               borderRadius: 20,
-              backgroundColor: 'rgba(220, 38, 38, 0.1)',
+              backgroundColor: 'rgba(220, 38, 38, 0.15)',
             }}
           >
             <X size={18} color="#dc2626" />
@@ -224,7 +224,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               style={{
                   width: '100%',
                 height: 250,
-                backgroundColor: '#f5f5f5',
+                backgroundColor: '#23272f',
                   borderRadius: 12,
               }}
               resizeMode="cover"
@@ -237,7 +237,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
           <Text style={{
             fontSize: 24,
             fontWeight: 'bold',
-            color: '#1a1a1a',
+            color: '#fff',
             lineHeight: 32,
             marginBottom: 16,
           }}>
@@ -247,15 +247,15 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
           {/* Meta Information */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
-              <Calendar size={14} color="#666" style={{ marginRight: 4 }} />
-              <Text style={{ fontSize: 12, color: '#666' }}>
+              <Calendar size={14} color="#b0b3b8" style={{ marginRight: 4 }} />
+              <Text style={{ fontSize: 12, color: '#b0b3b8' }}>
                 {formatDate(article.published_at)}
               </Text>
             </View>
             {article.author && (
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <User size={14} color="#666" style={{ marginRight: 4 }} />
-                <Text style={{ fontSize: 12, color: '#666' }}>
+                <User size={14} color="#b0b3b8" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 12, color: '#b0b3b8' }}>
                   {article.author}
                 </Text>
               </View>
@@ -272,7 +272,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               alignSelf: 'flex-start',
               marginBottom: 16,
             }}>
-              <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '600' }}>
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
                 {article.category}
               </Text>
             </View>
@@ -283,7 +283,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
           <View style={{ paddingHorizontal: 20 }}>
             <Text style={{
               fontSize: 16,
-              color: '#1a1a1a',
+              color: '#fff',
               lineHeight: 26,
             }}>
               {getDisplayContent()}
@@ -295,16 +295,16 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
           marginTop: 32,
           paddingHorizontal: 20,
           paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
+          backgroundColor: '#23272f',
           borderTopWidth: 1,
-          borderTopColor: '#e5e5e5',
+          borderTopColor: '#23272f',
             borderRadius: 12,
             marginHorizontal: 20,
         }}>
-          <Text style={{ fontSize: 14, color: '#666', textAlign: 'center' }}>
+          <Text style={{ fontSize: 14, color: '#b0b3b8', textAlign: 'center' }}>
             Source: {article.source}
           </Text>
-          <Text style={{ fontSize: 12, color: '#999', textAlign: 'center', marginTop: 4 }}>
+          <Text style={{ fontSize: 12, color: '#a0a0a0', textAlign: 'center', marginTop: 4 }}>
             Published on {formatDate(article.published_at)}
           </Text>
           </View>

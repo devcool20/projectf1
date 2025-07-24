@@ -3,22 +3,45 @@ import { View, Text, ScrollView, SafeAreaView, Image, TouchableOpacity, Animated
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useDominantColor } from '@/hooks/useDominantColor';
+import { useRouter } from 'expo-router';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallScreen = screenWidth < 400;
 
 const DRIVER_IMAGES = {
-  'Oscar Piastri': require('../../assets/images/drivers/oscar.png'),
-  'Lando Norris': require('../../assets/images/drivers/lando.png'),
-  'Charles Leclerc': require('../../assets/images/drivers/charles.png'),
+  'Max Verstappen': require('../../assets/images/drivers/max.png'),
   'Lewis Hamilton': require('../../assets/images/drivers/lewis.png'),
-  // Add more driver images as needed
+  'George Russell': require('../../assets/images/drivers/george.png'),
+  'Charles Leclerc': require('../../assets/images/drivers/charles.png'),
+  'Carlos Sainz': require('../../assets/images/drivers/carlos.png'),
+  'Lando Norris': require('../../assets/images/drivers/lando.png'),
+  'Oscar Piastri': require('../../assets/images/drivers/oscar.png'),
+  'Fernando Alonso': require('../../assets/images/drivers/fernando.png'),
+  'Lance Stroll': require('../../assets/images/drivers/lance.png'),
+  'Esteban Ocon': require('../../assets/images/drivers/esteban.png'),
+  'Pierre Gasly': require('../../assets/images/drivers/pierre.png'),
+  'Yuki Tsunoda': require('../../assets/images/drivers/yuki.png'),
+  'Franco Colapinto': require('../../assets/images/drivers/franco.png'),
+  'Alex Albon': require('../../assets/images/drivers/alex.png'),
+  'Oliver Bearman': require('../../assets/images/drivers/oliver.png'),
+  'Kimi Antonelli': require('../../assets/images/drivers/kimi.png'),
+  'Gabriel Bortoleto': require('../../assets/images/drivers/gabriel.png'),
+  'Nico Hulkenberg': require('../../assets/images/drivers/nico.png'),
+  'Liam Lawson': require('../../assets/images/drivers/liam.png'),
+  'Isack Hadjar': require('../../assets/images/drivers/isack.png')
 };
 
 const TEAM_IMAGES = {
-  'McLaren': require('../../assets/images/team/mclaren.png'),
-  'Ferrari': require('../../assets/images/team/ferrari.png'),
-  // Add more team images as needed
+  'Red Bull': require('../../team-logos/redbull.png'),
+  'Mercedes': require('../../team-logos/mercedes.png'),
+  'Ferrari': require('../../team-logos/ferrari.png'),
+  'McLaren': require('../../team-logos/mclaren.png'),
+  'Aston Martin': require('../../team-logos/astonmartin.png'),
+  'Alpine': require('../../team-logos/alpine.png'),
+  'Williams': require('../../team-logos/williams.png'),
+  'Racing Bulls': require('../../team-logos/racingbulls.png'),
+  'Kick Sauber': require('../../team-logos/stake.png'),
+  'Haas': require('../../team-logos/haas.png'),
 };
 
 const TEAM_COLORS = {
@@ -71,6 +94,7 @@ export default function StandingsScreen() {
   const [teams, setTeams] = useState<TeamStanding[]>([]);
   const [loading, setLoading] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const router = useRouter();
 
   useEffect(() => {
     setLoading(true);
@@ -104,14 +128,33 @@ export default function StandingsScreen() {
 
   const renderList = () => {
     if (activeTab === 'drivers') {
-      return drivers.map((driver) => {
+      // Sort drivers by points descending
+      const sortedDrivers = [...drivers].sort((a, b) => b.points - a.points);
+      return sortedDrivers.map((driver) => {
         const imageSrc = DRIVER_IMAGES[driver.driver_name as keyof typeof DRIVER_IMAGES];
         const [firstName, lastName] = driver.driver_name.split(' ');
         return (
-          <TouchableOpacity key={driver.id} style={styles.card}>
-            <View style={styles.cardImageContainer}>
+          <TouchableOpacity
+            key={driver.id}
+            style={styles.card}
+            onPress={() => router.push(`/standings/${driver.driver_name.toLowerCase().replace(/ /g, '-')}` as any)}
+          >
+            <View style={[styles.cardImageContainer, { overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }]}>
               {imageSrc ? (
-                <Image source={imageSrc} style={styles.cardImage} resizeMode="cover" />
+                <Image
+                  source={imageSrc}
+                  style={[
+                    styles.cardImage,
+                    {
+                      alignSelf: 'center',
+                      width: '110%',
+                      height: '110%',
+                      marginLeft: '-10%',
+                      marginTop: '-10%',
+                    }
+                  ]}
+                  resizeMode="cover"
+                />
               ) : (
                 <View style={styles.cardImageFallback}>
                   <Text style={styles.cardImageFallbackText}>{driver.driver_name[0]}</Text>
@@ -132,13 +175,15 @@ export default function StandingsScreen() {
         );
       });
     }
-    return teams.map((team) => {
+    // Sort teams by points descending
+    const sortedTeams = [...teams].sort((a, b) => b.points - a.points);
+    return sortedTeams.map((team) => {
       const imageSrc = TEAM_IMAGES[team.team_name as keyof typeof TEAM_IMAGES];
       return (
         <TouchableOpacity key={team.id} style={styles.card}>
           <View style={styles.cardImageContainer}>
             {imageSrc ? (
-              <Image source={imageSrc} style={styles.cardImage} resizeMode="contain" />
+              <Image source={imageSrc} style={[styles.cardImage, { alignSelf: 'center', width: 48, height: 48, maxWidth: 60, maxHeight: 60 }]} resizeMode="contain" />
             ) : (
               <View style={styles.cardImageFallback}>
                 <Text style={styles.cardImageFallbackText}>{team.team_name[0]}</Text>
@@ -281,6 +326,8 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardImageFallback: {
     width: '100%',

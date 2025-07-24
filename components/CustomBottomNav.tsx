@@ -9,7 +9,7 @@ const TABS = [
   { name: 'News', path: '/news', icon: '📰' },
   { name: 'Screenings', path: '/screenings', icon: '🎬' },
   { name: 'Shop', path: '/shop', icon: '🛍️' },
-  { name: 'Drivers', path: '/drivers', icon: '🏆' },
+  { name: 'Standings', path: '/drivers', icon: '🏆' },
   { name: 'Home', path: '/home', icon: '🏠' },
 ];
 
@@ -23,7 +23,7 @@ export default function CustomBottomNav({ state, descriptors, navigation }) {
       className="absolute left-0 right-0 bottom-0 z-50"
       style={{ backgroundColor: 'transparent' }}
     >
-      <View className="mx-auto mb-1 w-[96%] max-w-2xl rounded-xl bg-gradient-to-br from-[#e7dbc7] to-[#e2d3be] shadow-kodama-lg flex-row justify-between items-center px-1 py-0.5 border border-[#e0d2b7]/70 backdrop-blur-sm">
+      <View className="mx-auto mb-1 w-[96%] max-w-2xl rounded-xl bg-gradient-to-br from-[#23272f] to-[#111216] shadow-kodama-lg flex-row justify-between items-center px-1 py-0.5 border border-[#23272f]/80 backdrop-blur-sm">
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label = options.tabBarLabel !== undefined
@@ -68,22 +68,22 @@ export default function CustomBottomNav({ state, descriptors, navigation }) {
               <Animated.View
                 style={{
                   transform: [{ scale: isFocused ? 1.1 : 1 }],
-                  shadowColor: isFocused ? '#d32f2f' : 'transparent',
-                  shadowOpacity: isFocused ? 0.2 : 0,
+                  shadowColor: isFocused ? '#fff' : 'transparent',
+                  shadowOpacity: isFocused ? 0.15 : 0,
                   shadowRadius: isFocused ? 6 : 0,
                   shadowOffset: { width: 0, height: 1 },
                 }}
-                className={`rounded-lg ${isFocused ? 'bg-[#f9e6e1]/80' : ''} px-1.5 py-0.5 mb-0.5`}
+                className={`rounded-lg ${isFocused ? 'bg-[#23272f]/80' : ''} px-1.5 py-0.5 mb-0.5`}
               >
                 <Text className="text-lg" style={{
-                  color: isFocused ? 'hsl(var(--f1-red))' : '#a08c6b',
+                  color: isFocused ? '#fff' : '#b0b3b8',
                   fontWeight: isFocused ? 'bold' : 'normal',
                 }}>{tab.icon}</Text>
               </Animated.View>
               <Text
-                className={`text-[10px] ${isFocused ? 'font-bold text-[hsl(var(--f1-red))]' : 'text-[#7c6a4d]'}`}
+                className={`text-[10px] ${isFocused ? 'font-bold text-white' : 'text-[#b0b3b8]'}`}
                 style={{
-                  textShadowColor: isFocused ? '#fff' : 'transparent',
+                  textShadowColor: isFocused ? '#23272f' : 'transparent',
                   textShadowRadius: isFocused ? 1 : 0,
                 }}
                 numberOfLines={1}

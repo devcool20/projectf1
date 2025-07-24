@@ -89,7 +89,7 @@ export default function ShopScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-[#181a20]">
       <ScrollView 
         className="flex-1" 
         showsVerticalScrollIndicator={true} 
@@ -101,11 +101,11 @@ export default function ShopScreen() {
       >
         <View className="w-full max-w-md pb-24">
           {/* Header */}
-          <View className="bg-gradient-card p-6 shadow-kodama-lg">
-            <Text className="text-2xl font-heading font-bold text-foreground">
+          <View className="bg-[#23272f] p-6 shadow-kodama-lg">
+            <Text className="text-2xl font-heading font-bold text-white">
               🛒 F1 Shop
             </Text>
-            <Text className="text-muted-foreground mt-1">
+            <Text className="text-[#b0b3b8] mt-1">
               Get your F1 merchandise and team gear
             </Text>
           </View>
@@ -113,26 +113,26 @@ export default function ShopScreen() {
           {/* Content */}
           <View className="p-6">
             {loading ? (
-              <View className="bg-gradient-card rounded-2xl p-8 items-center shadow-kodama-lg">
+              <View className="bg-[#23272f] rounded-2xl p-8 items-center shadow-kodama-lg">
                 <Text className="text-6xl mb-4">⏳</Text>
-                <Text className="text-xl font-medium text-foreground">
+                <Text className="text-xl font-medium text-white">
                   Loading products...
                 </Text>
               </View>
             ) : products.length === 0 ? (
-              <View className="bg-gradient-card rounded-2xl p-8 items-center shadow-kodama-lg">
+              <View className="bg-[#23272f] rounded-2xl p-8 items-center shadow-kodama-lg">
                 <Text className="text-6xl mb-4">🛒</Text>
-                <Text className="text-2xl font-heading font-bold text-foreground mb-3">
+                <Text className="text-2xl font-heading font-bold text-white mb-3">
                   No Products Available
                 </Text>
-                <Text className="text-muted-foreground text-lg leading-relaxed text-center">
+                <Text className="text-[#b0b3b8] text-lg leading-relaxed text-center">
                   Check back soon for F1 merchandise and team gear!
                 </Text>
               </View>
             ) : (
               <View className="space-y-4">
                 {products.map((product) => (
-                  <View key={product.id} className="bg-gradient-card rounded-2xl shadow-kodama-lg overflow-hidden">
+                  <View key={product.id} className="bg-[#23272f] rounded-2xl shadow-kodama-lg overflow-hidden">
                     {/* Header Image */}
                     {product.image_url ? (
                       <Image
@@ -167,17 +167,17 @@ export default function ShopScreen() {
                     {/* Content */}
                     <View className="p-4">
                       {/* Product Name */}
-                      <Text className="text-xl font-heading font-bold text-foreground mb-2">
+                      <Text className="text-xl font-heading font-bold text-white mb-2">
                         {product.product_name}
                       </Text>
 
                       {/* Price */}
                       <View className="mb-3">
-                        <Text className="text-lg font-bold text-primary">
+                        <Text className="text-lg font-bold text-[#dc2626]">
                           {formatPrice(product.price, product.currency)}
                         </Text>
                         {product.category && (
-                          <Text className="text-sm text-muted-foreground mt-1">
+                          <Text className="text-sm text-[#b0b3b8] mt-1">
                             {product.category}
                           </Text>
                         )}
@@ -185,7 +185,7 @@ export default function ShopScreen() {
 
                       {/* Description */}
                       {product.description && (
-                        <Text className="text-sm text-muted-foreground leading-relaxed mb-4">
+                        <Text className="text-sm text-[#b0b3b8] leading-relaxed mb-4">
                           {product.description}
                         </Text>
                       )}
@@ -193,9 +193,9 @@ export default function ShopScreen() {
                       {/* Buy Now Button */}
                       <Pressable
                         onPress={() => handleBuyNow(product.product_link)}
-                        className="bg-primary rounded-xl py-3 px-4 shadow-lg"
+                        className="bg-[#dc2626] rounded-xl py-3 px-4 shadow-lg"
                       >
-                        <Text className="text-primary-foreground text-center font-semibold text-base">
+                        <Text className="text-white text-center font-semibold text-base">
                           🛒 Buy Now
                         </Text>
                       </Pressable>
