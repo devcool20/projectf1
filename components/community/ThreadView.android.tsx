@@ -311,10 +311,10 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
   };
 
   const handleDeleteReply = async (replyId: string) => {
-    Alert.alert("Delete Reply", "Are you sure you want to delete this reply?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert('Delete Reply', 'Are you sure you want to delete this reply?', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: "Delete", style: "destructive", onPress: async () => {
+        text: 'Delete', style: 'destructive', onPress: async () => {
           try {
             await supabase.from('replies').delete().eq('id', replyId);
             fetchReplies();

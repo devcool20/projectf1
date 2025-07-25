@@ -508,21 +508,28 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
   };
 
   const handleDeleteReply = async (replyId: string) => {
-    try {
-      if (threadData?.type === 'repost') {
-        // Delete from repost_replies table
-        const { error } = await supabase.from('repost_replies').delete().eq('id', replyId);
-        if (error) throw error;
-      } else {
-        // Delete from replies table
-        const { error } = await supabase.from('replies').delete().eq('id', replyId);
-        if (error) throw error;
+    Alert.alert('Delete Reply', 'Are you sure you want to delete this reply?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete', style: 'destructive', onPress: async () => {
+          try {
+            if (threadData?.type === 'repost') {
+              // Delete from repost_replies table
+              const { error } = await supabase.from('repost_replies').delete().eq('id', replyId);
+              if (error) throw error;
+            } else {
+              // Delete from replies table
+              const { error } = await supabase.from('replies').delete().eq('id', replyId);
+              if (error) throw error;
+            }
+            await fetchReplies();
+          } catch (error) {
+            console.error('Error deleting reply:', error);
+            Alert.alert('Failed to delete reply');
+          }
+        }
       }
-      await fetchReplies();
-    } catch (error) {
-      console.error('Error deleting reply:', error);
-      Alert.alert('Failed to delete reply');
-    }
+    ]);
   };
 
   const handleDeleteThread = async (threadId: string) => {
