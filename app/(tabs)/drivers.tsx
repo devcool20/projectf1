@@ -99,7 +99,7 @@ export default function StandingsScreen() {
   useEffect(() => {
     setLoading(true);
     if (activeTab === 'drivers') {
-      supabase.from('driver_standings').select('*').order('position', { ascending: true }).then(({ data }) => {
+      supabase.from('driver_standings').select('*').then(({ data }) => {
         setDrivers((data as DriverStanding[]) || []);
         setLoading(false);
       });

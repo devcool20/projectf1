@@ -8,15 +8,17 @@ import { Ionicons } from '@expo/vector-icons';
 export default function StandingsDetailScreen() {
   const { name } = useLocalSearchParams();
   const router = useRouter();
-  const driver = drivers.find(d => d.name.toLowerCase().replace(/ /g, '-') === String(name).toLowerCase());
+  // Convert slug to full name (e.g., max-verstappen -> Max Verstappen)
+  const driverName = name
+    ? String(name)
+        .split('-')
+        .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(' ')
+    : undefined;
 
-  if (!driver) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#181a20' }}>
-        <Text style={{ color: '#fff', fontSize: 20 }}>Driver not found</Text>
-      </View>
-    );
-  }
+  // Fetch about from drivers.ts
+  const driverStatic = drivers.find(d => d.name === driverName);
+  const about = driverStatic ? driverStatic.about : '';
 
   return (
     <>
@@ -26,18 +28,15 @@ export default function StandingsDetailScreen() {
           onPress={() => router.back()}
           style={{
             position: 'absolute',
-            top: 36,
-            left: 16,
+            top: 76,
+            left: 2,
             zIndex: 10,
-            backgroundColor: 'rgba(0,0,0,0.2)',
-            borderRadius: 20,
-            padding: 6,
           }}
           activeOpacity={0.7}
         >
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
-        <DriverDetail driver={driver} />
+        <DriverDetail driverName={driverName} about={about} />
       </View>
     </>
   );
