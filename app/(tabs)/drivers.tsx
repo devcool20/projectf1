@@ -44,6 +44,7 @@ const TEAM_IMAGES = {
   'Haas': require('../../team-logos/haas.png'),
 };
 
+// Use the same TEAM_COLORS mapping as for drivers
 const TEAM_COLORS = {
   'McLaren': '#FF8700',
   'Ferrari': '#DC0000',
@@ -54,6 +55,7 @@ const TEAM_COLORS = {
   'Williams': '#005AFF',
   'Racing Bulls': '#6692FF',
   'Kick Sauber': '#52E252',
+  'Stake F1 Team Kick Sauber': '#52E252',
   'Haas': '#FFFFFF',
 };
 
@@ -104,7 +106,7 @@ export default function StandingsScreen() {
         setLoading(false);
       });
     } else {
-      supabase.from('team_standings').select('*').order('position', { ascending: true }).then(({ data }) => {
+      supabase.from('team_standings').select('*').then(({ data }) => {
         setTeams((data as TeamStanding[]) || []);
         setLoading(false);
       });
@@ -232,10 +234,11 @@ export default function StandingsScreen() {
     }
     // Sort teams by points descending
     const sortedTeams = [...teams].sort((a, b) => b.points - a.points);
-    return sortedTeams.map((team) => {
+    return sortedTeams.map((team, idx) => {
       const imageSrc = TEAM_IMAGES[team.team_name as keyof typeof TEAM_IMAGES];
+      const teamColor = TEAM_COLORS[team.team_name] || '#fff';
       return (
-        <TouchableOpacity key={team.id} style={styles.card}>
+        <TouchableOpacity key={team.id} style={[styles.card, { paddingVertical: 18, paddingHorizontal: 18 }]}>
           <View style={styles.cardImageContainer}>
             {imageSrc ? (
               <Image source={imageSrc} style={[styles.cardImage, { alignSelf: 'center', width: 48, height: 48, maxWidth: 60, maxHeight: 60 }]} resizeMode="contain" />
@@ -245,11 +248,20 @@ export default function StandingsScreen() {
               </View>
             )}
           </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardPosition}>{String(team.position).padStart(2, '0')}</Text>
-            <Text style={styles.cardName}>{team.team_name}</Text>
-            <Text style={styles.cardTeam}>{team.car_model}</Text>
-            <Text style={styles.cardPoints}>{team.points} PTS</Text>
+          <View style={[styles.cardContent, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}> 
+            {/* Position - left */}
+            <View style={{ minWidth: 32, alignItems: 'flex-start' }}>
+              <Text style={{ fontSize: 16, color: '#666', fontWeight: '700' }}>{String(idx + 1).padStart(2, '0')}</Text>
+            </View>
+            {/* Team name and car model - center */}
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: teamColor, marginBottom: 4 }}>{team.team_name}</Text>
+              <Text style={{ fontSize: 14, color: teamColor, fontWeight: '500' }}>{team.car_model}</Text>
+            </View>
+            {/* Points - right */}
+            <View style={{ minWidth: 64, alignItems: 'flex-end' }}>
+              <Text style={{ fontSize: 16, color: '#fff', fontWeight: '700' }}>{team.points} PTS</Text>
+            </View>
           </View>
           <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
@@ -441,7 +453,7 @@ const styles = StyleSheet.create({
   cardPoints: {
     fontSize: isSmallScreen ? 13 : 14,
     color: '#ffffff',
-    fontWeight: '700',
+    fontWeight: '200',
     marginTop: 4,
   },
   chevron: {
