@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, Stack } from 'expo-router';
 import { teams } from '../../data/teams';
 import TeamDetail from '../../components/TeamDetail';
 import { View, Text } from 'react-native';
@@ -16,5 +16,10 @@ export default function TeamDetailScreen() {
     );
   }
 
-  return <TeamDetail team={team} />;
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <TeamDetail team={team} />
+    </>
+  );
 } 

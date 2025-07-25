@@ -172,7 +172,7 @@ const DriverDetail = ({ driverName, about: aboutProp }) => {
             {number && <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>#{number}</Text>}
             {country && <Text style={{ color: '#fff', fontSize: 16, marginBottom: 2 }}>{country}</Text>}
           </View>
-        </View>
+    </View>
         {/* Right side */}
         <View style={{ alignItems: 'flex-end', minWidth: 100 }}>
         <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{driver.points}</Text>

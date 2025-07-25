@@ -100,12 +100,12 @@ export default function ShopScreen() {
         style={{ overflow: 'auto' }}
       >
         <View className="w-full max-w-md pb-24">
-          {/* Header */}
-          <View className="bg-[#23272f] p-6 shadow-kodama-lg">
-            <Text className="text-2xl font-heading font-bold text-white">
+          {/* Header - more compact */}
+          <View className="bg-[#23272f] px-4 py-2 shadow-kodama-lg">
+            <Text className="text-xl font-heading font-bold text-white">
               🛒 F1 Shop
             </Text>
-            <Text className="text-[#b0b3b8] mt-1">
+            <Text className="text-[#b0b3b8] mt-0.5 text-sm">
               Get your F1 merchandise and team gear
             </Text>
           </View>
@@ -133,18 +133,20 @@ export default function ShopScreen() {
               <View className="space-y-4">
                 {products.map((product) => (
                   <View key={product.id} className="bg-[#23272f] rounded-2xl shadow-kodama-lg overflow-hidden">
-                    {/* Header Image */}
-                    {product.image_url ? (
-                      <Image
-                        source={{ uri: product.image_url }}
-                        className="w-full h-48"
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View className="w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                        <Text className="text-4xl">🛍️</Text>
-                      </View>
-                    )}
+                    {/* Image Placeholder with aspect ratio and contain mode */}
+                    <View style={{ width: '100%', aspectRatio: 4/3, backgroundColor: '#181a20', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+                      {product.image_url ? (
+                        <Image
+                          source={{ uri: product.image_url }}
+                          style={{ width: '100%', height: '100%' }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                          <Text className="text-4xl">🛍️</Text>
+                        </View>
+                      )}
+                    </View>
 
                     {/* Team Badge */}
                     {product.team && (

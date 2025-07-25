@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { SplashScreen } from 'expo-router';
 import { globalNewsService } from '@/lib/globalNewsService';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { StandingsProvider } from '@/contexts/StandingsContext';
 import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -112,7 +113,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <AppContent />
+      <StandingsProvider>
+        <AppContent />
+      </StandingsProvider>
     </AuthProvider>
   );
 }

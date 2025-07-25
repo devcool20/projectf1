@@ -238,7 +238,11 @@ export default function StandingsScreen() {
       const imageSrc = TEAM_IMAGES[team.team_name as keyof typeof TEAM_IMAGES];
       const teamColor = TEAM_COLORS[team.team_name] || '#fff';
       return (
-        <TouchableOpacity key={team.id} style={[styles.card, { paddingVertical: 18, paddingHorizontal: 18 }]}>
+        <TouchableOpacity
+          key={team.id}
+          style={[styles.card, { paddingVertical: 18, paddingHorizontal: 18 }]}
+          onPress={() => router.push(`/team/${team.team_name.toLowerCase().replace(/ /g, '-')}`)}
+        >
           <View style={styles.cardImageContainer}>
             {imageSrc ? (
               <Image source={imageSrc} style={[styles.cardImage, { alignSelf: 'center', width: 48, height: 48, maxWidth: 60, maxHeight: 60 }]} resizeMode="contain" />
@@ -273,7 +277,7 @@ export default function StandingsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.standingsOuter}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Standings</Text>
+          <Text style={styles.headerTitle}>Standings 2025</Text>
         </View>
         <View style={[styles.tabRow, { marginHorizontal: isSmallScreen ? 40 : 60 }]}>
           {TABS.map(tab => (
@@ -296,7 +300,7 @@ export default function StandingsScreen() {
           ) : (
             <ScrollView 
               style={styles.scrollView} 
-              contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: isSmallScreen ? 8 : 16 }}
+              contentContainerStyle={{ paddingBottom: 16, paddingHorizontal: isSmallScreen ? 8 : 16 }}
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.listContainer}>{renderList()}</View>

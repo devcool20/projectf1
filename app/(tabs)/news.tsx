@@ -399,6 +399,10 @@ export default function NewsScreen() {
                 fontSize: 16,
                 color: '#fff',
                 paddingVertical: 12,
+                borderWidth: 1,
+                borderColor: '#08090a',
+                borderRadius: 8,
+                backgroundColor: 'transparent',
               }}
               placeholder="Search articles..."
               placeholderTextColor="#a0a0a0"
