@@ -52,8 +52,8 @@ const TEAM_COLORS = {
   'Aston Martin': '#006F62',
   'Alpine': '#0090FF',
   'Williams': '#005AFF',
-  'VCARB': '#6692FF',
-  'Sauber': '#52E252',
+  'Racing Bulls': '#6692FF',
+  'Kick Sauber': '#52E252',
   'Haas': '#FFFFFF',
 };
 
@@ -126,54 +126,109 @@ export default function StandingsScreen() {
     });
   };
 
+  const renderHero = (driver: DriverStanding) => {
+    const imageSrc = DRIVER_IMAGES[driver.driver_name as keyof typeof DRIVER_IMAGES];
+    const [firstName, lastName] = driver.driver_name.split(' ');
+    const teamColor = TEAM_COLORS[driver.team_name as keyof typeof TEAM_COLORS] || '#fff';
+    return (
+      <TouchableOpacity
+        style={styles.heroContainer}
+        activeOpacity={0.85}
+        onPress={() => router.push(`/standings/${driver.driver_name.toLowerCase().replace(/ /g, '-')}` as any)}
+      >
+        {imageSrc ? (
+          <Image
+            source={imageSrc}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.heroImageFallback}>
+            <Text style={styles.cardImageFallbackText}>{driver.driver_name[0]}</Text>
+          </View>
+        )}
+        <LinearGradient
+          colors={["rgba(0,0,0,0.85)", "rgba(0,0,0,0.4)", "rgba(0,0,0,0)"]}
+          start={{ x: 0.5, y: 1 }}
+          end={{ x: 0.5, y: 0 }}
+          style={styles.heroVignette}
+        />
+        <View style={styles.heroInfo}>
+          <Text style={styles.heroPosition}>01</Text>
+          <Text style={styles.heroName}>
+            <Text style={styles.cardFirstName}>{firstName} </Text>
+            <Text style={[styles.cardLastName, { color: teamColor }]}>{lastName}</Text>
+          </Text>
+          <Text style={[styles.heroTeam, { color: teamColor }]}>{driver.team_name}</Text>
+          <Text style={styles.heroPoints}>{driver.points} PTS</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   const renderList = () => {
     if (activeTab === 'drivers') {
       // Sort drivers by points descending
       const sortedDrivers = [...drivers].sort((a, b) => b.points - a.points);
-      return sortedDrivers.map((driver) => {
-        const imageSrc = DRIVER_IMAGES[driver.driver_name as keyof typeof DRIVER_IMAGES];
-        const [firstName, lastName] = driver.driver_name.split(' ');
-        return (
-          <TouchableOpacity
-            key={driver.id}
-            style={styles.card}
-            onPress={() => router.push(`/standings/${driver.driver_name.toLowerCase().replace(/ /g, '-')}` as any)}
-          >
-            <View style={[styles.cardImageContainer, { overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }]}>
-              {imageSrc ? (
-                <Image
-                  source={imageSrc}
-                  style={[
-                    styles.cardImage,
-                    {
-                      alignSelf: 'center',
-                      width: '110%',
-                      height: '110%',
-                      marginLeft: '-10%',
-                      marginTop: '-10%',
-                    }
-                  ]}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.cardImageFallback}>
-                  <Text style={styles.cardImageFallbackText}>{driver.driver_name[0]}</Text>
-                </View>
-              )}
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.cardPosition}>{String(driver.position).padStart(2, '0')}</Text>
-              <Text style={styles.cardName}>
-                <Text style={styles.cardFirstName}>{firstName} </Text>
-                <Text style={styles.cardLastName}>{lastName}</Text>
-              </Text>
-              <Text style={styles.cardTeam}>{driver.team_name}</Text>
-              <Text style={styles.cardPoints}>{driver.points} PTS</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-        );
-      });
+      if (sortedDrivers.length === 0) return null;
+      // Remove the #1 driver for the list
+      const restDrivers = sortedDrivers.slice(1);
+      return (
+        <>
+          {renderHero(sortedDrivers[0])}
+          <View style={styles.listContainer}>
+            {restDrivers.map((driver, idx) => {
+              const imageSrc = DRIVER_IMAGES[driver.driver_name as keyof typeof DRIVER_IMAGES];
+              const [firstName, lastName] = driver.driver_name.split(' ');
+              const teamColor = TEAM_COLORS[driver.team_name as keyof typeof TEAM_COLORS] || '#fff';
+              return (
+                <TouchableOpacity
+                  key={driver.id}
+                  style={styles.card}
+                  onPress={() => router.push(`/standings/${driver.driver_name.toLowerCase().replace(/ /g, '-')}` as any)}
+                >
+                  <View style={[styles.cardImageContainer, { overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }]}> 
+                    {imageSrc ? (
+                      <Image
+                        source={imageSrc}
+                        style={[
+                          styles.cardImage,
+                          {
+                            alignSelf: 'center',
+                            width: '110%',
+                            height: '110%',
+                            marginLeft: '-10%',
+                            marginTop: '-10%',
+                          }
+                        ]}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.cardImageFallback}>
+                        <Text style={styles.cardImageFallbackText}>{driver.driver_name[0]}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.cardContent}>
+                    <View style={styles.cardContentLeft}>
+                      <Text style={styles.cardPosition}>{String(idx + 2).padStart(2, '0')}</Text>
+                      <Text style={styles.cardPoints}>{driver.points} PTS</Text>
+                    </View>
+                    <View style={styles.cardContentRight}>
+                      <Text style={styles.cardName}>
+                        <Text style={styles.cardFirstName}>{firstName} </Text>
+                        <Text style={[styles.cardLastName, { color: teamColor }]}>{lastName}</Text>
+                      </Text>
+                      <Text style={[styles.cardTeam, { color: teamColor }]}>{driver.team_name}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.chevron}>›</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </>
+      );
     }
     // Sort teams by points descending
     const sortedTeams = [...teams].sort((a, b) => b.points - a.points);
@@ -343,6 +398,20 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cardContentLeft: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 48,
+    marginRight: 12,
+  },
+  cardContentRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   cardPosition: {
     fontSize: isSmallScreen ? 14 : 16,
@@ -353,6 +422,7 @@ const styles = StyleSheet.create({
     fontSize: isSmallScreen ? 18 : 20,
     fontWeight: '400',
     color: '#ffffff',
+    textAlign: 'right',
   },
   cardFirstName: {
     fontWeight: '400',
@@ -366,9 +436,10 @@ const styles = StyleSheet.create({
     color: '#aaaaaa',
     fontWeight: '500',
     marginTop: 2,
+    textAlign: 'right',
   },
   cardPoints: {
-    fontSize: isSmallScreen ? 16 : 18,
+    fontSize: isSmallScreen ? 13 : 14,
     color: '#ffffff',
     fontWeight: '700',
     marginTop: 4,
@@ -390,5 +461,74 @@ const styles = StyleSheet.create({
   // Scroll View
   scrollView: {
     flex: 1,
+  },
+  heroContainer: {
+    width: '100%',
+    aspectRatio: 1.2,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 24,
+    backgroundColor: '#111',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  heroImageFallback: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#333333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  heroVignette: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -5,
+    height: '80%',
+    zIndex: 1,
+  },
+  heroInfo: {
+    position: 'absolute',
+    left: 20,
+    bottom: 130,
+    zIndex: 2,
+    width: '80%',
+    paddingBottom: 8,
+  },
+  heroPosition: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '700',
+    marginBottom: 2,
+    opacity: 0.7,
+  },
+  heroName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  heroTeam: {
+    fontSize: 14,
+    color: '#FF8700',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  heroPoints: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '700',
+    marginTop: 2,
   },
 });
