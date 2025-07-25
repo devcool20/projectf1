@@ -5,12 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 
 const TABS = [
-  { name: 'Threads', path: '/community', icon: '💬' },
-  { name: 'News', path: '/news', icon: '📰' },
-  { name: 'Screenings', path: '/screenings', icon: '🎬' },
-  { name: 'Shop', path: '/shop', icon: '🛍️' },
-  { name: 'Standings', path: '/drivers', icon: '🏆' },
-  { name: 'Home', path: '/home', icon: '🏠' },
+  { name: 'Threads', path: '/community', icon: '\ud83d\udcac' },
+  { name: 'News', path: '/news', icon: '\ud83d\udcf0' },
+  { name: 'Screenings', path: '/screenings', icon: '\ud83c\udfac' },
+  { name: 'Shop', path: '/shop', icon: '\ud83d\udecd\ufe0f' },
+  { name: 'Standings', path: '/drivers', icon: '\ud83c\udfc6' },
 ];
 
 export default function CustomBottomNav({ state, descriptors, navigation }) {

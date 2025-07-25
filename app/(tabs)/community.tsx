@@ -53,7 +53,6 @@ const NAV_ITEMS = [
   { href: '/screenings', icon: Clapperboard, name: 'Screenings' },
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
   { href: '/drivers', icon: Trophy, name: 'Drivers' },
-  { href: '/home', icon: Home, name: 'Home' },
   { href: '/profile', icon: User, name: 'Profile' },
   { href: '/bookmarks', icon: Bookmark, name: 'Bookmarks' }
 ];
