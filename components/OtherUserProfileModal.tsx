@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, Image, ActivityIndicator, ScrollView } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { X, User, Mail, Trophy } from 'lucide-react-native';
+import CarLoadingAnimation from './CarLoadingAnimation';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
@@ -168,8 +169,10 @@ export const OtherUserProfileModal: React.FC<OtherUserProfileModalProps> = ({
           </View>
 
           {loading ? (
-            <View className="flex-1 justify-center items-center p-8">
-              <ActivityIndicator size="large" color="#606060" />
+            <View className="flex-1 justify-center items-center p-8" style={{ backgroundColor: '#000000' }}>
+              <CarLoadingAnimation 
+                duration={1000}
+              />
             </View>
           ) : profile ? (
             <ScrollView contentContainerStyle={{ alignItems: 'center', padding: 24 }} style={{ maxHeight: 600 }}>

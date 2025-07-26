@@ -594,7 +594,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
         <TouchableOpacity onPress={onClose} style={{ position: 'absolute', top: 40, left: 20, padding: 8 }}>
-          <Text style={{ color: '#dc2626', fontWeight: 'bold', fontSize: 18 }}>{'< Back'}</Text>
+                      <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 18 }} className="font-formula1-regular">{'< Back'}</Text>
         </TouchableOpacity>
         <Text style={{ fontSize: 18, color: '#888', textAlign: 'center', marginTop: 60 }}>This thread is not available.</Text>
       </View>
@@ -653,7 +653,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                     <View style={{ flex: 1 }}>
                       {/* Repost user info */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+                        <Text style={{ fontWeight: '600', color: '#000', fontSize: 15 }} className="font-formula1-regular">
                           {threadData.profiles?.username || 'Unknown User'}
                         </Text>
                         {threadData.profiles?.is_admin ? (
@@ -688,7 +688,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
 
                       {/* Repost content */}
                       {threadData.content && (
-                        <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
+                        <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
                           {threadData.content}
                         </Text>
                       )}
@@ -732,11 +732,11 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                             />
                             <View style={{ flex: 1 }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
+                                <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                                   {threadData.original_thread?.profiles?.username || 'Unknown User'}
                                 </Text>
                               </View>
-                              <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
+                              <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16, fontFamily: 'Formula1-Regular' }}>
                                 {threadData.original_thread?.content}
                               </Text>
                               {threadData.original_thread?.image_url && (
@@ -772,7 +772,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                           size={14}
                       accessibilityLabel="Like repost"
                         />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>
                           {threadData.likeCount || 0}
                         </Text>
                       </View>
@@ -786,7 +786,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                       size={14}
                       accessibilityLabel="Comment"
                     />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>
                           {threadData?.type === 'repost' ? repostReplyCount : (threadData.replyCount || 0)}
                         </Text>
                       </View>
@@ -800,7 +800,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                       size={14}
                       accessibilityLabel="Repost"
                     />
-                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{threadData.repostCount || 0}</Text>
+                        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{threadData.repostCount || 0}</Text>
                   </View>
                   {/* Bookmark */}
                         <EngagementButton
@@ -910,7 +910,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                         />
                       ) : (
                         <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#dc2626', justifyContent: 'center', alignItems: 'center' }}>
-                          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+                          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }} className="font-formula1-bold">
                             {(reply.profiles?.username || 'A').charAt(0).toUpperCase()}
                           </Text>
                         </View>
@@ -923,7 +923,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                           onPress={() => reply.user_id && onProfilePress && onProfilePress(reply.user_id)}
                           disabled={!reply.user_id || !onProfilePress}
                         >
-                          <Text style={{ fontWeight: 'bold', color: '#000', fontSize: USERNAME_FONT_SIZE }} selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
+                          <Text style={{ fontWeight: '600', color: '#000', fontSize: USERNAME_FONT_SIZE }} className="font-formula1-regular" selectable={false}>{reply.profiles?.username || 'Anonymous'}</Text>
                         </TouchableOpacity>
                         {reply.profiles?.is_admin ? (
                           <Image 
@@ -939,8 +939,8 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                           />
                         )}
                       </View>
-                      <Text style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{formatThreadTimestamp(reply.created_at)}</Text>
-                      <Text style={{ color: '#000', marginBottom: 8 }} selectable={false}>{reply.content}</Text>
+                                              <Text style={{ fontSize: 12, color: '#888', marginBottom: 4, fontFamily: 'Formula1-Regular' }}>{formatThreadTimestamp(reply.created_at)}</Text>
+                      <Text style={{ color: '#000', marginBottom: 8, fontFamily: 'Formula1-Regular' }} selectable={false}>{reply.content}</Text>
                       {reply.image_url && (
                         <TouchableOpacity onPress={() => setPreviewImageUrl(reply.image_url)}>
                           <View style={{ alignItems: 'center', marginTop: 4 }}>
@@ -962,7 +962,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
                             size={14}
                             accessibilityLabel="Like reply"
                           />
-                          {reply.likeCount > 0 && <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12 }}>{reply.likeCount}</Text>}
+                          {reply.likeCount > 0 && <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{reply.likeCount}</Text>}
                         </View>
                         {session && (reply.user_id === session.user.id || isCurrentUserAdmin()) && (
                           <TouchableOpacity onPress={() => handleDeleteReply(reply.id)} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
@@ -1012,7 +1012,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
               }} 
               style={{ paddingVertical: 8, paddingHorizontal: 12 }}
             >
-              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+              <Text style={{ color: '#dc2626', fontWeight: '600', fontFamily: 'Formula1-Regular' }}>Delete</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -1049,7 +1049,7 @@ export function ThreadView({ thread, onClose, session, onProfilePress, onRepostP
               }} 
               style={{ paddingVertical: 8, paddingHorizontal: 12 }}
             >
-              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+              <Text style={{ color: '#dc2626', fontWeight: '600' }} className="font-formula1-regular">Delete</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

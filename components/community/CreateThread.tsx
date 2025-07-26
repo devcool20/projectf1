@@ -166,6 +166,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
+    fontFamily: 'Formula1-Bold',
   },
   input: {
     backgroundColor: '#F3F3F3',
@@ -175,6 +176,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#ffffff',
+    fontFamily: 'Formula1-Regular',
   },
   contentInput: {
     height: 120,
@@ -193,6 +195,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     color: '#333333',
+    fontFamily: 'Formula1-Regular',
   },
   imagePreview: {
     position: 'relative',
@@ -218,6 +221,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Formula1-Bold',
   },
   button: {
     backgroundColor: '#1DA1F2',
@@ -229,10 +233,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Formula1-Bold',
   },
   error: {
     color: '#FF3B30',
     marginBottom: 12,
     textAlign: 'center',
+    fontFamily: 'Formula1-Regular',
   },
 }); 

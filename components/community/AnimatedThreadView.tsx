@@ -774,7 +774,7 @@ export function AnimatedThreadView({
             <TouchableOpacity onPress={handleCloseWithAnimation} style={{ marginRight: 16 }}>
               <ArrowLeft size={28} color="#3a3a3a" />
             </TouchableOpacity>
-            <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#3a3a3a' }}>
+            <Text style={{ fontSize: 20, fontWeight: '600', color: '#3a3a3a', fontFamily: 'Formula1-Regular' }}>
               Thread
             </Text>
           </View>
@@ -809,7 +809,7 @@ export function AnimatedThreadView({
                     <View style={{ flex: 1 }}>
                       {/* Repost user info */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+                        <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                           {threadData.profiles?.username || 'Unknown User'}
                         </Text>
                         {threadData.profiles?.is_admin ? (
@@ -825,14 +825,14 @@ export function AnimatedThreadView({
                             resizeMode="contain"
                           />
                         )}
-                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
+                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8, fontFamily: 'Formula1-Regular' }}>
                           {formatThreadTimestamp(threadData.created_at)}
                         </Text>
                       </View>
 
                       {/* Repost content */}
                       {threadData.content && (
-                        <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
+                        <Text style={{ color: '#000', fontSize: 14, lineHeight: 18, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
                           {threadData.content}
                         </Text>
                       )}
@@ -870,10 +870,10 @@ export function AnimatedThreadView({
                               style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
                             />
                             <View style={{ flex: 1 }}>
-                              <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
+                              <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                                 {threadData.original_thread?.profiles?.username || 'Unknown User'}
                               </Text>
-                              <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
+                              <Text style={{ color: '#1a1a1a', fontSize: 14, lineHeight: 18, fontFamily: 'Formula1-Regular' }}>
                                 {threadData.original_thread?.content}
                               </Text>
                             </View>
@@ -893,7 +893,7 @@ export function AnimatedThreadView({
                         type="like"
                         size={14}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
                         {threadData.likeCount || 0}
                       </Text>
                     </View>
@@ -906,12 +906,12 @@ export function AnimatedThreadView({
                         type="comment"
                         size={14}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
                         {repostReplyCount || 0}
                       </Text>
                     </View>
 
-                    <TouchableOpacity 
+                                        <TouchableOpacity
                       onPress={() => onRepostPress?.(threadData)}
                       style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
                     >
@@ -922,7 +922,7 @@ export function AnimatedThreadView({
                         type="repost"
                         size={14}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
                         0
                       </Text>
                     </TouchableOpacity>
@@ -948,9 +948,9 @@ export function AnimatedThreadView({
                       />
                     </TouchableOpacity>
 
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+                                          <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                                  <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                           {threadData.profiles?.username || 'Unknown User'}
                         </Text>
                         {threadData.profiles?.is_admin ? (
@@ -966,12 +966,12 @@ export function AnimatedThreadView({
                             resizeMode="contain"
                           />
                         )}
-                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
+                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8, fontFamily: 'Formula1-Regular' }}>
                           {formatThreadTimestamp(threadData.created_at)}
                         </Text>
                       </View>
 
-                      <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
+                      <Text style={{ color: '#000', fontSize: 14, lineHeight: 18, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
                         {threadData.content}
                       </Text>
 
@@ -998,7 +998,7 @@ export function AnimatedThreadView({
                         type="like"
                         size={14}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
                         {threadData.likeCount || 0}
                       </Text>
                     </View>
@@ -1011,7 +1011,7 @@ export function AnimatedThreadView({
                         type="comment"
                         size={14}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
                         {threadData.replyCount || 0}
                       </Text>
                     </View>
@@ -1024,7 +1024,7 @@ export function AnimatedThreadView({
                         type="repost"
                         size={14}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
                         0
                       </Text>
                     </View>
@@ -1059,7 +1059,7 @@ export function AnimatedThreadView({
                       onChangeText={setNewReply}
                       multiline
                       style={{
-                        fontSize: 16,
+                        fontSize: 15,
                         color: '#000000',
                         paddingVertical: 8,
                         paddingHorizontal: 12,
@@ -1069,6 +1069,7 @@ export function AnimatedThreadView({
                         borderColor: '#e5e5e5',
                         minHeight: 40,
                         maxHeight: 120,
+                        fontFamily: 'Formula1-Regular',
                       }}
                     />
                     {replyImage && (
@@ -1111,7 +1112,7 @@ export function AnimatedThreadView({
                         }}
                         disabled={!newReply.trim() && !replyImage}
                       >
-                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>
+                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13, fontFamily: 'Formula1-Regular' }}>
                           Reply
                         </Text>
                       </TouchableOpacity>
@@ -1126,12 +1127,12 @@ export function AnimatedThreadView({
               {loadingReplies && replies.length === 0 ? (
                 <View style={{ alignItems: 'center', marginTop: 20 }}>
                   <ActivityIndicator size="small" color="#666666" />
-                  <Text style={{ marginTop: 8, color: '#666666', fontSize: 12 }}>
+                  <Text style={{ marginTop: 8, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
                     Loading replies...
                   </Text>
                 </View>
               ) : replies.length === 0 ? (
-                <Text style={{ textAlign: 'center', marginTop: 20, color: '#666666' }}>
+                <Text style={{ textAlign: 'center', marginTop: 20, color: '#666666', fontFamily: 'Formula1-Regular' }}>
                   No replies yet. Be the first to reply!
                 </Text>
               ) : (
@@ -1146,14 +1147,14 @@ export function AnimatedThreadView({
                     />
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 14 }}>
+                        <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                           {reply.profiles?.username || 'Unknown User'}
                         </Text>
-                        <Text style={{ fontSize: 12, color: '#888', marginLeft: 8 }}>
+                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8, fontFamily: 'Formula1-Regular' }}>
                           {formatThreadTimestamp(reply.created_at)}
                         </Text>
                       </View>
-                      <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }}>
+                      <Text style={{ color: '#000', fontSize: 14, lineHeight: 18, marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
                         {reply.content}
                       </Text>
                       {reply.image_url && (
@@ -1170,7 +1171,7 @@ export function AnimatedThreadView({
                             size={14}
                             accessibilityLabel="Like reply"
                         />
-                          <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 12, minWidth: 16, textAlign: 'left' }}>{reply.likeCount || 0}</Text>
+                          <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 11, minWidth: 16, textAlign: 'left', fontFamily: 'Formula1-Regular' }}>{reply.likeCount || 0}</Text>
                         </View>
                         {/* Comment */}
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>

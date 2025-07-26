@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
-import { useFonts, RacingSansOne_400Regular } from '@expo-google-fonts/racing-sans-one';
-import { Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { useFonts } from 'expo-font';
 import { useEffect, useState } from 'react';
 import { SplashScreen } from 'expo-router';
 import { globalNewsService } from '@/lib/globalNewsService';
@@ -46,7 +45,7 @@ function AppContent() {
           },
           headerTintColor: '#FFFFFF',
           headerTitleStyle: {
-            fontFamily: 'RacingSansOne',
+            fontFamily: 'Formula1-Bold',
           },
           headerBackTitle: 'Back',
           headerBackVisible: true,
@@ -91,9 +90,9 @@ function AppContent() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    'RacingSansOne': RacingSansOne_400Regular,
-    'Inter': Inter_400Regular,
-    'Inter-SemiBold': Inter_600SemiBold,
+    'Formula1-Bold': require('../assets/fonts/Formula1-Bold_web_0.ttf'),
+    'Formula1-Regular': require('../assets/fonts/Formula1-Regular_web_0.ttf'),
+    'Formula1-Wide': require('../assets/fonts/Formula1-Wide_web_0.ttf'),
   });
 
   useEffect(() => {

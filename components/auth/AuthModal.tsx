@@ -438,14 +438,14 @@ const styles = StyleSheet.create({
     color: '#333333',
     textAlign: 'center',
     marginBottom: 8,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
   subtitle: {
     fontSize: 16,
     color: '#666666',
     textAlign: 'center',
     marginBottom: 32,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   errorContainer: {
     backgroundColor: '#fef2f2',
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#dc2626',
     textAlign: 'center',
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
     marginBottom: 8,
   },
   signUpPromptButton: {
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: 'bold',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     paddingVertical: 16,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   eyeButton: {
     padding: 4,
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
   googleButton: {
     borderWidth: 1,
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontSize: 18,
     fontWeight: 'bold',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
   successContainer: {
     alignItems: 'center',
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 24,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   successInfo: {
     backgroundColor: '#f0f9ff',
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0369a1',
     textAlign: 'center',
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
     lineHeight: 20,
   },
   signUpContainer: {
@@ -571,12 +571,12 @@ const styles = StyleSheet.create({
   signUpText: {
     fontSize: 16,
     color: '#666666',
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   signUpLink: {
     fontSize: 16,
     color: '#dc2626',
     fontWeight: 'bold',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
 });

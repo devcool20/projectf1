@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { drivers } from '../../data/drivers';
 import DriverDetail from '../../components/DriverDetail';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import CarLoadingAnimation from '../../components/CarLoadingAnimation';
 
 export default function StandingsDetailScreen() {
   const { name } = useLocalSearchParams();

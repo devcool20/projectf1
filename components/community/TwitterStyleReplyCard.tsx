@@ -179,7 +179,7 @@ export default function TwitterStyleReplyCard({
         </View>
         <View style={{ flex: 1, marginLeft: avatarMargin }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+            <Text style={{ fontWeight: '600', color: '#000', fontSize: 15 }} className="font-formula1-regular">
               {reply.threads?.profiles?.username || 'Unknown User'}
             </Text>
             {threadLogo && (
@@ -189,12 +189,12 @@ export default function TwitterStyleReplyCard({
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
+            <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }} className="font-formula1-regular">
               {formatThreadTimestamp(reply.threads?.created_at)}
             </Text>
           </View>
           <TouchableOpacity onPress={() => onThreadPress?.(reply.threads?.id)}>
-            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }}>
+            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }} className="font-formula1-regular">
               {reply.threads?.content || 'Original thread content'}
             </Text>
             {reply.threads?.image_url && (
@@ -225,7 +225,7 @@ export default function TwitterStyleReplyCard({
         </View>
         <View style={{ flex: 1, marginLeft: avatarMargin }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+            <Text style={{ fontWeight: '600', color: '#000', fontSize: 15 }} className="font-formula1-regular">
               {reply.profiles?.username || 'Unknown User'}
             </Text>
             {replyLogo && (
@@ -235,14 +235,14 @@ export default function TwitterStyleReplyCard({
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
+            <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }} className="font-formula1-regular">
               {formatThreadTimestamp(reply.created_at)}
             </Text>
           </View>
-          <Text style={{ color: '#888', fontSize: 11, marginTop: 2 }}>
+          <Text style={{ color: '#888', fontSize: 11, marginTop: 2 }} className="font-formula1-regular">
             Replying to @{reply.threads?.profiles?.username || 'unknown'}
           </Text>
-          <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }}>
+          <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }} className="font-formula1-regular">
             {reply.content}
           </Text>
           {reply.image_url && (
@@ -266,7 +266,7 @@ export default function TwitterStyleReplyCard({
                 color={isLiked ? '#dc2626' : '#666666'} 
                 fill={isLiked ? '#dc2626' : 'none'} 
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }} className="font-formula1-regular">
                 {replyLikeCount}
               </Text>
             </TouchableOpacity>

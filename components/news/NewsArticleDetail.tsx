@@ -116,7 +116,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#181a20' }}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <Text style={{ fontSize: 18, color: '#dc2626', textAlign: 'center', marginBottom: 16 }}>
+          <Text style={{ fontSize: 18, color: '#dc2626', textAlign: 'center', marginBottom: 16, fontFamily: 'Formula1-Regular' }}>
             {error}
           </Text>
           <TouchableOpacity
@@ -128,7 +128,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               borderRadius: 8,
             }}
           >
-            <Text style={{ color: '#fff', fontWeight: '600' }}>Close</Text>
+            <Text style={{ color: '#fff', fontWeight: '600', fontFamily: 'Formula1-Regular' }}>Close</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -167,7 +167,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               <ArrowLeft size={20} color="#fff" />
             </TouchableOpacity>
           )}
-          <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff' }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: '#fff', fontFamily: 'Formula1-Regular' }}>
             {article.source}
           </Text>
         </View>
@@ -236,10 +236,11 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
           <Text style={{
             fontSize: 24,
-            fontWeight: 'bold',
+            fontWeight: '600',
             color: '#fff',
             lineHeight: 32,
             marginBottom: 16,
+            fontFamily: 'Formula1-Regular'
           }}>
             {article.title}
           </Text>
@@ -248,14 +249,14 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
               <Calendar size={14} color="#b0b3b8" style={{ marginRight: 4 }} />
-              <Text style={{ fontSize: 12, color: '#b0b3b8' }}>
+              <Text style={{ fontSize: 12, color: '#b0b3b8', fontFamily: 'Formula1-Regular' }}>
                 {formatDate(article.published_at)}
               </Text>
             </View>
             {article.author && (
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <User size={14} color="#b0b3b8" style={{ marginRight: 4 }} />
-                <Text style={{ fontSize: 12, color: '#b0b3b8' }}>
+                <Text style={{ fontSize: 12, color: '#b0b3b8', fontFamily: 'Formula1-Regular' }}>
                   {article.author}
                 </Text>
               </View>
@@ -272,7 +273,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               alignSelf: 'flex-start',
               marginBottom: 16,
             }}>
-              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', fontFamily: 'Formula1-Regular' }}>
                 {article.category}
               </Text>
             </View>
@@ -285,6 +286,7 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
               fontSize: 16,
               color: '#fff',
               lineHeight: 26,
+              fontFamily: 'Formula1-Regular'
             }}>
               {getDisplayContent()}
             </Text>
@@ -301,10 +303,10 @@ export default function NewsArticleDetail({ article, onClose, onBack }: NewsArti
             borderRadius: 12,
             marginHorizontal: 20,
         }}>
-          <Text style={{ fontSize: 14, color: '#b0b3b8', textAlign: 'center' }}>
+          <Text style={{ fontSize: 14, color: '#b0b3b8', textAlign: 'center', fontFamily: 'Formula1-Regular' }}>
             Source: {article.source}
           </Text>
-          <Text style={{ fontSize: 12, color: '#a0a0a0', textAlign: 'center', marginTop: 4 }}>
+          <Text style={{ fontSize: 12, color: '#a0a0a0', textAlign: 'center', marginTop: 4, fontFamily: 'Formula1-Regular' }}>
             Published on {formatDate(article.published_at)}
           </Text>
           </View>

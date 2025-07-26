@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     textAlign: 'center',
     marginBottom: 12,
-    fontFamily: 'RacingSansOne',
+    fontFamily: 'Formula1-Bold',
   },
   subtitle: {
     fontSize: 16,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 24,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   buttonContainer: {
     marginBottom: 32,
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginRight: 8,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
   buttonIcon: {
     marginLeft: 4,
@@ -208,6 +208,6 @@ const styles = StyleSheet.create({
   featureText: {
     color: '#e5e5e5',
     fontSize: 16,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
 }); 

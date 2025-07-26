@@ -236,11 +236,11 @@ export default function NewsScreen() {
             borderRadius: 12,
             marginRight: 8,
           }}>
-            <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '600' }}>
+            <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '600', fontFamily: 'Formula1-Regular' }}>
               {article.source}
             </Text>
           </View>
-          <Text style={{ fontSize: 12, color: '#b0b3b8' }}>
+          <Text style={{ fontSize: 12, color: '#b0b3b8', fontFamily: 'Formula1-Regular' }}>
             {formatDate(article.published_at)}
           </Text>
         </View>
@@ -248,10 +248,11 @@ export default function NewsScreen() {
         {/* Article Title */}
         <Text style={{
           fontSize: 18,
-          fontWeight: 'bold',
+          fontWeight: '600',
           color: '#fff',
           marginBottom: 8,
           lineHeight: 24,
+          fontFamily: 'Formula1-Regular'
         }} numberOfLines={2}>
           {article.title}
         </Text>
@@ -262,6 +263,7 @@ export default function NewsScreen() {
           color: '#b0b3b8',
           lineHeight: 20,
           marginBottom: 12,
+          fontFamily: 'Formula1-Regular'
         }} numberOfLines={4}>
           {article.content ? 
             truncateToLines(article.content, 200) : 
@@ -275,7 +277,7 @@ export default function NewsScreen() {
             {article.author && (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
                 <User size={12} color="#999" style={{ marginRight: 4 }} />
-                <Text style={{ fontSize: 12, color: '#999' }}>
+                <Text style={{ fontSize: 12, color: '#999', fontFamily: 'Formula1-Regular' }}>
                   {article.author}
                 </Text>
               </View>
@@ -286,6 +288,7 @@ export default function NewsScreen() {
                 color: '#dc2626',
                 fontWeight: '600',
                 textTransform: 'uppercase',
+                fontFamily: 'Formula1-Regular'
               }}>
                 {article.category}
               </Text>
@@ -297,7 +300,7 @@ export default function NewsScreen() {
             onPress={() => handleReadFullArticle(article)}
             activeOpacity={0.7}
           >
-            <Text style={{ fontSize: 12, color: '#999', marginRight: 8 }}>
+            <Text style={{ fontSize: 12, color: '#999', marginRight: 8, fontFamily: 'Formula1-Regular' }}>
               Read full article
             </Text>
             <ExternalLink size={14} color="#999" />
@@ -341,12 +344,12 @@ export default function NewsScreen() {
         }}
         activeOpacity={0.8}
       >
-        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600' }}>
-          Load More Articles
-        </Text>
-        <Text style={{ color: '#ffffff', fontSize: 12, marginTop: 4, opacity: 0.8 }}>
-          Load 5 more articles
-        </Text>
+                  <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600', fontFamily: 'Formula1-Regular' }}>
+            Load More Articles
+          </Text>
+          <Text style={{ color: '#ffffff', fontSize: 12, marginTop: 4, opacity: 0.8, fontFamily: 'Formula1-Regular' }}>
+            Load 5 more articles
+          </Text>
       </TouchableOpacity>
     );
   };

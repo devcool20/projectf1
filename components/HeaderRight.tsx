@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 24,
-    fontFamily: 'RacingSansOne',
+    fontFamily: 'Formula1-Bold',
     color: '#333333',
   },
   closeButton: {
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   menuItemText: {
     marginLeft: 12,
     fontSize: 16,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
     color: '#333333',
   },
 }); 

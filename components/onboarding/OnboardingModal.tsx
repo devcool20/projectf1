@@ -247,14 +247,14 @@ const styles = StyleSheet.create({
     color: '#666666',
     textAlign: 'center',
     marginBottom: 4,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   brandTitle: {
     fontSize: 36,
     fontWeight: 'bold',
     color: '#dc2626',
     textAlign: 'center',
-    fontFamily: 'RacingSansOne',
+    fontFamily: 'Formula1-Bold',
   },
   sparkleContainer: {
     position: 'absolute',
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     color: '#666666',
     textAlign: 'center',
     lineHeight: 24,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   featuresSection: {
     padding: 24,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333333',
     marginBottom: 20,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
   featureItem: {
     flexDirection: 'row',
@@ -323,13 +323,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333333',
     marginBottom: 4,
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
   featureDescription: {
     fontSize: 14,
     color: '#666666',
     lineHeight: 20,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   ctaSection: {
     padding: 24,
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     textAlign: 'center',
     marginBottom: 8,
-    fontFamily: 'RacingSansOne',
+    fontFamily: 'Formula1-Bold',
   },
   ctaSubtitle: {
     fontSize: 16,
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 24,
-    fontFamily: 'Inter',
+    fontFamily: 'Formula1-Regular',
   },
   signUpButton: {
     backgroundColor: '#dc2626',
@@ -373,6 +373,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    fontFamily: 'Inter-SemiBold',
+    fontFamily: 'Formula1-Bold',
   },
 }); 

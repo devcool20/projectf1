@@ -156,7 +156,7 @@ export default function RepostModal({
           </TouchableOpacity>
           
           {/* Repost Title */}
-          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626', marginBottom: 16, textAlign: 'center' }}>Repost</Text>
+                      <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626', marginBottom: 16, textAlign: 'center' }} className="font-formula1-bold">Repost</Text>
           
           {/* User Avatar and Input */}
           <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
@@ -253,7 +253,7 @@ export default function RepostModal({
                 />
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                    <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 15 }}>
+                    <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 15 }} className="font-formula1-bold">
                       {originalThread.profiles?.username || 'Unknown User'}
                     </Text>
                     {userLogo && (
@@ -291,7 +291,7 @@ export default function RepostModal({
               style={{ backgroundColor: '#dc2626', borderRadius: 9999, paddingVertical: 10, paddingHorizontal: 32, alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(220, 38, 38, 0.15)' }}
               disabled={isPosting}
             >
-              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, opacity: isPosting ? 0.5 : 1 }}>
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, opacity: isPosting ? 0.5 : 1 }} className="font-formula1-bold">
                 {isPosting ? 'Posting...' : 'Repost'}
               </Text>
             </TouchableOpacity>

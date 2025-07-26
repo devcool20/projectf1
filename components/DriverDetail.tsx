@@ -7,6 +7,7 @@ import { RadioCard } from './RadioCard';
 import { fetchAllRadioCards, RadioCardData } from '../lib/radioCardData';
 import DriverPointsBarChart from './DriverPointsBarChart';
 import { drivers } from '../data/drivers';
+import CarLoadingAnimation from './CarLoadingAnimation';
 // Team logo mapping
 const TEAM_LOGOS = {
   'Red Bull': require('../team-logos/redbull.png'),
@@ -115,7 +116,13 @@ const DriverDetail = ({ driverName, about: aboutProp }) => {
   }, [driverName]);
 
   if (loading || !driver) {
-    return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: APP_BG }}><Text style={{ color: '#fff' }}>Loading...</Text></View>;
+    return (
+      <View style={{ flex: 1, backgroundColor: APP_BG }}>
+        <CarLoadingAnimation 
+          duration={1000}
+        />
+      </View>
+    );
   }
 
   // Calculate position
@@ -161,32 +168,32 @@ const DriverDetail = ({ driverName, about: aboutProp }) => {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, marginTop: 24, marginBottom: 24 }}>
         {/* Left side */}
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 2 }}>
-            <Text style={{ color: '#fff' }}>{firstName} </Text>
-            <Text style={{ color: teamColor }}>{lastName}</Text>
+          <Text style={{ fontSize: 28, fontWeight: '600', color: '#fff', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>
+            <Text style={{ color: '#fff', fontFamily: 'Formula1-Regular' }}>{firstName} </Text>
+            <Text style={{ color: teamColor, fontFamily: 'Formula1-Regular' }}>{lastName}</Text>
           </Text>
-          <Text style={{ fontSize: 18, color: '#b0b3b8', marginBottom: 2 }}>{driver.team_name}</Text>
+          <Text style={{ fontSize: 18, color: '#b0b3b8', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{driver.team_name}</Text>
           {/* Team logo, number, country stacked vertically */}
           <View style={{ flexDirection: 'column', alignItems: 'flex-start', marginTop: 4, marginBottom: 2 }}>
             {teamLogo && <Image source={teamLogo} style={{ width: 28, height: 28, marginBottom: 10 }} resizeMode="contain" />}
-            {number && <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>#{number}</Text>}
-            {country && <Text style={{ color: '#fff', fontSize: 16, marginBottom: 2 }}>{country}</Text>}
+            {number && <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 10, fontFamily: 'Formula1-Regular' }}>#{number}</Text>}
+            {country && <Text style={{ color: '#fff', fontSize: 16, marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{country}</Text>}
           </View>
     </View>
         {/* Right side */}
         <View style={{ alignItems: 'flex-end', minWidth: 100 }}>
-        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{driver.points}</Text>
-        <Text style={{ color: '#b0b3b8', fontSize: 12 }}>Points</Text>
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{driver.wins}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 12 }}>Wins</Text>
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{driver.podiums}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 12 }}>Podiums</Text>
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{driver.poles}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 12 }}>Poles</Text>
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{driver.dnfs}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 12 }}>DNFs</Text>
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18 }}>{position}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 12 }}>Position</Text>
+        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 18, fontFamily: 'Formula1-Regular' }}>{driver.points}</Text>
+        <Text style={{ color: '#b0b3b8', fontSize: 12, fontFamily: 'Formula1-Regular' }}>Points</Text>
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 18, fontFamily: 'Formula1-Regular' }}>{driver.wins}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 12, fontFamily: 'Formula1-Regular' }}>Wins</Text>
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 18, fontFamily: 'Formula1-Regular' }}>{driver.podiums}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 12, fontFamily: 'Formula1-Regular' }}>Podiums</Text>
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 18, fontFamily: 'Formula1-Regular' }}>{driver.poles}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 12, fontFamily: 'Formula1-Regular' }}>Poles</Text>
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 18, fontFamily: 'Formula1-Regular' }}>{driver.dnfs}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 12, fontFamily: 'Formula1-Regular' }}>DNFs</Text>
+          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 18, fontFamily: 'Formula1-Regular' }}>{position}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 12, fontFamily: 'Formula1-Regular' }}>Position</Text>
         </View>
       </View>
       {/* Bar chart */}
@@ -195,15 +202,15 @@ const DriverDetail = ({ driverName, about: aboutProp }) => {
       </View>
       {/* About section */}
       <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-        <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>About</Text>
-        <Text style={{ color: '#fff', fontSize: 16, lineHeight: 24 }}>{aboutProp || driver.about}</Text>
+        <Text style={{ color: '#fff', fontSize: 20, fontWeight: '600', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>About</Text>
+        <Text style={{ color: '#fff', fontSize: 16, lineHeight: 24, fontFamily: 'Formula1-Regular' }}>{aboutProp || driver.about}</Text>
       </View>
       {/* Driver Facts section */}
       <View style={{ paddingHorizontal: 20, marginBottom: 32 }}>
-        <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>Driver Facts</Text>
+        <Text style={{ color: '#fff', fontSize: 20, fontWeight: '600', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>Driver Facts</Text>
         {driverFacts.map((fact, idx) => (
           <View key={idx} style={{ marginBottom: 8 }}>
-            <Text style={{ color: '#fff', fontSize: 15, lineHeight: 22 }}>{fact}</Text>
+            <Text style={{ color: '#fff', fontSize: 15, lineHeight: 22, fontFamily: 'Formula1-Regular' }}>{fact}</Text>
             {idx < driverFacts.length - 1 && <View style={{ height: 1, backgroundColor: '#fff', opacity: 0.2, marginVertical: 8 }} />}
           </View>
         ))}
@@ -211,7 +218,7 @@ const DriverDetail = ({ driverName, about: aboutProp }) => {
       {/* Famous Radio Section */}
       {radioCard && (
         <View style={{ marginTop: 32, marginBottom: 32, paddingHorizontal: 20 }}>
-          <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>Famous Radio:</Text>
+          <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600', marginBottom: 12, fontFamily: 'Formula1-Regular' }}>Famous Radio:</Text>
           <RadioCard
             teamColor={radioCard.teamColor}
             teamIcon={radioCard.teamIcon}

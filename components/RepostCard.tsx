@@ -135,7 +135,7 @@ export default function RepostCard({
         <View style={{ flex: 1 }}>
           {/* Repost user info */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+            <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
               {repost.profiles?.username || 'Unknown User'}
             </Text>
             {repostUserLogo && (
@@ -145,7 +145,7 @@ export default function RepostCard({
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>
+            <Text style={{ fontSize: 11, color: '#888', marginLeft: 8, fontFamily: 'Formula1-Regular' }}>
               {formatThreadTimestamp(repost.created_at)}
             </Text>
             {/* More options button for repost owner or admin - moved to top right */}
@@ -162,7 +162,7 @@ export default function RepostCard({
 
           {/* Repost content */}
           {repost.content && (
-            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
+            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
               {repost.content}
             </Text>
           )}
@@ -190,7 +190,7 @@ export default function RepostCard({
               />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                  <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
+                  <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                     {repost.original_thread?.profiles?.username || 'Unknown User'}
                   </Text>
                   {originalUserLogo && (
@@ -201,7 +201,7 @@ export default function RepostCard({
                     />
                   )}
                 </View>
-                <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
+                <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16, fontFamily: 'Formula1-Regular' }}>
                   {repost.original_thread?.content}
                 </Text>
                 {repost.original_thread?.image_url && (

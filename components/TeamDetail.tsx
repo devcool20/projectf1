@@ -5,6 +5,7 @@ import { TeamBio } from '../data/teams';
 import { supabase } from '../lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import CarLoadingAnimation from './CarLoadingAnimation';
 
 interface TeamDetailProps {
   team: TeamBio;
@@ -29,6 +30,7 @@ const TEAM_COLORS: Record<string, string> = {
 
 const TeamDetail: React.FC<TeamDetailProps> = ({ team }) => {
   const [stats, setStats] = useState({ points: 0, wins: 0, dnfs: 0, podiums: 0, poles: 0 });
+  const [loading, setLoading] = useState(true);
   const teamColor = TEAM_COLORS[team.name] || '#fff';
   const router = useRouter();
 
@@ -42,15 +44,43 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team }) => {
 
   useEffect(() => {
     async function fetchStats() {
-      const { data } = await supabase
-        .from('team_standings')
-        .select('points, wins, dnfs, podiums, poles')
-        .eq('team_name', team.name)
-        .single();
-      if (data) setStats(data);
+      try {
+        console.log('Fetching team stats for:', team.name);
+        const { data, error } = await supabase
+          .from('team_standings')
+          .select('points, wins, dnfs, podiums, poles')
+          .eq('team_name', team.name)
+          .single();
+        
+        if (error) {
+          console.error('Supabase error:', error);
+        }
+        
+        if (data) {
+          console.log('Team stats loaded:', data);
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching team stats:', error);
+      } finally {
+        // Add a small delay to ensure the animation is visible
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
+      }
     }
     fetchStats();
   }, [team.name]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: APP_BG }}>
+        <CarLoadingAnimation 
+          duration={1000}
+        />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: APP_BG }} contentContainerStyle={{ padding: 0 }}>
@@ -88,39 +118,39 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team }) => {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 20, marginBottom: 24 }}>
         {/* Left column - left aligned */}
         <View style={{ flex: 1, alignItems: 'flex-start' }}>
-          <Text style={{ fontSize: 18, color: '#b0b3b8', fontWeight: '600', marginBottom: 6 }}>{team.car_model}</Text>
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: teamColor, marginBottom: 8 }}>{team.name}</Text>
+          <Text style={{ fontSize: 18, color: '#b0b3b8', fontWeight: '600', marginBottom: 6, fontFamily: 'Formula1-Regular' }}>{team.car_model}</Text>
+          <Text style={{ fontSize: 28, fontWeight: '600', color: teamColor, marginBottom: 8, fontFamily: 'Formula1-Regular' }}>{team.name}</Text>
           {/* Removed logo from here */}
-          <Text style={{ fontSize: 16, color: '#fff', marginBottom: 4 }}>
+          <Text style={{ fontSize: 16, color: '#fff', marginBottom: 4, fontFamily: 'Formula1-Regular' }}>
             {team.driverNumbers && team.driverNumbers.length > 0 ? `#${team.driverNumbers.join(', #')}` : ''}
           </Text>
-          <Text style={{ fontSize: 16, color: '#fff', marginBottom: 2 }}>{team.country}</Text>
+          <Text style={{ fontSize: 16, color: '#fff', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{team.country}</Text>
         </View>
         {/* Right column */}
         <View style={{ minWidth: 100, alignItems: 'flex-end', justifyContent: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 6 }}>{stats.points} PTS</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 14, marginBottom: 2 }}>Points</Text>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}>{stats.wins}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 14, marginBottom: 2 }}>Wins</Text>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}>{stats.dnfs}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 14, marginBottom: 2 }}>DNFs</Text>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}>{stats.podiums}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 14, marginBottom: 2 }}>Podiums</Text>
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}>{stats.poles}</Text>
-          <Text style={{ color: '#b0b3b8', fontSize: 14 }}>Poles</Text>
+          <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600', marginBottom: 6, fontFamily: 'Formula1-Regular' }}>{stats.points} PTS</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 14, marginBottom: 2, fontFamily: 'Formula1-Regular' }}>Points</Text>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{stats.wins}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 14, marginBottom: 2, fontFamily: 'Formula1-Regular' }}>Wins</Text>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{stats.dnfs}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 14, marginBottom: 2, fontFamily: 'Formula1-Regular' }}>DNFs</Text>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{stats.podiums}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 14, marginBottom: 2, fontFamily: 'Formula1-Regular' }}>Podiums</Text>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{stats.poles}</Text>
+          <Text style={{ color: '#b0b3b8', fontSize: 14, fontFamily: 'Formula1-Regular' }}>Poles</Text>
         </View>
       </View>
       {/* About section */}
       <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-        <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>About</Text>
-        <Text style={{ color: '#fff', fontSize: 16, lineHeight: 24 }}>{team.about}</Text>
+        <Text style={{ color: '#fff', fontSize: 20, fontWeight: '600', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>About</Text>
+        <Text style={{ color: '#fff', fontSize: 16, lineHeight: 24, fontFamily: 'Formula1-Regular' }}>{team.about}</Text>
       </View>
       {/* Facts section */}
       <View style={{ paddingHorizontal: 20, marginBottom: 32 }}>
-        <Text style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginBottom: 8 }}>Team Facts</Text>
+        <Text style={{ color: '#fff', fontSize: 20, fontWeight: '600', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>Team Facts</Text>
         {team.facts.map((fact, idx) => (
           <View key={idx} style={{ marginBottom: 8 }}>
-            <Text style={{ color: '#fff', fontSize: 15, lineHeight: 22 }}>{fact}</Text>
+            <Text style={{ color: '#fff', fontSize: 15, lineHeight: 22, fontFamily: 'Formula1-Regular' }}>{fact}</Text>
             {idx < team.facts.length - 1 && <View style={{ height: 1, backgroundColor: '#fff', opacity: 0.2, marginVertical: 8 }} />}
           </View>
         ))}

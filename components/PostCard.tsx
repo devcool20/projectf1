@@ -158,7 +158,7 @@ export default function PostCard({
         {/* Content Column */}
         <View style={{ flex: 1, paddingLeft: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontWeight: 'bold', color: '#000', fontSize: USERNAME_FONT_SIZE }} selectable={false}>{username}</Text>
+            <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }} selectable={false}>{username}</Text>
             {logoToShow && (
               <Image 
                 source={logoToShow} 
@@ -178,11 +178,11 @@ export default function PostCard({
               </View>
             )}
           </View>
-          <Text style={{ fontSize: 13, color: '#888', marginTop: -2, marginLeft: 2 }} selectable={false}>{formatThreadTimestamp(timestamp)}</Text>
-          <Text style={{ color: '#000000', marginVertical: 8 }} selectable={false}>{displayedContent}</Text>
+                      <Text style={{ fontSize: 13, color: '#888', marginTop: -2, marginLeft: 2, fontFamily: 'Formula1-Regular' }} selectable={false}>{formatThreadTimestamp(timestamp)}</Text>
+          <Text style={{ color: '#000000', marginVertical: 8, fontSize: 14, lineHeight: 18, fontFamily: 'Formula1-Regular' }} selectable={false}>{displayedContent}</Text>
           {shouldTruncate && (
             <TouchableOpacity onPress={() => setExpanded(true)}>
-              <Text style={{ color: '#dc2626', fontWeight: 'bold', fontSize: 13, marginBottom: 4 }}>Read more</Text>
+              <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 13, marginBottom: 4, fontFamily: 'Formula1-Regular' }}>Read more</Text>
             </TouchableOpacity>
           )}
           {imageUrl && (
@@ -222,7 +222,7 @@ export default function PostCard({
                 size={14}
                 accessibilityLabel="Like post"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{likes}</Text>
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{likes}</Text>
             </View>
             {/* Comment */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
@@ -234,7 +234,7 @@ export default function PostCard({
                 size={14}
                 accessibilityLabel="Comment"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{comments}</Text>
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{comments}</Text>
             </View>
             {/* Repost */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
@@ -246,7 +246,7 @@ export default function PostCard({
                 size={14}
                 accessibilityLabel="Repost"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13 }}>{reposts}</Text>
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{reposts}</Text>
             </View>
             {/* Bookmark */}
             <EngagementButton
@@ -271,7 +271,7 @@ export default function PostCard({
           <View style={{ position: 'absolute', top: menuPos.top, left: menuPos.left, backgroundColor: '#fff', borderRadius: 8, elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, padding: 8, minWidth: 120 }}>
             {showDelete && (
               <TouchableOpacity onPress={() => { setMenuVisible(false); onDeletePress(); }} style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
-                <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+                <Text style={{ color: '#dc2626', fontWeight: '600', fontFamily: 'Formula1-Regular' }}>Delete</Text>
               </TouchableOpacity>
             )}
           </View>

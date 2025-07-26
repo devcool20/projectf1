@@ -743,7 +743,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
             {activeTab === 'account' && (
               <>
                 {/* Account Information Header */}
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1f2937', marginBottom: 24 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1f2937', marginBottom: 24 }} className="font-formula1-bold">
                   Account Information
                 </Text>
                 
@@ -851,7 +851,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
                       style={{ width: 20, height: 20, marginRight: 12 }}
                       resizeMode="contain"
                     />
-                    <Text style={{ color: '#000000', fontWeight: 'bold', fontSize: 16 }}>Admin</Text>
+                    <Text style={{ color: '#000000', fontWeight: 'bold', fontSize: 16 }} className="font-formula1-bold">Admin</Text>
                   </View>
                 ) : (
                   <View style={{ marginTop: 16 }}>
@@ -966,7 +966,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose, se
             {activeTab === 'following' && (
               <>
                 {/* Following Section */}
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1f2937', marginBottom: 24 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1f2937', marginBottom: 24 }} className="font-formula1-bold">
                   Following
                 </Text>
                 

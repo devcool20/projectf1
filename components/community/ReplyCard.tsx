@@ -153,7 +153,7 @@ export default function ReplyCard({
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontWeight: 'bold', color: '#666', fontSize: 16 }}>
+              <Text style={{ fontWeight: '600', color: '#666', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                 {reply.threads?.profiles?.username || 'Unknown User'}
               </Text>
               {threadLogo && (
@@ -164,13 +164,13 @@ export default function ReplyCard({
                 />
               )}
             </View>
-            <Text style={{ fontSize: 12, color: '#888' }}>
+            <Text style={{ fontSize: 12, color: '#888', fontFamily: 'Formula1-Regular' }}>
               {formatThreadTimestamp(reply.threads?.created_at)}
             </Text>
           </View>
         </View>
         <TouchableOpacity onPress={() => onThreadPress?.(reply.threads?.id)}>
-          <Text style={{ color: '#666', fontSize: 14, lineHeight: 20 }}>
+          <Text style={{ color: '#666', fontSize: 14, lineHeight: 20, fontFamily: 'Formula1-Regular' }}>
             {reply.threads?.content || 'Original thread content'}
           </Text>
           {reply.threads?.image_url && (
@@ -205,7 +205,7 @@ export default function ReplyCard({
         <View style={{ flex: 1 }}>
           {/* Reply Header */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 16 }}>
+            <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
               {reply.profiles?.username || 'Unknown User'}
             </Text>
             {replyLogo && (
@@ -215,18 +215,18 @@ export default function ReplyCard({
                 resizeMode="contain"
               />
             )}
-            <Text style={{ color: '#888', fontSize: 12, marginLeft: 8 }}>
+            <Text style={{ color: '#888', fontSize: 12, marginLeft: 8, fontFamily: 'Formula1-Regular' }}>
               Replying to @{reply.threads?.profiles?.username || 'unknown'}
             </Text>
           </View>
 
           {/* Timestamp */}
-          <Text style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
+          <Text style={{ fontSize: 12, color: '#888', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
             {formatThreadTimestamp(reply.created_at)}
           </Text>
 
           {/* Reply Content */}
-          <Text style={{ color: '#000', fontSize: 15, lineHeight: 22, marginBottom: 8 }}>
+          <Text style={{ color: '#000', fontSize: 15, lineHeight: 22, marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
             {reply.content}
           </Text>
 

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useDominantColor } from '@/hooks/useDominantColor';
 import { useRouter } from 'expo-router';
+import CarLoadingAnimation from '@/components/CarLoadingAnimation';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallScreen = screenWidth < 400;
@@ -100,15 +101,43 @@ export default function StandingsScreen() {
 
   useEffect(() => {
     setLoading(true);
+    console.log('Loading data for tab:', activeTab);
+    
+    const startTime = Date.now();
+    
     if (activeTab === 'drivers') {
-      supabase.from('driver_standings').select('*').then(({ data }) => {
+      supabase.from('driver_standings').select('*').then(({ data, error }) => {
+        if (error) {
+          console.error('Error loading drivers:', error);
+        }
+        console.log('Drivers loaded:', data?.length || 0);
         setDrivers((data as DriverStanding[]) || []);
-        setLoading(false);
+        
+        // Ensure minimum loading time for animation visibility
+        const elapsed = Date.now() - startTime;
+        const minLoadingTime = 800; // 800ms minimum
+        if (elapsed < minLoadingTime) {
+          setTimeout(() => setLoading(false), minLoadingTime - elapsed);
+        } else {
+          setLoading(false);
+        }
       });
     } else {
-      supabase.from('team_standings').select('*').then(({ data }) => {
+      supabase.from('team_standings').select('*').then(({ data, error }) => {
+        if (error) {
+          console.error('Error loading teams:', error);
+        }
+        console.log('Teams loaded:', data?.length || 0);
         setTeams((data as TeamStanding[]) || []);
-        setLoading(false);
+        
+        // Ensure minimum loading time for animation visibility
+        const elapsed = Date.now() - startTime;
+        const minLoadingTime = 800; // 800ms minimum
+        if (elapsed < minLoadingTime) {
+          setTimeout(() => setLoading(false), minLoadingTime - elapsed);
+        } else {
+          setLoading(false);
+        }
       });
     }
   }, [activeTab]);
@@ -255,16 +284,16 @@ export default function StandingsScreen() {
           <View style={[styles.cardContent, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}> 
             {/* Position - left */}
             <View style={{ minWidth: 32, alignItems: 'flex-start' }}>
-              <Text style={{ fontSize: 16, color: '#666', fontWeight: '700' }}>{String(idx + 1).padStart(2, '0')}</Text>
+              <Text style={{ fontSize: 16, color: '#666', fontWeight: '700', fontFamily: 'Formula1-Regular' }}>{String(idx + 1).padStart(2, '0')}</Text>
             </View>
             {/* Team name and car model - center */}
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 20, fontWeight: '700', color: teamColor, marginBottom: 4 }}>{team.team_name}</Text>
-              <Text style={{ fontSize: 14, color: teamColor, fontWeight: '500' }}>{team.car_model}</Text>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: teamColor, marginBottom: 4, fontFamily: 'Formula1-Regular' }}>{team.team_name}</Text>
+              <Text style={{ fontSize: 14, color: teamColor, fontWeight: '500', fontFamily: 'Formula1-Regular' }}>{team.car_model}</Text>
             </View>
             {/* Points - right */}
             <View style={{ minWidth: 64, alignItems: 'flex-end' }}>
-              <Text style={{ fontSize: 16, color: '#fff', fontWeight: '700' }}>{team.points} PTS</Text>
+              <Text style={{ fontSize: 16, color: '#fff', fontWeight: '700', fontFamily: 'Formula1-Regular' }}>{team.points} PTS</Text>
             </View>
           </View>
           <Text style={styles.chevron}>›</Text>
@@ -273,11 +302,13 @@ export default function StandingsScreen() {
     });
   };
 
+
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.standingsOuter}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Standings 2025</Text>
+          <Text style={[styles.headerTitle, { fontFamily: 'Formula1-Regular' }]}>Standings 2025</Text>
         </View>
         <View style={[styles.tabRow, { marginHorizontal: isSmallScreen ? 40 : 60 }]}>
           {TABS.map(tab => (
@@ -288,15 +319,15 @@ export default function StandingsScreen() {
                 if (tab.key !== activeTab) animateTab(tab.key);
               }}
             >
-              <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>{tab.label}</Text>
+              <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive, { fontFamily: 'Formula1-Regular' }]}>{tab.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#ffffff" />
-            </View>
+            <CarLoadingAnimation 
+              duration={1000}
+            />
           ) : (
             <ScrollView 
               style={styles.scrollView} 
@@ -410,7 +441,8 @@ const styles = StyleSheet.create({
   cardImageFallbackText: {
     color: '#ffffff',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontFamily: 'Formula1-Regular',
   },
   cardContent: {
     flex: 1,
@@ -433,19 +465,23 @@ const styles = StyleSheet.create({
     fontSize: isSmallScreen ? 14 : 16,
     color: '#666666',
     fontWeight: '600',
+    fontFamily: 'Formula1-Regular',
   },
   cardName: {
     fontSize: isSmallScreen ? 18 : 20,
     fontWeight: '400',
     color: '#ffffff',
     textAlign: 'right',
+    fontFamily: 'Formula1-Regular',
   },
   cardFirstName: {
     fontWeight: '400',
+    fontFamily: 'Formula1-Regular',
   },
   cardLastName: {
     fontWeight: '700',
     textTransform: 'uppercase',
+    fontFamily: 'Formula1-Regular',
   },
   cardTeam: {
     fontSize: isSmallScreen ? 14 : 16,
@@ -453,12 +489,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 2,
     textAlign: 'right',
+    fontFamily: 'Formula1-Regular',
   },
   cardPoints: {
     fontSize: isSmallScreen ? 13 : 14,
     color: '#ffffff',
     fontWeight: '200',
     marginTop: 4,
+    fontFamily: 'Formula1-Regular',
   },
   chevron: {
     fontSize: isSmallScreen ? 20 : 24,
@@ -528,23 +566,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 2,
     opacity: 0.7,
+    fontFamily: 'Formula1-Regular',
   },
   heroName: {
     fontSize: 22,
     fontWeight: '700',
     color: '#fff',
     marginBottom: 2,
+    fontFamily: 'Formula1-Regular',
   },
   heroTeam: {
     fontSize: 14,
     color: '#FF8700',
     fontWeight: '600',
     marginBottom: 2,
+    fontFamily: 'Formula1-Regular',
   },
   heroPoints: {
     fontSize: 16,
     color: '#fff',
     fontWeight: '700',
     marginTop: 2,
+    fontFamily: 'Formula1-Regular',
   },
 });

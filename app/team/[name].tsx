@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { teams } from '../../data/teams';
 import TeamDetail from '../../components/TeamDetail';
 import { View, Text } from 'react-native';
+import CarLoadingAnimation from '../../components/CarLoadingAnimation';
 
 export default function TeamDetailScreen() {
   const { name } = useLocalSearchParams();

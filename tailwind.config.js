@@ -19,9 +19,9 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        'serif': ['Merriweather', 'serif'],
-        'heading': ['Source Serif 4', 'serif'],
-        'mono': ['JetBrains Mono', 'monospace'],
+        'formula1-bold': ['Formula1-Bold', 'sans-serif'],
+        'formula1-regular': ['Formula1-Regular', 'sans-serif'],
+        'formula1-wide': ['Formula1-Wide', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',

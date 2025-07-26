@@ -1,24 +1,16 @@
 import React from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
+import CarLoadingAnimation from '../../components/CarLoadingAnimation';
 
 export default function ProfileScreen() {
   return (
     <View style={{ 
       flex: 1, 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      backgroundColor: '#fff',
-      padding: 20
+      backgroundColor: '#000000'
     }}>
-      <ActivityIndicator size="large" color="#1DA1F2" />
-      <Text style={{ 
-        marginTop: 16, 
-        fontSize: 16, 
-        color: '#666',
-        textAlign: 'center'
-      }}>
-        Loading profile...
-      </Text>
+      <CarLoadingAnimation 
+        duration={1000}
+      />
     </View>
   );
 }

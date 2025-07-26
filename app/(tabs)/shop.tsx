@@ -102,10 +102,10 @@ export default function ShopScreen() {
         <View className="w-full max-w-md pb-24">
           {/* Header - more compact */}
           <View className="bg-[#23272f] px-4 py-2 shadow-kodama-lg">
-            <Text className="text-xl font-heading font-bold text-white">
+            <Text style={{ fontSize: 20, fontWeight: '600', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
               🛒 F1 Shop
             </Text>
-            <Text className="text-[#b0b3b8] mt-0.5 text-sm">
+            <Text style={{ color: '#b0b3b8', marginTop: 2, fontSize: 14, fontFamily: 'Formula1-Regular' }}>
               Get your F1 merchandise and team gear
             </Text>
           </View>
@@ -115,17 +115,17 @@ export default function ShopScreen() {
             {loading ? (
               <View className="bg-[#23272f] rounded-2xl p-8 items-center shadow-kodama-lg">
                 <Text className="text-6xl mb-4">⏳</Text>
-                <Text className="text-xl font-medium text-white">
+                <Text style={{ fontSize: 20, fontWeight: '500', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
                   Loading products...
                 </Text>
               </View>
             ) : products.length === 0 ? (
               <View className="bg-[#23272f] rounded-2xl p-8 items-center shadow-kodama-lg">
                 <Text className="text-6xl mb-4">🛒</Text>
-                <Text className="text-2xl font-heading font-bold text-white mb-3">
+                <Text style={{ fontSize: 24, fontWeight: '600', color: '#ffffff', marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
                   No Products Available
                 </Text>
-                <Text className="text-[#b0b3b8] text-lg leading-relaxed text-center">
+                <Text style={{ color: '#b0b3b8', fontSize: 18, lineHeight: 28, textAlign: 'center', fontFamily: 'Formula1-Regular' }}>
                   Check back soon for F1 merchandise and team gear!
                 </Text>
               </View>
@@ -153,7 +153,7 @@ export default function ShopScreen() {
                       <View 
                         className={`absolute top-3 right-3 bg-gradient-to-r ${getTeamColors(product.team)} px-2 py-1 rounded-full`}
                       >
-                        <Text className="text-white text-xs font-medium">
+                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '500', fontFamily: 'Formula1-Regular' }}>
                           {product.team}
                         </Text>
                       </View>
@@ -162,24 +162,24 @@ export default function ShopScreen() {
                     {/* Featured Badge */}
                     {product.featured && (
                       <View className="absolute top-3 left-3 bg-yellow-500 px-2 py-1 rounded-full">
-                        <Text className="text-white text-xs font-bold">⭐ FEATURED</Text>
+                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '600', fontFamily: 'Formula1-Regular' }}>⭐ FEATURED</Text>
                       </View>
                     )}
 
                     {/* Content */}
                     <View className="p-4">
                       {/* Product Name */}
-                      <Text className="text-xl font-heading font-bold text-white mb-2">
+                      <Text style={{ fontSize: 20, fontWeight: '600', color: '#ffffff', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
                         {product.product_name}
                       </Text>
 
                       {/* Price */}
                       <View className="mb-3">
-                        <Text className="text-lg font-bold text-[#dc2626]">
+                        <Text style={{ fontSize: 18, fontWeight: '600', color: '#dc2626', fontFamily: 'Formula1-Regular' }}>
                           {formatPrice(product.price, product.currency)}
                         </Text>
                         {product.category && (
-                          <Text className="text-sm text-[#b0b3b8] mt-1">
+                          <Text style={{ fontSize: 14, color: '#b0b3b8', marginTop: 4, fontFamily: 'Formula1-Regular' }}>
                             {product.category}
                           </Text>
                         )}
@@ -187,7 +187,7 @@ export default function ShopScreen() {
 
                       {/* Description */}
                       {product.description && (
-                        <Text className="text-sm text-[#b0b3b8] leading-relaxed mb-4">
+                        <Text style={{ fontSize: 14, color: '#b0b3b8', lineHeight: 22, marginBottom: 16, fontFamily: 'Formula1-Regular' }}>
                           {product.description}
                         </Text>
                       )}
@@ -197,7 +197,7 @@ export default function ShopScreen() {
                         onPress={() => handleBuyNow(product.product_link)}
                         className="bg-[#dc2626] rounded-xl py-3 px-4 shadow-lg"
                       >
-                        <Text className="text-white text-center font-semibold text-base">
+                        <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600', fontSize: 16, fontFamily: 'Formula1-Regular' }}>
                           🛒 Buy Now
                         </Text>
                       </Pressable>

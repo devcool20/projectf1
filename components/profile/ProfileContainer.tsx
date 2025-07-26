@@ -10,6 +10,7 @@ import TwitterStyleReplyCard from '../community/TwitterStyleReplyCard';  // Impo
 import { ThreadView } from '../community/ThreadView';  // Import ThreadView
 import RepostModal from '../RepostModal';  // Import RepostModal
 import { getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
+import CarLoadingAnimation from '../CarLoadingAnimation';
 
 // Team logos and admin constants
 const TEAM_LOGOS: { [key: string]: any } = {
@@ -1163,11 +1164,10 @@ export default function ProfileContainer({
   // Loading state
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-        <ActivityIndicator size="large" color="#dc2626" />
-        <Text style={{ marginTop: 16, fontSize: 16, color: '#657786' }}>
-          Loading profile...
-        </Text>
+      <View style={{ flex: 1, backgroundColor: '#000000' }}>
+        <CarLoadingAnimation 
+          duration={1000}
+        />
       </View>
     );
   }
@@ -1177,7 +1177,7 @@ export default function ProfileContainer({
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', padding: 20 }}>
         <AlertCircle size={48} color="#dc2626" />
-        <Text style={{ marginTop: 16, fontSize: 18, fontWeight: 'bold', color: '#dc2626', textAlign: 'center' }}>
+                    <Text style={{ marginTop: 16, fontSize: 18, fontWeight: 'bold', color: '#dc2626', textAlign: 'center' }} className="font-formula1-bold">
           Error Loading Profile
         </Text>
         <Text style={{ marginTop: 8, fontSize: 14, color: '#666', textAlign: 'center' }}>
@@ -1193,7 +1193,7 @@ export default function ProfileContainer({
             borderRadius: 25,
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Retry</Text>
+                      <Text style={{ color: '#fff', fontWeight: 'bold' }} className="font-formula1-bold">Retry</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={onBack}
@@ -1203,7 +1203,7 @@ export default function ProfileContainer({
             paddingVertical: 12,
           }}
         >
-          <Text style={{ color: '#666', fontWeight: 'bold' }}>Go Back</Text>
+                      <Text style={{ color: '#666', fontWeight: 'bold' }} className="font-formula1-bold">Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -1214,7 +1214,7 @@ export default function ProfileContainer({
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', padding: 20 }}>
         <View style={{ alignItems: 'center', marginBottom: 32 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 12, textAlign: 'center' }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 12, textAlign: 'center' }} className="font-formula1-bold">
             Complete Your Profile Setup
           </Text>
           <Text style={{ fontSize: 16, color: '#657786', textAlign: 'center', marginBottom: 16, lineHeight: 24 }}>
@@ -1235,7 +1235,7 @@ export default function ProfileContainer({
           }}
           activeOpacity={0.8}
         >
-          <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 16 }}>Go Back to Community</Text>
+          <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 16 }} className="font-formula1-bold">Go Back to Community</Text>
         </TouchableOpacity>
       </View>
     );
@@ -1245,7 +1245,7 @@ export default function ProfileContainer({
   if (!profile) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', padding: 20 }}>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#666', textAlign: 'center' }}>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#666', textAlign: 'center' }} className="font-formula1-bold">
           Profile Not Found
         </Text>
         <TouchableOpacity
@@ -1269,7 +1269,7 @@ export default function ProfileContainer({
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff', padding: 20 }}>
         <View style={{ alignItems: 'center', marginBottom: 32 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 12, textAlign: 'center' }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 12, textAlign: 'center' }} className="font-formula1-bold">
             Sign in to view profiles
           </Text>
           <Text style={{ fontSize: 16, color: '#657786', textAlign: 'center', marginBottom: 32 }}>
@@ -1288,7 +1288,7 @@ export default function ProfileContainer({
             activeOpacity={0.8}
           >
             <LogIn size={20} color="#ffffff" style={{ marginRight: 8 }} />
-            <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 16 }}>Sign In Now</Text>
+            <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 16 }} className="font-formula1-bold">Sign In Now</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity
@@ -1339,7 +1339,7 @@ return (
           <ArrowLeft size={22} color="#1a1a1a" />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#1a1a1a', marginBottom: 2 }}>{profile.username}</Text>
+                      <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#1a1a1a', marginBottom: 2 }} className="font-formula1-bold">{profile.username}</Text>
           <Text style={{ color: '#657786', fontSize: 13 }}>{threads.length} posts • {replies.length} replies</Text>
         </View>
         {session?.user?.id === userId ? (
@@ -1360,7 +1360,7 @@ return (
             }}
             activeOpacity={0.8}
           >
-            <Text style={{ fontWeight: '600', color: '#ffffff', fontSize: 14 }}>Edit Profile</Text>
+            <Text style={{ fontWeight: '600', color: '#ffffff', fontSize: 14, fontFamily: 'Formula1-Regular' }}>Edit Profile</Text>
           </TouchableOpacity>
         ) : session && (
           <TouchableOpacity 
@@ -1383,7 +1383,8 @@ return (
             <Text style={{ 
               fontWeight: '600', 
               color: isFollowing ? '#1a1a1a' : '#ffffff', 
-              fontSize: 14 
+              fontSize: 14,
+              fontFamily: 'Formula1-Regular'
             }}>
               {isFollowing ? 'Following' : 'Follow'}
             </Text>
@@ -1448,10 +1449,11 @@ return (
         <View style={{ alignItems: 'center', marginBottom: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
             <Text style={{ 
-              fontWeight: 'bold', 
+              fontWeight: '600', 
               fontSize: 24, 
               color: '#1a1a1a', 
-              marginRight: 8 
+              marginRight: 8,
+              fontFamily: 'Formula1-Regular'
             }}>
               {profile.full_name || profile.username}
             </Text>
@@ -1460,7 +1462,8 @@ return (
           <Text style={{ 
             color: '#657786', 
             fontSize: 16, 
-            marginBottom: 8 
+            marginBottom: 8,
+            fontFamily: 'Formula1-Regular'
           }}>
             @{profile.username}
           </Text>
@@ -1470,7 +1473,8 @@ return (
               fontSize: 16, 
               lineHeight: 22, 
               textAlign: 'center',
-              paddingHorizontal: 20
+              paddingHorizontal: 20,
+              fontFamily: 'Formula1-Regular'
             }}>
               {profile.bio}
             </Text>
@@ -1508,8 +1512,8 @@ return (
             }}
             activeOpacity={0.7}
           >
-            <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#1a1a1a' }}>{followersCount}</Text>
-            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 6 }}>Followers</Text>
+            <Text style={{ fontWeight: '600', fontSize: 18, color: '#1a1a1a', fontFamily: 'Formula1-Regular' }}>{followersCount}</Text>
+            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 6, fontFamily: 'Formula1-Regular' }}>Followers</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             onPress={() => {
@@ -1526,8 +1530,8 @@ return (
             }}
             activeOpacity={0.7}
           >
-            <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#1a1a1a' }}>{followingCount}</Text>
-            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 6 }}>Following</Text>
+            <Text style={{ fontWeight: '600', fontSize: 18, color: '#1a1a1a', fontFamily: 'Formula1-Regular' }}>{followingCount}</Text>
+            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 6, fontFamily: 'Formula1-Regular' }}>Following</Text>
           </TouchableOpacity>
         </View>
         
@@ -1554,7 +1558,7 @@ return (
               activeOpacity={0.8}
             >
               <LogOut size={18} color="#dc2626" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#dc2626', fontSize: 14, fontWeight: '600' }}>Logout</Text>
+              <Text style={{ color: '#dc2626', fontSize: 14, fontWeight: '600', fontFamily: 'Formula1-Regular' }}>Logout</Text>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -1577,7 +1581,7 @@ return (
               }}
               activeOpacity={0.8}
             >
-              <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600' }}>Delete Profile</Text>
+              <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600', fontFamily: 'Formula1-Regular' }}>Delete Profile</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1601,9 +1605,10 @@ return (
           activeOpacity={0.7}
         >
           <Text style={{ 
-            fontWeight: activeTab === 'posts' ? 'bold' : '600', 
+            fontWeight: activeTab === 'posts' ? '600' : '600', 
             color: activeTab === 'posts' ? '#dc2626' : '#657786',
-            fontSize: 15
+            fontSize: 15,
+            fontFamily: 'Formula1-Regular'
           }}>Posts</Text>
         </TouchableOpacity>
         <TouchableOpacity 
@@ -1618,9 +1623,10 @@ return (
           activeOpacity={0.7}
         >
           <Text style={{ 
-            fontWeight: activeTab === 'replies' ? 'bold' : '600', 
+            fontWeight: activeTab === 'replies' ? '600' : '600', 
             color: activeTab === 'replies' ? '#dc2626' : '#657786',
-            fontSize: 15
+            fontSize: 15,
+            fontFamily: 'Formula1-Regular'
           }}>Replies</Text>
         </TouchableOpacity>
       </View>
@@ -1667,7 +1673,7 @@ return (
                             {/* Repost user info */}
                             <View style={{ marginBottom: 4 }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+                                <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                                   {item.profiles?.username || 'Unknown User'}
                                 </Text>
                                 {item.profiles?.is_admin ? (
@@ -1696,14 +1702,14 @@ return (
                                   </TouchableOpacity>
                                 )}
                               </View>
-                              <Text style={{ fontSize: 11, color: '#888' }}>
+                              <Text style={{ fontSize: 11, color: '#888', fontFamily: 'Formula1-Regular' }}>
                                 {new Date(item.created_at).toLocaleDateString()}
                               </Text>
                             </View>
 
                             {/* Repost content */}
                             {item.content && (
-                              <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
+                              <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
                                 {item.content}
                               </Text>
                             )}
@@ -1742,7 +1748,7 @@ return (
                                 />
                                 <View style={{ flex: 1 }}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                    <Text style={{ fontWeight: 'bold', color: '#1a1a1a', fontSize: 13 }}>
+                                    <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
                                       {item.original_thread?.profiles?.username || 'Unknown User'}
                                     </Text>
                                     {item.original_thread?.profiles?.is_admin ? (
@@ -1759,7 +1765,7 @@ return (
                                       />
                                     )}
                                   </View>
-                                  <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16 }}>
+                                  <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16, fontFamily: 'Formula1-Regular' }}>
                                     {item.original_thread?.content || ''}
                                   </Text>
                                   {item.original_thread?.image_url && (
@@ -1921,7 +1927,7 @@ return (
                 {index < replies.length - 1 && (
                   <View style={{
                     height: 1,
-                    backgroundColor: '#e5e5e5',
+                    backgroundColor: '#2b2a2a',
                     marginHorizontal: 16,
                     marginVertical: 0
                   }} />
@@ -1969,7 +1975,7 @@ return (
           }}>
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} className="font-formula1-bold">
                 {isOwnProfile ? 'Your Followers' : (profile?.username || 'User') + "'s Followers"}
               </Text>
               <TouchableOpacity onPress={() => setShowFollowersModal(false)} style={{ padding: 8 }}>
@@ -2028,7 +2034,7 @@ return (
                       activeOpacity={0.7}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 16 }}>
+                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 16 }} className="font-formula1-bold">
                           {follower.profiles?.username || 'Unknown User'}
                         </Text>
                         {follower.profiles?.favorite_team && TEAM_LOGOS[follower.profiles.favorite_team] && (
@@ -2108,7 +2114,7 @@ return (
           }}>
             {/* Header */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#000' }} className="font-formula1-bold">
                 {isOwnProfile ? 'Your Following' : (profile?.username || 'User') + "'s Following"}
               </Text>
               <TouchableOpacity onPress={() => setShowFollowingModal(false)} style={{ padding: 8 }}>
@@ -2167,7 +2173,7 @@ return (
                       activeOpacity={0.7}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 16 }}>
+                        <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 16 }} className="font-formula1-bold">
                           {followingUser.profiles?.username || 'Unknown User'}
                         </Text>
                         {followingUser.profiles?.favorite_team && TEAM_LOGOS[followingUser.profiles.favorite_team] && (
@@ -2253,7 +2259,7 @@ return (
               }} 
               style={{ paddingVertical: 8, paddingHorizontal: 12 }}
             >
-              <Text style={{ color: '#dc2626', fontWeight: 'bold' }}>Delete</Text>
+              <Text style={{ color: '#dc2626', fontWeight: 'bold' }} className="font-formula1-bold">Delete</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

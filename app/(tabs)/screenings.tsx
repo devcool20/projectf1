@@ -55,10 +55,10 @@ export default function ScreeningsScreen() {
         <View className="w-full max-w-md pb-24">
           {/* Header */}
           <View className="bg-[#23272f] p-6 shadow-kodama-lg">
-            <Text className="text-2xl font-heading font-bold text-white">
+            <Text style={{ fontSize: 24, fontWeight: '600', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
               🎬 F1 Screenings
             </Text>
-            <Text className="text-[#b0b3b8] mt-1">
+            <Text style={{ color: '#b0b3b8', marginTop: 4, fontFamily: 'Formula1-Regular' }}>
               Watch Formula 1 races with fellow fans
             </Text>
           </View>
@@ -68,17 +68,17 @@ export default function ScreeningsScreen() {
             {loading ? (
               <View className="bg-[#23272f] rounded-2xl p-8 items-center shadow-kodama-lg">
                 <Text className="text-6xl mb-4">⏳</Text>
-                <Text className="text-xl font-medium text-white">
+                <Text style={{ fontSize: 20, fontWeight: '500', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
                   Loading screenings...
                 </Text>
               </View>
             ) : screenings.length === 0 ? (
               <View className="bg-[#23272f] rounded-2xl p-8 items-center shadow-kodama-lg">
                 <Text className="text-6xl mb-4">📺</Text>
-                <Text className="text-2xl font-heading font-bold text-white mb-3">
+                <Text style={{ fontSize: 24, fontWeight: '600', color: '#ffffff', marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
                   No Screenings Available
                 </Text>
-                <Text className="text-[#b0b3b8] text-lg leading-relaxed text-center">
+                <Text style={{ color: '#b0b3b8', fontSize: 18, lineHeight: 28, textAlign: 'center', fontFamily: 'Formula1-Regular' }}>
                   Check back soon for upcoming F1 screening events!
                 </Text>
               </View>
@@ -102,7 +102,7 @@ export default function ScreeningsScreen() {
                     {/* Content */}
                     <View className="p-4">
                       {/* Grand Prix Name */}
-                      <Text className="text-xl font-heading font-bold text-white mb-2">
+                      <Text style={{ fontSize: 20, fontWeight: '600', color: '#ffffff', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
                         {screening.grand_prix_name}
                       </Text>
 
@@ -110,7 +110,7 @@ export default function ScreeningsScreen() {
                       <View className="mb-3">
                         <View className="flex-row items-center mb-1">
                           <Text className="text-base mr-2">📅</Text>
-                          <Text className="text-base font-medium text-white">
+                          <Text style={{ fontSize: 16, fontWeight: '500', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
                             {new Date(screening.date).toLocaleDateString('en-US', {
                               weekday: 'long',
                               year: 'numeric',
@@ -121,7 +121,7 @@ export default function ScreeningsScreen() {
                         </View>
                         <View className="flex-row items-center mb-1">
                           <Text className="text-base mr-2">⏰</Text>
-                          <Text className="text-base font-medium text-white">
+                          <Text style={{ fontSize: 16, fontWeight: '500', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
                             {new Date(`2000-01-01T${screening.timing}`).toLocaleTimeString('en-US', {
                               hour: 'numeric',
                               minute: '2-digit',
@@ -135,21 +135,21 @@ export default function ScreeningsScreen() {
                       <View className="mb-3">
                         <View className="flex-row items-center mb-1">
                           <Text className="text-base mr-2">📍</Text>
-                          <Text className="text-base font-medium text-white">
+                          <Text style={{ fontSize: 16, fontWeight: '500', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
                             {screening.location}
                           </Text>
                         </View>
                         {screening.country && (
-                          <Text className="text-sm text-[#b0b3b8] ml-6">
-                            {screening.country}
-                          </Text>
+                                                  <Text style={{ fontSize: 14, color: '#b0b3b8', marginLeft: 24, fontFamily: 'Formula1-Regular' }}>
+                          {screening.country}
+                        </Text>
                         )}
                       </View>
 
                       {/* Round Number */}
                       {screening.round_number && (
                         <View className="pt-3 border-t border-[#23272f]">
-                          <Text className="text-xs text-[#b0b3b8] text-center">
+                          <Text style={{ fontSize: 12, color: '#b0b3b8', textAlign: 'center', fontFamily: 'Formula1-Regular' }}>
                             Round {screening.round_number} • {screening.season}
                           </Text>
                         </View>

@@ -3,6 +3,7 @@ import { View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { ThreadView } from '@/components/community/ThreadView';
+import CarLoadingAnimation from '@/components/CarLoadingAnimation';
 
 export default function ThreadScreen() {
   const router = useRouter();
@@ -96,8 +97,10 @@ export default function ThreadScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-background items-center justify-center">
-        <ActivityIndicator size="large" />
+      <View className="flex-1 bg-background items-center justify-center" style={{ backgroundColor: '#000000' }}>
+        <CarLoadingAnimation 
+          duration={1000}
+        />
       </View>
     );
   }
