@@ -154,7 +154,7 @@ export default function TwitterStyleReplyCard({
       activeOpacity={0.7}
       style={{ backgroundColor: '#ffffff' }}
     >
-      <View style={{ padding: 16, backgroundColor: '#ffffff', position: 'relative', minHeight: 120 }}>
+    <View style={{ padding: 16, backgroundColor: '#ffffff', position: 'relative', minHeight: 120 }}>
       {/* Line connecting avatars */}
       {parentAvatarTopY !== null && replyAvatarTopY !== null && (
         <View
@@ -203,18 +203,18 @@ export default function TwitterStyleReplyCard({
               {formatThreadTimestamp(reply.threads?.created_at)}
             </Text>
           </View>
-          <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }} className="font-formula1-regular">
-            {reply.threads?.content || 'Original thread content'}
-          </Text>
-          {reply.threads?.image_url && (
-            <View style={{ alignItems: 'center', marginTop: 4 }}>
-              <Image
-                source={{ uri: reply.threads.image_url }}
-                style={getResponsiveImageStyle(screenWidth)}
-                resizeMode="cover"
-              />
-            </View>
-          )}
+            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }} className="font-formula1-regular">
+              {reply.threads?.content || 'Original thread content'}
+            </Text>
+            {reply.threads?.image_url && (
+              <View style={{ alignItems: 'center', marginTop: 4 }}>
+                <Image
+                  source={{ uri: reply.threads.image_url }}
+                  style={getResponsiveImageStyle(screenWidth)}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
         </View>
       </View>
       {/* Reply block */}

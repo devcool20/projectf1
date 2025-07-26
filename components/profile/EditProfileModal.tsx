@@ -15,7 +15,7 @@ import { X, Camera, User, Edit3, Heart, Trophy } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from '@/lib/supabase';
-import CarLoadingAnimation from '../CarLoadingAnimation';
+import ProfileCarLoadingAnimation from '../ProfileCarLoadingAnimation';
 
 // Team logos constant
 const TEAM_LOGOS: { [key: string]: any } = {
@@ -368,7 +368,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <CarLoadingAnimation 
+              <ProfileCarLoadingAnimation 
                 duration={1000}
               />
             </View>

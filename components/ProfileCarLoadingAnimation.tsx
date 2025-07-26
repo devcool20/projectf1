@@ -3,13 +3,13 @@ import { View, Image, Animated, Dimensions, StyleSheet } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-interface CarLoadingAnimationProps {
+interface ProfileCarLoadingAnimationProps {
   duration?: number;
   showLoadingText?: boolean;
 }
 
-const CarLoadingAnimation: React.FC<CarLoadingAnimationProps> = ({ 
-  duration = 1000, // Reduced from 2000 to 1000ms for faster animation
+const ProfileCarLoadingAnimation: React.FC<ProfileCarLoadingAnimationProps> = ({ 
+  duration = 1000,
   showLoadingText = false
 }) => {
   const carPosition = useRef(new Animated.Value(-200)).current;
@@ -52,7 +52,7 @@ const CarLoadingAnimation: React.FC<CarLoadingAnimationProps> = ({
         ]}
       >
         <Image
-          source={require('../assets/gif/obnoxious-racing-car-unscreen.gif')}
+          source={require('../assets/gif/f1car2-unscreen.gif')}
           style={styles.carImage}
           resizeMode="contain"
         />
@@ -80,4 +80,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CarLoadingAnimation; 
+export default ProfileCarLoadingAnimation; 

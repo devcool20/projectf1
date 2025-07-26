@@ -10,7 +10,7 @@ import TwitterStyleReplyCard from '../community/TwitterStyleReplyCard';  // Impo
 import { AnimatedThreadView } from '../community/AnimatedThreadView';  // Import AnimatedThreadView
 import RepostModal from '../RepostModal';  // Import RepostModal
 import { getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
-import CarLoadingAnimation from '../CarLoadingAnimation';
+import ProfileCarLoadingAnimation from '../ProfileCarLoadingAnimation';
 import { useEngagementStore } from '../community/engagementStore';
 
 // Team logos and admin constants
@@ -1204,7 +1204,7 @@ export default function ProfileContainer({
   if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: 'transparent' }}>
-        <CarLoadingAnimation 
+        <ProfileCarLoadingAnimation 
           duration={1000}
         />
       </View>
