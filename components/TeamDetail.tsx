@@ -47,10 +47,10 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team }) => {
       try {
         console.log('Fetching team stats for:', team.name);
         const { data, error } = await supabase
-          .from('team_standings')
-          .select('points, wins, dnfs, podiums, poles')
-          .eq('team_name', team.name)
-          .single();
+        .from('team_standings')
+        .select('points, wins, dnfs, podiums, poles')
+        .eq('team_name', team.name)
+        .single();
         
         if (error) {
           console.error('Supabase error:', error);

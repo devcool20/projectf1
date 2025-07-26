@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, Dimensions, LayoutChangeEvent } fr
 import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react-native';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { useEngagementStore } from './engagementStore';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
@@ -40,7 +41,8 @@ export default function TwitterStyleReplyCard({
 }: TwitterStyleReplyCardProps) {
   const { width: screenWidth } = Dimensions.get('window');
   const [replyLikeCount, setReplyLikeCount] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
+  const { replyLikes, setReplyLike } = useEngagementStore();
+  const isLiked = replyLikes[reply.id] || false;
   const avatarSize = 40;
   const avatarMargin = 12;
   const parentAvatarRef = useRef<View>(null);
@@ -76,10 +78,10 @@ export default function TwitterStyleReplyCard({
       
       setReplyLikeCount(likesData?.length || 0);
 
-      // Check if current user has liked this reply
+      // Check if current user has liked this reply and update Zustand store
       if (session?.user) {
         const userLiked = likesData?.some(like => like.user_id === session.user.id);
-        setIsLiked(userLiked || false);
+        setReplyLike(reply.id, userLiked || false);
       }
     } catch (error) {
       console.error('Error fetching reply engagement:', error);
@@ -101,7 +103,7 @@ export default function TwitterStyleReplyCard({
           .eq('user_id', session.user.id);
         
         if (error) throw error;
-        setIsLiked(false);
+        setReplyLike(reply.id, false);
         setReplyLikeCount(prev => prev - 1);
       } else {
         // Add like
@@ -113,7 +115,7 @@ export default function TwitterStyleReplyCard({
           });
         
         if (error) throw error;
-        setIsLiked(true);
+        setReplyLike(reply.id, true);
         setReplyLikeCount(prev => prev + 1);
       }
     } catch (error) {
@@ -147,7 +149,12 @@ export default function TwitterStyleReplyCard({
   const threadLogo = getThreadLogoToShow(reply.threads?.profiles);
 
   return (
-    <View style={{ padding: 16, backgroundColor: '#ffffff', position: 'relative', minHeight: 120 }}>
+    <TouchableOpacity 
+      onPress={() => onThreadPress?.(reply.threads?.id)}
+      activeOpacity={0.7}
+      style={{ backgroundColor: '#ffffff' }}
+    >
+      <View style={{ padding: 16, backgroundColor: '#ffffff', position: 'relative', minHeight: 120 }}>
       {/* Line connecting avatars */}
       {parentAvatarTopY !== null && replyAvatarTopY !== null && (
         <View
@@ -167,7 +174,10 @@ export default function TwitterStyleReplyCard({
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 }}>
         {/* Attach onLayout to the View wrapping the avatar for accurate Y position */}
         <View ref={parentAvatarRef} onLayout={onParentAvatarLayout}>
-          <TouchableOpacity onPress={() => onProfilePress?.(reply.threads?.user_id)}>
+          <TouchableOpacity onPress={(e) => {
+            e.stopPropagation();
+            onProfilePress?.(reply.threads?.user_id);
+          }}>
             <Image
               source={{
                 uri: reply.threads?.profiles?.avatar_url ||
@@ -193,27 +203,28 @@ export default function TwitterStyleReplyCard({
               {formatThreadTimestamp(reply.threads?.created_at)}
             </Text>
           </View>
-          <TouchableOpacity onPress={() => onThreadPress?.(reply.threads?.id)}>
-            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }} className="font-formula1-regular">
-              {reply.threads?.content || 'Original thread content'}
-            </Text>
-            {reply.threads?.image_url && (
-              <View style={{ alignItems: 'center', marginTop: 4 }}>
-                <Image
-                  source={{ uri: reply.threads.image_url }}
-                  style={getResponsiveImageStyle(screenWidth)}
-                  resizeMode="cover"
-                />
-              </View>
-            )}
-          </TouchableOpacity>
+          <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }} className="font-formula1-regular">
+            {reply.threads?.content || 'Original thread content'}
+          </Text>
+          {reply.threads?.image_url && (
+            <View style={{ alignItems: 'center', marginTop: 4 }}>
+              <Image
+                source={{ uri: reply.threads.image_url }}
+                style={getResponsiveImageStyle(screenWidth)}
+                resizeMode="cover"
+              />
+            </View>
+          )}
         </View>
       </View>
       {/* Reply block */}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
         {/* Attach onLayout to the View wrapping the avatar for accurate Y position */}
         <View ref={replyAvatarRef} onLayout={onReplyAvatarLayout}>
-          <TouchableOpacity onPress={() => onProfilePress?.(reply.user_id)}>
+          <TouchableOpacity onPress={(e) => {
+            e.stopPropagation();
+            onProfilePress?.(reply.user_id);
+          }}>
             <Image
               source={{
                 uri: reply.profiles?.avatar_url ||
@@ -258,7 +269,10 @@ export default function TwitterStyleReplyCard({
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
             {/* Likes */}
             <TouchableOpacity 
-              onPress={handleLikePress} 
+              onPress={(e) => {
+                e.stopPropagation();
+                handleLikePress();
+              }} 
               style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
             >
               <Heart 
@@ -280,5 +294,6 @@ export default function TwitterStyleReplyCard({
         </View>
       </View>
     </View>
+    </TouchableOpacity>
   );
 }

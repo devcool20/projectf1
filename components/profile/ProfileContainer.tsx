@@ -7,10 +7,11 @@ import { EditProfileModal } from './EditProfileModal';
 import PostCard from '../PostCard';  // Import PostCard
 import ReplyCard from '../community/ReplyCard';  // Import ReplyCard
 import TwitterStyleReplyCard from '../community/TwitterStyleReplyCard';  // Import TwitterStyleReplyCard
-import { ThreadView } from '../community/ThreadView';  // Import ThreadView
+import { AnimatedThreadView } from '../community/AnimatedThreadView';  // Import AnimatedThreadView
 import RepostModal from '../RepostModal';  // Import RepostModal
 import { getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import CarLoadingAnimation from '../CarLoadingAnimation';
+import { useEngagementStore } from '../community/engagementStore';
 
 // Team logos and admin constants
 const TEAM_LOGOS: { [key: string]: any } = {
@@ -65,7 +66,7 @@ export default function ProfileContainer({
   const [activeTab, setActiveTab] = useState<'posts' | 'replies'>('posts');
   const [editModal, setEditModal] = useState(false);
   const [selectedThread, setSelectedThread] = useState<any>(null);
-  const [isViewingThread, setIsViewingThread] = useState(false);
+  const [showAnimatedThreadView, setShowAnimatedThreadView] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -95,6 +96,9 @@ export default function ProfileContainer({
   
   // Add state for profile setup message
   const [showProfileSetupMessage, setShowProfileSetupMessage] = useState(false);
+  
+  // Zustand engagement store
+  const { likes, bookmarks, setLike, setBookmark, bulkSet } = useEngagementStore();
 
   // Helper function to check if user is admin
   const isUserAdmin = (userProfile: any, userSession: any) => {
@@ -118,6 +122,23 @@ export default function ProfileContainer({
     // Reset profile setup message when session changes (user logs in/out)
     setShowProfileSetupMessage(false);
   }, [userId, session]);
+
+  // Sync Zustand store when threads data changes
+  useEffect(() => {
+    if (threads.length > 0) {
+      const engagementData = {
+        likes: threads.reduce((acc, thread) => {
+          acc[thread.id] = thread.isLiked || false;
+          return acc;
+        }, {} as Record<string, boolean>),
+        bookmarks: threads.reduce((acc, thread) => {
+          acc[thread.id] = thread.isBookmarked || false;
+          return acc;
+        }, {} as Record<string, boolean>),
+      };
+      bulkSet(engagementData);
+    }
+  }, [threads, bulkSet]);
 
   // Prevent auto-refresh when switching browser tabs
   useEffect(() => {
@@ -307,7 +328,6 @@ export default function ProfileContainer({
         ...thread,
         likeCount: likeCountMap[thread.id] || 0,
         replyCount: thread.replies[0]?.count || 0,
-
         bookmarkCount: bookmarkCountMap[thread.id] || 0,
         isLiked: userLikes.some(like => like.thread_id === thread.id),
         isBookmarked: userBookmarks.some(bookmark => bookmark.thread_id === thread.id),
@@ -505,7 +525,7 @@ export default function ProfileContainer({
     const thread = threads.find(t => t.id === threadId);
     if (thread) {
       setSelectedThread(thread);
-      setIsViewingThread(true);
+      setShowAnimatedThreadView(true);
     }
   };
 
@@ -513,24 +533,25 @@ export default function ProfileContainer({
     // For replies, we need to find the thread from the replies data
     const reply = replies.find(r => r.threads?.id === threadId);
     if (reply?.threads) {
-      // Ensure the thread has the necessary data structure for ThreadView
+      // Ensure the thread has the necessary data structure for AnimatedThreadView
       const threadWithCounts = {
         ...reply.threads,
         likeCount: 0, // This would need to be fetched or calculated
         replyCount: 0, // This would need to be fetched or calculated
-
         isLiked: false,
         isBookmarked: false,
         profiles: reply.threads.profiles
       };
       setSelectedThread(threadWithCounts);
-      setIsViewingThread(true);
+      setShowAnimatedThreadView(true);
     }
   };
 
-  const handleCloseThread = () => {
-    setIsViewingThread(false);
+  const handleCloseAnimatedThreadView = () => {
+    setShowAnimatedThreadView(false);
     setSelectedThread(null);
+    // Refresh data to sync engagement state
+    fetchAllData(false);
   };
 
   const handleProfilePress = (userId: string) => {
@@ -576,7 +597,8 @@ export default function ProfileContainer({
 
     console.log('Like toggle called:', { threadId, isLiked, userId: session.user.id });
 
-    // Optimistic UI update
+    // Optimistic UI update with Zustand store
+    setLike(threadId, !isLiked);
     setThreads(prevThreads => prevThreads.map(thread => {
       if (thread.id === threadId) {
         const newLikeCount = isLiked ? (thread.likeCount || 0) - 1 : (thread.likeCount || 0) + 1;
@@ -620,6 +642,7 @@ export default function ProfileContainer({
     } catch (error) {
       console.error("Error toggling like:", error);
       // Revert optimistic update on error
+      setLike(threadId, isLiked);
       setThreads(prevThreads => prevThreads.map(thread => {
         if (thread.id === threadId) {
           const revertedLikeCount = isLiked ? (thread.likeCount || 0) + 1 : (thread.likeCount || 0) - 1;
@@ -633,7 +656,8 @@ export default function ProfileContainer({
   const handleBookmarkToggle = async (threadId: string, isBookmarked: boolean) => {
     if (!session) return;
 
-    // Optimistic UI update
+    // Optimistic UI update with Zustand store
+    setBookmark(threadId, !isBookmarked);
     setThreads(prevThreads => prevThreads.map(thread => {
       if (thread.id === threadId) {
         return { ...thread, isBookmarked: !isBookmarked };
@@ -647,7 +671,21 @@ export default function ProfileContainer({
         if (error) throw error;
       } else {
         const { error } = await supabase.from('bookmarks').insert({ thread_id: threadId, user_id: session.user.id });
-        if (error) throw error;
+        if (error) {
+          // Handle duplicate key error (bookmark already exists)
+          if (error.code === '23505') {
+            console.log('Bookmark already exists, updating UI to show as bookmarked');
+            setBookmark(threadId, true);
+            setThreads(prevThreads => prevThreads.map(thread => {
+              if (thread.id === threadId) {
+                return { ...thread, isBookmarked: true };
+              }
+              return thread;
+            }));
+            return; // Don't throw error, just return
+          }
+          throw error;
+        }
       }
       
       // Don't refresh data immediately - let the optimistic update stay
@@ -655,6 +693,7 @@ export default function ProfileContainer({
     } catch (error) {
       console.error("Error toggling bookmark:", error);
       // Revert optimistic update on error
+      setBookmark(threadId, isBookmarked);
       setThreads(prevThreads => prevThreads.map(thread => {
         if (thread.id === threadId) {
           return { ...thread, isBookmarked: isBookmarked };
@@ -1164,7 +1203,7 @@ export default function ProfileContainer({
   // Loading state
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000000' }}>
+      <View style={{ flex: 1, backgroundColor: 'transparent' }}>
         <CarLoadingAnimation 
           duration={1000}
         />
@@ -1631,28 +1670,17 @@ return (
         </TouchableOpacity>
       </View>
       {/* Posts/Replies List */}
-      {isViewingThread && selectedThread ? (
-        <ThreadView 
-          thread={selectedThread} 
-          onClose={handleCloseThread} 
-          session={session} 
-          onProfilePress={handleProfilePress}
-          onThreadPress={handleThreadClick}
-          onThreadIdPress={handleThreadClick}
-          onDeleteRepost={handleRepostDeletePress}
-        />
-      ) : (
-        <ScrollView 
-          style={{ flex: 1 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={['#1DA1F2']}
-              tintColor={'#1DA1F2'}
-            />
-          }
-        >
+      <ScrollView 
+        style={{ flex: 1 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={['#1DA1F2']}
+            tintColor={'#1DA1F2'}
+          />
+        }
+      >
           {activeTab === 'posts' ? (
             threads.length > 0 ? (
               threads.map((item, index) => (
@@ -2374,6 +2402,20 @@ return (
           </View>
         </View>
       </Modal>
+
+      {/* AnimatedThreadView Modal */}
+      {selectedThread && (
+        <AnimatedThreadView
+          thread={selectedThread}
+          onClose={handleCloseAnimatedThreadView}
+          session={session}
+          onProfilePress={handleProfilePress}
+          onThreadPress={handleThreadClick}
+          onThreadIdPress={handleThreadClick}
+          onDeleteRepost={handleRepostDeletePress}
+          isVisible={showAnimatedThreadView}
+        />
+      )}
     </View>
   );
 }; 

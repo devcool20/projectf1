@@ -6,7 +6,7 @@ export default function ProfileScreen() {
   return (
     <View style={{ 
       flex: 1, 
-      backgroundColor: '#000000'
+      backgroundColor: 'transparent'
     }}>
       <CarLoadingAnimation 
         duration={1000}

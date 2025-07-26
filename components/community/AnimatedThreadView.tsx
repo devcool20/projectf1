@@ -163,7 +163,24 @@ export function AnimatedThreadView({
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.95);
 
-  const { setReplyCount } = useEngagementStore();
+  const { setReplyCount, likes, bookmarks, setLike, setBookmark } = useEngagementStore();
+
+  // Sync thread data with Zustand store
+  useEffect(() => {
+    if (thread) {
+      const isLikedFromStore = likes[thread.id] || false;
+      const isBookmarkedFromStore = bookmarks[thread.id] || false;
+      
+      setThreadData(prev => {
+        if (!prev) return thread;
+        return {
+          ...prev,
+          isLiked: isLikedFromStore,
+          isBookmarked: isBookmarkedFromStore,
+        };
+      });
+    }
+  }, [thread, likes, bookmarks]);
 
   // Helper to detect mobile web
   function isMobileWeb() {
@@ -435,6 +452,10 @@ export function AnimatedThreadView({
   // Handle thread like toggle
   const handleThreadLikeToggle = async (threadId: string, isLiked: boolean, isRepost: boolean = false) => {
     if (!session) return;
+    
+    // Optimistic update with Zustand store
+    setLike(threadId, !isLiked);
+    
     try {
       if (isRepost) {
       if (isLiked) {
@@ -471,6 +492,8 @@ export function AnimatedThreadView({
       } : prev);
     } catch (error) {
       console.error('Error toggling thread like:', error);
+      // Revert optimistic update on error
+      setLike(threadId, isLiked);
     }
   };
 
@@ -567,6 +590,10 @@ export function AnimatedThreadView({
   // In handleBookmarkToggle, always use bookmarks table and thread_id = threadData.id
   const handleBookmarkToggle = async () => {
     if (!session || !threadData) return;
+    
+    // Optimistic update with Zustand store
+    setBookmark(threadData.id, !threadData.isBookmarked);
+    
     try {
       const threadIdToBookmark = threadData.id;
       if (threadData.isBookmarked) {
@@ -582,6 +609,7 @@ export function AnimatedThreadView({
           .insert({ thread_id: threadIdToBookmark, user_id: session.user.id });
         if (error) {
           if (error.code === '23505') {
+            setBookmark(threadData.id, true);
             setThreadData(prev => prev ? { ...prev, isBookmarked: true } : prev);
             return;
           }
@@ -591,6 +619,8 @@ export function AnimatedThreadView({
       setThreadData(prev => prev ? { ...prev, isBookmarked: !prev.isBookmarked } : prev);
     } catch (error) {
       console.error('Error toggling bookmark:', error);
+      // Revert optimistic update on error
+      setBookmark(threadData.id, threadData.isBookmarked);
       Alert.alert('Error', 'Failed to update bookmark');
     }
   };

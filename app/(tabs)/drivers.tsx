@@ -119,7 +119,7 @@ export default function StandingsScreen() {
         if (elapsed < minLoadingTime) {
           setTimeout(() => setLoading(false), minLoadingTime - elapsed);
         } else {
-          setLoading(false);
+        setLoading(false);
         }
       });
     } else {
@@ -136,7 +136,7 @@ export default function StandingsScreen() {
         if (elapsed < minLoadingTime) {
           setTimeout(() => setLoading(false), minLoadingTime - elapsed);
         } else {
-          setLoading(false);
+        setLoading(false);
         }
       });
     }

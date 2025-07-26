@@ -169,7 +169,7 @@ export const OtherUserProfileModal: React.FC<OtherUserProfileModalProps> = ({
           </View>
 
           {loading ? (
-            <View className="flex-1 justify-center items-center p-8" style={{ backgroundColor: '#000000' }}>
+            <View className="flex-1 justify-center items-center p-8" style={{ backgroundColor: 'transparent' }}>
               <CarLoadingAnimation 
                 duration={1000}
               />
