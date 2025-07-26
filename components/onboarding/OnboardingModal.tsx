@@ -19,6 +19,7 @@ import Animated, {
   withDelay,
   runOnJS
 } from 'react-native-reanimated';
+import CarLoadingAnimation from '../CarLoadingAnimation';
 
 interface OnboardingModalProps {
   visible: boolean;
@@ -157,6 +158,15 @@ export function OnboardingModal({ visible, onClose, onSignUp }: OnboardingModalP
               </Text>
             </Animated.View>
 
+            {/* Car Animation Section */}
+            <Animated.View style={[styles.carAnimationSection, featuresStyle]}>
+              <View style={styles.carAnimationContainer}>
+                <CarLoadingAnimation 
+                  duration={2000}
+                />
+              </View>
+            </Animated.View>
+
             {/* Features Section */}
             <Animated.View style={[styles.featuresSection, featuresStyle]}>
               <Text style={styles.featuresTitle}>What you can do:</Text>
@@ -282,6 +292,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     fontFamily: 'Formula1-Regular',
+  },
+  carAnimationSection: {
+    padding: 20,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  carAnimationContainer: {
+    width: '100%',
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   featuresSection: {
     padding: 24,

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Image,
 } from 'react-native';
 import { Lock, Zap } from 'lucide-react-native';
 import Animated, { 
@@ -15,6 +16,7 @@ import Animated, {
   withSequence,
   withDelay
 } from 'react-native-reanimated';
+
 
 interface LockedScreenProps {
   onGetStarted: () => void;
@@ -82,6 +84,15 @@ export function LockedScreen({
         
         {/* Subtitle */}
         <Text style={styles.subtitle}>{subtitle}</Text>
+
+        {/* Car Animation Section */}
+        <View style={styles.carAnimationContainer}>
+          <Image
+            source={require('../../assets/gif/f1car2-unscreen.gif')}
+            style={styles.carImage}
+            resizeMode="contain"
+          />
+        </View>
 
         {/* Get Started Button */}
         <Animated.View style={[styles.buttonContainer, buttonStyle]}>
@@ -160,6 +171,20 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     lineHeight: 24,
     fontFamily: 'Formula1-Regular',
+  },
+  carAnimationContainer: {
+    width: '100%',
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 32,
+  },
+  carImage: {
+    width: 200,
+    height: 100,
   },
   buttonContainer: {
     marginBottom: 32,

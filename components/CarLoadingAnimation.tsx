@@ -52,7 +52,7 @@ const CarLoadingAnimation: React.FC<CarLoadingAnimationProps> = ({
         ]}
       >
         <Image
-          source={require('../assets/gif/obnoxious-racing-car-unscreen.gif')}
+          source={require('../assets/gif/f1car2-unscreen.gif')}
           style={styles.carImage}
           resizeMode="contain"
         />
