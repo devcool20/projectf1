@@ -1942,26 +1942,26 @@ return (
               </View>
             )
           ) : (
-                      replies.length > 0 ? (
-            replies.map((reply, index) => (
-              <View key={reply.id}>
-                <TwitterStyleReplyCard
-                  reply={reply}
-                  onProfilePress={handleProfilePress}
-                  onThreadPress={handleReplyThreadClick}
-                  session={session}
-                />
-                {/* Separator line between replies */}
-                {index < replies.length - 1 && (
-                  <View style={{
-                    height: 1,
-                    backgroundColor: '#2b2a2a',
-                    marginHorizontal: 16,
-                    marginVertical: 0
-                  }} />
-                )}
-              </View>
-            ))
+            replies.length > 0 ? (
+              replies.map((reply, index) => (
+                <View key={reply.id}>
+                  <TwitterStyleReplyCard
+                    reply={reply}
+                    onProfilePress={handleProfilePress}
+                    onThreadPress={handleReplyThreadClick}
+                    session={session}
+                  />
+                  {/* Separator line between replies */}
+                  {index < replies.length - 1 && (
+                    <View style={{
+                      height: 1,
+                      backgroundColor: '#2b2a2a',
+                      marginHorizontal: 16,
+                      marginVertical: 0
+                    }} />
+                  )}
+                </View>
+              ))
             ) : (
               <View style={{ padding: 16, alignItems: 'center' }}>
                 <Text style={{ color: '#888', fontSize: 16 }}>No replies yet.</Text>
@@ -1969,7 +1969,7 @@ return (
             )
           )}
         </ScrollView>
-      )}
+      {/* End of Threads */}
       {/* Edit Profile Modal */}
       <EditProfileModal
         visible={editModal}

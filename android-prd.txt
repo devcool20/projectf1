@@ -1,0 +1,411 @@
+# Product Requirements Document: projectF1 Android Application
+
+**Version:** 1.0
+**Date:** July 27, 2025
+**Author:** Gemini CLI
+
+## 1. Introduction
+
+This document outlines the functional and non-functional requirements for the Android version of the projectF1 application. The primary goal is to replicate the existing web application's features, user experience (UX), and visual design with pixel-perfect accuracy on the Android platform. This PRD will serve as a comprehensive guide for the development team, ensuring consistency and a high-quality user experience across both platforms.
+
+The web application has been optimized for mobile view, and this document leverages that existing design and functionality as the baseline for the Android implementation.
+
+## 2. Overall Architecture & Structure
+
+The Android application will largely mirror the web application's architecture, leveraging React Native's cross-platform capabilities where applicable, and implementing platform-specific components as needed.
+
+### 2.1. Routing & Navigation
+
+*   **Framework:** Expo Router will be used for navigation, maintaining the existing route structure.
+*   **Tab-based Navigation:** The primary navigation will be via a custom bottom tab bar, replicating the `CustomBottomNav` component.
+    *   Tabs: Community (Threads), News, Screenings, Shop, Drivers (Standings).
+    *   Tab icons and labels must match the web version.
+    *   Active tab styling (scale, shadow, text color) must be identical.
+*   **Nested Routes:** Support for nested routes within tabs (e.g., `/community/thread/[id]`, `/profile/[id]`, `/standings/[name]`, `/team/[name]`).
+*   **Deep Linking:** The application must support deep linking to specific threads, profiles, and standings pages (e.g., `projectf1://community?thread=123`).
+*   **Header:** Custom headers will be implemented per screen, replicating the web's `HeaderRight` component and back button functionality.
+
+### 2.2. State Management
+
+*   **Authentication:** `AuthContext.tsx` will manage user session, loading state, and onboarding status.
+*   **Standings:** `StandingsContext.tsx` will provide global access to driver and team standings data.
+*   **Engagement Metrics:** `useEngagementStore` (Zustand) will manage real-time likes, bookmarks, and reply counts for threads and replies, ensuring optimistic UI updates.
+*   **Global News Service:** `globalNewsService.ts` will handle news fetching, caching, and filtering, providing a centralized news data source.
+
+### 2.3. Data Fetching & Persistence
+
+*   **Backend:** Supabase will be the primary backend for authentication, database (PostgreSQL), and storage (for images).
+*   **Real-time Updates:** Supabase subscriptions will be utilized for real-time updates where appropriate (e.g., new threads, replies, likes).
+*   **Local Storage/Cache:** `localStorage` (or equivalent for React Native) will be used for caching news articles (`globalNewsService.ts`) and onboarding status.
+
+### 2.4. Styling & Theming
+
+*   **Styling Framework:** NativeWind (Tailwind CSS for React Native) will be used for utility-first styling, replicating the web's `className` usage.
+*   **Direct StyleSheet:** `StyleSheet.create` will be used for complex layouts and animations where NativeWind might be less efficient or expressive.
+*   **Inline Styles:** Used sparingly for dynamic styles.
+*   **Fonts:** Custom fonts (`Formula1-Bold`, `Formula1-Regular`, `Formula1-Wide`, `RacingSansOne`, `Inter`) must be embedded and used consistently.
+*   **Color Scheme:** Support for light/dark mode via `useColorScheme` (though the current web app appears to be primarily dark-themed).
+*   **Responsive Design:** Layouts must adapt to different screen sizes and orientations, utilizing `Dimensions` API and conditional styling (`isSmallScreen`).
+
+### 2.5. Assets
+
+*   **Images:** All static image assets (driver photos, team logos, product images, event images, favicon, app icon) must be included and optimized for Android.
+*   **GIFs:** Loading animations (`f1car2-unscreen.gif`, `obnoxious-racing-car-unscreen.gif`) must be supported.
+*   **Icons:** `lucide-react-native` will provide vector icons.
+
+## 3. Core Features Breakdown
+
+This section details each major feature, including its sub-features and minute UI/UX requirements.
+
+### 3.1. Authentication & User Management
+
+*   **AuthModal (`components/auth/AuthModal.tsx`):**
+    *   **Sign-in:** Email/password.
+    *   **Sign-up:** Email/password.
+    *   **Google Sign-in:** OAuth integration.
+    *   **Error Handling:** Display clear error messages (e.g., "Invalid credentials", "Email already exists").
+    *   **Loading States:** Show activity indicators during API calls.
+    *   **Password Visibility Toggle:** Eye icon to show/hide password.
+    *   **Animated Modal:** Scale and opacity animations for modal entry/exit.
+*   **EnhancedSignupModal (`components/auth/EnhancedSignupModal.tsx`):**
+    *   **Purpose:** Collect additional user details after initial sign-up (especially for Google users).
+    *   **Fields:** Email (pre-filled for Google), Password (optional for Google), Username, Profile Picture, Favorite Team.
+    *   **Username Availability Check:** Real-time validation with visual feedback (check/error icon).
+    *   **Profile Picture Upload:**
+        *   Integration with `expo-image-picker` for gallery access.
+        *   Image resizing/compression using `expo-image-manipulator` to optimize upload size.
+        *   Preview of selected image.
+    *   **Favorite Team Selection:** Grid of F1 team logos with names, visual selection indicator.
+    *   **Privacy Notice:** Text regarding Terms of Service and Privacy Policy.
+    *   **Loading State:** "Creating Profile..." button state.
+*   **ProfileContainer (`components/profile/ProfileContainer.tsx`):**
+    *   **Profile Header:**
+        *   Back button (`ArrowLeft` icon).
+        *   Username and post/reply counts in header.
+        *   "Edit Profile" button (for own profile) or "Follow/Following" button (for other profiles).
+    *   **Avatar Display:** Circular avatar with optional edit icon overlay (for own profile).
+    *   **User Info:**
+        *   Full Name, Username (`@` prefix).
+        *   Bio (multi-line text).
+        *   Favorite Team logo/name or Admin badge (`FIA` team logo for admin).
+    *   **Followers/Following Counts:** Display numerical counts.
+        *   Tappable to open respective modals (`FollowersModal`, `FollowingModal`).
+    *   **Action Buttons (Own Profile):**
+        *   "Logout" button (`LogOut` icon).
+        *   "Delete Profile" button (with confirmation modal).
+    *   **Action Buttons (Other Profiles):**
+        *   "Follow" / "Following" button (`UserPlus`/`UserMinus` icons), with loading state.
+    *   **Tabs:** "Posts" and "Replies" tabs to switch content view.
+    *   **Content Display:**
+        *   **Posts Tab:** List of `PostCard` and `RepostCard` components.
+        *   **Replies Tab:** List of `TwitterStyleReplyCard` components.
+    *   **Loading/Error States:** Show `ProfileCarLoadingAnimation` or error messages.
+    *   **Refresh Control:** Pull-to-refresh functionality.
+*   **EditProfileModal (`components/profile/EditProfileModal.tsx`):**
+    *   **Fields:** Username, Full Name, Bio, Favorite Team, Avatar.
+    *   **Avatar Upload:** Same functionality as `EnhancedSignupModal`.
+    *   **Team Selection:** Same grid selection as `EnhancedSignupModal`.
+    *   **Save/Cancel Buttons:** Update profile or revert changes.
+    *   **Loading State:** Activity indicator on save.
+*   **OtherUserProfileModal (`components/OtherUserProfileModal.tsx`):**
+    *   **Purpose:** Display a simplified view of another user's profile.
+    *   **Fields:** Avatar, Username, Favorite Team.
+    *   **Follow/Unfollow Button:** Functionality to follow/unfollow the displayed user.
+    *   **Loading State:** `ProfileCarLoadingAnimation`.
+*   **LockedScreen (`components/auth/LockedScreen.tsx`):**
+    *   **Purpose:** Displayed when a feature requires authentication.
+    *   **Visuals:** Lock icon, animated sparkle, F1 car animation.
+    *   **Call to Action:** "Get Started" button to trigger authentication.
+    *   **Feature Highlights:** Bullet points describing benefits of signing up.
+*   **OnboardingModal (`components/onboarding/OnboardingModal.tsx`):**
+    *   **Purpose:** Introduce new users to the app's features.
+    *   **Visuals:** "Welcome to projectF1" with animated sparkles, F1 car animation.
+    *   **Feature List:** Scrollable list of app features with icons, titles, and descriptions.
+    *   **Call to Action:** "Get Started" button to initiate sign-up.
+    *   **Animated Modal:** Scale and opacity animations for modal entry/exit.
+
+### 3.2. Community (Threads/Posts/Reposts/Replies)
+
+*   **CommunityScreen (`app/(tabs)/community.tsx`):**
+    *   **Feed Display:** Main scrollable feed showing a mix of `PostCard` and `RepostCard` components.
+    *   **"For You" / "Following" Tabs:** Switch between general feed and feed from followed users.
+    *   **Post Creation:**
+        *   Text input for content.
+        *   Image upload (`ImagePicker` integration).
+        *   "Post" button.
+        *   `CreateThread` component (modal).
+    *   **Search Functionality:**
+        *   Search bar (`TextInput` with `Search` icon).
+        *   Real-time search for threads and profiles.
+        *   Display search results (threads and profiles).
+    *   **Sidebar Navigation:** (`Menu` icon to open/close).
+        *   List of main navigation items (Threads, News, Screenings, Shop, Drivers, Profile, Bookmarks).
+        *   "Post" button within sidebar.
+    *   **Refresh Control:** Pull-to-refresh for the feed.
+    *   **Pagination:** Infinite scroll to load more threads/reposts.
+    *   **New Threads Indicator:** Visual cue when new content is available.
+*   **PostCard (`components/PostCard.tsx`):**
+    *   **User Info:** Avatar (circular), Username, Favorite Team logo/Admin badge, Timestamp (formatted compactly, e.g., "5m", "2h", "Jul 25").
+    *   **Content:** Text content (with "Read more" truncation for long posts), Image display (responsive sizing).
+    *   **Engagement Bar:**
+        *   **Likes:** `Heart` icon, count, active/inactive state.
+        *   **Comments:** `MessageCircle` icon, count.
+        *   **Reposts:** `Repeat2` icon, count.
+        *   **Bookmarks:** `Bookmark` icon, active/inactive state.
+    *   **Actions:**
+        *   Tapping on avatar/username navigates to profile.
+        *   Tapping on image opens full-screen preview.
+        *   Tapping on post content (outside engagement bar) opens `ThreadView`.
+        *   "More" (`MoreHorizontal`) icon for delete option (only for post owner or admin).
+*   **RepostCard (`components/RepostCard.tsx`):**
+    *   **Structure:** Similar to `PostCard` but with an embedded "original thread preview".
+    *   **Repost User Info:** Avatar, Username, Team logo/Admin badge, Timestamp.
+    *   **Repost Content:** Optional text and image.
+    *   **Original Thread Preview:**
+        *   Bordered box containing original post's avatar, username, content, and image.
+        *   Tappable to navigate to the original thread.
+    *   **Engagement Bar:** Likes, Comments, Reposts (counts and active states).
+    *   **Actions:** Like/Unlike, Repost, Delete (for repost owner or admin).
+*   **RepostModal (`components/RepostModal.tsx`):**
+    *   **Purpose:** Allow users to repost a thread with optional additional content.
+    *   **Fields:** Text input ("Add your thoughts..."), Image upload.
+    *   **Original Thread Preview:** Displays the thread being reposted.
+    *   **"Repost" Button:** Submits the repost.
+*   **AnimatedThreadView (`components/community/AnimatedThreadView.tsx`):**
+    *   **Purpose:** Full-screen modal view for a single thread and its replies.
+    *   **Animations:** Slide-in/slide-out animation from the right.
+    *   **Header:** Back button, "Thread" title.
+    *   **Main Thread Content:** Displays the `PostCard` or `RepostCard` content.
+    *   **Reply Input:**
+        *   Text input for new replies.
+        *   Image upload for replies.
+        *   "Reply" button.
+        *   Current user's avatar displayed next to input.
+    *   **Replies Section:**
+        *   List of `TwitterStyleReplyCard` components.
+        *   Loading indicator for replies.
+        *   "No replies yet" message.
+    *   **Reply Actions:**
+        *   Tapping on reply avatar/username navigates to profile.
+        *   Liking replies (`Heart` icon, count).
+        *   Replying to a specific user (`@username` pre-fill in input).
+        *   Deleting replies (for reply owner or admin).
+    *   **Image Preview Modal:** Full-screen modal to view images from posts/replies.
+*   **TwitterStyleReplyCard (`components/community/TwitterStyleReplyCard.tsx`):**
+    *   **Structure:** Replicates Twitter's reply display with a vertical line connecting the original post's avatar to the reply's avatar.
+    *   **Original Thread Context:** Displays a compact version of the original thread (avatar, username, content, image).
+    *   **Reply Content:** Avatar, username, timestamp, content, image.
+    *   **Engagement Bar:** Likes (with count), Comments (placeholder).
+    *   **Actions:** Like/Unlike, navigate to profile/thread.
+*   **BookmarkCard (`components/community/BookmarkCard.tsx`):**
+    *   **Purpose:** Display bookmarked threads/reposts in the "Bookmarks" section.
+    *   **Content:** Similar to `PostCard` but with a prominent `Bookmark` icon and a delete action for the bookmark.
+    *   **Actions:** Tapping opens the `ThreadView`.
+
+### 3.3. News Feed
+
+*   **NewsScreen (`app/(tabs)/news.tsx`):**
+    *   **Header:** "F1 News" title.
+    *   **Search Bar:** `TextInput` with `Search` icon, clear button (`X` icon).
+    *   **Filter Button:** `Filter` icon to toggle source filter options.
+    *   **Source Filters:** Horizontal scrollable list of source buttons (e.g., "All Sources", "Formula 1 Official", "ESPN F1").
+    *   **Article List:** Scrollable list of news articles.
+    *   **Article Card (`renderArticleCard` function):**
+        *   Hero Image (if available).
+        *   Source badge, formatted published date.
+        *   Title (truncated to 2 lines).
+        *   Description/Content (truncated to 4 lines).
+        *   Author, Category.
+        *   "Read full article" link (`ExternalLink` icon).
+    *   **"Load More" Button:** Appears at the bottom to fetch additional articles.
+    *   **Loading/Error States:** Activity indicator, "No articles found" message.
+    *   **Refresh Control:** Pull-to-refresh.
+*   **NewsArticleDetail (`components/news/NewsArticleDetail.tsx`):**
+    *   **Purpose:** Display full content of a selected news article.
+    *   **Header:** Back button, Source name, Share icon, External Link icon, Close icon.
+    *   **Content:** Full image, title, meta info (date, author), category badge, full article text.
+    *   **Source Attribution:** Footer with source name and published date.
+
+### 3.4. Standings (Drivers & Teams)
+
+*   **StandingsScreen (`app/(tabs)/drivers.tsx`):**
+    *   **Header:** "Standings 2025" title.
+    *   **Tabs:** "Drivers" and "Teams" for switching views.
+    *   **Loading Animation:** `CarLoadingAnimation` displayed during data fetch.
+    *   **Driver List (`renderList` function):**
+        *   **Hero Driver:** Top driver displayed prominently with large image, position, name (first name, colored last name), team, points.
+        *   **Other Drivers:** List items with position, avatar, name (first name, colored last name), team, points.
+        *   Tappable to navigate to `DriverDetailScreen`.
+    *   **Team List (`renderList` function):**
+        *   List items with position, team logo, team name, car model, points.
+        *   Tappable to navigate to `TeamDetailScreen`.
+    *   **Animations:** Fade animation when switching tabs.
+*   **DriverDetailScreen (`app/standings/[name].tsx`):**
+    *   **Header:** Back button.
+    *   **Hero Section:** Driver image, position, name (first name, colored last name), team.
+    *   **Stats Grid:** Points, Wins, Podiums, Poles (numerical display).
+    *   **Details Section:** Nationality, Date of Birth, Team.
+    *   **Biography Section:** Multi-line text bio.
+    *   **Points Progression Chart:** `DriverPointsBarChart` visualizing points per round.
+    *   **Loading/Error States:** Activity indicator or "Driver not found" message.
+*   **TeamDetailScreen (`app/team/[name].tsx`):**
+    *   **Header:** Back button.
+    *   **Hero Section:** Team logo, position, team name, car model.
+    *   **Stats Grid:** Points, Wins, Podiums, Poles (numerical display).
+    *   **Details Section:** Base Location, Team Principal, First Entry.
+    *   **Team History Section:** Multi-line text bio.
+    *   **Loading/Error States:** Activity indicator or "Team not found" message.
+*   **DriverPointsBarChart (`components/DriverPointsBarChart.tsx`):**
+    *   **Purpose:** Visualize driver points progression over rounds.
+    *   **UI:** Bar chart with Y-axis (points), X-axis (rounds), bars colored by team.
+    *   **Labels:** Numerical labels for points and rounds.
+
+### 3.5. Shop
+
+*   **ShopScreen (`app/(tabs)/shop.tsx`):**
+    *   **Header:** "F1 Shop" title.
+    *   **Product List:** Scrollable list of `ProductCard` components.
+    *   **ProductCard (`components/ProductCard.tsx`):**
+        *   Product Image.
+        *   Product Name.
+        *   Price (formatted with currency symbol, e.g., "$29.99").
+        *   Team Badge (gradient background with team colors).
+        *   Featured Badge ("⭐ FEATURED").
+        *   Category.
+        *   Description.
+        *   "🛒 Buy Now" button (links to external URL).
+    *   **Loading/Empty States:** Activity indicator, "No Products Available" message.
+    *   **Refresh Control:** Pull-to-refresh.
+
+### 3.6. Screenings
+
+*   **ScreeningsScreen (`app/(tabs)/screenings.tsx`):**
+    *   **Header:** "🎬 F1 Screenings" title.
+    *   **Event List:** Scrollable list of screening events.
+    *   **Event Card (inline rendering):**
+        *   Header Image (if available).
+        *   Grand Prix Name.
+        *   Date, Time, Location, Country.
+        *   Round Number, Season.
+    *   **Loading/Empty States:** Activity indicator, "No Screenings Available" message.
+    *   **Refresh Control:** Pull-to-refresh.
+
+### 3.7. UI/UX Elements
+
+*   **CustomBottomNav (`components/CustomBottomNav.tsx`):**
+    *   **Appearance:** Rounded-edge, semi-transparent background with gradient.
+    *   **Items:** Icons and text labels for each tab.
+    *   **Active State:** Scale animation, bold text, distinct background for the active tab.
+    *   **Shadows:** Subtle shadows for depth.
+*   **CarLoadingAnimation (`components/CarLoadingAnimation.tsx`):**
+    *   **Purpose:** Generic loading animation.
+    *   **Visual:** F1 car GIF moving across the screen.
+    *   **Looping:** Continuous animation.
+*   **ProfileCarLoadingAnimation (`components/ProfileCarLoadingAnimation.tsx`):**
+    *   **Purpose:** Specific loading animation for profile-related screens.
+    *   **Visual:** Different F1 car GIF moving across the screen.
+    *   **Looping:** Continuous animation.
+*   **AnimatedRadioCards (`components/AnimatedRadioCards.tsx`):**
+    *   **Purpose:** Display famous F1 radio messages.
+    *   **Visual:** Two cards, one partially visible on each side, sliding into view when tapped.
+    *   **Animations:** Slide and opacity animations.
+    *   **RadioCard (`components/RadioCard.tsx`):**
+        *   Team color, team icon, driver name.
+        *   Driver and team responses.
+        *   Sound wave visualization.
+*   **Modals:** Consistent styling for all modal components (background overlay, rounded corners, shadows, close buttons).
+*   **Buttons:** Consistent styling for all buttons (`Button` component from `components/ui/button.tsx`), including variants (default, destructive, outline, secondary, ghost, link, cta) and sizes.
+*   **Cards:** Consistent styling for `Card` components (`components/ui/card.tsx`) with headers, titles, descriptions, and content.
+*   **Inputs:** Consistent styling for `Input` components (`components/ui/input.tsx`).
+*   **EngagementButton (`components/engagement-button/index.tsx`):**
+    *   **Purpose:** Reusable component for like, repost, bookmark actions.
+    *   **Visual:** Icon (Heart, Repeat2, Bookmark), active/inactive states.
+    *   **Animations:** Scale, rotate, color interpolation, haptic feedback on press.
+
+## 4. Technical Details & Dependencies (for Android Implementation)
+
+The following technical considerations and dependencies are crucial for the Android implementation:
+
+### 4.1. Core Frameworks & Libraries
+
+*   **React Native:** The primary framework for cross-platform development.
+*   **Expo:** Managed workflow for simplified development, including:
+    *   `expo-router`: File-system based routing.
+    *   `expo-font`: Custom font loading.
+    *   `expo-image-picker`: Accessing device photo library.
+    *   `expo-image-manipulator`: Image resizing and compression.
+    *   `expo-linear-gradient`: Gradient backgrounds.
+    *   `expo-haptics`: Haptic feedback.
+    *   `expo-linking`: Deep linking.
+*   **Supabase:**
+    *   `@supabase/supabase-js`: JavaScript client library for Supabase.
+    *   `react-native-url-polyfill`: Required for Supabase in React Native environment.
+    *   Database schema (tables: `profiles`, `threads`, `reposts`, `replies`, `likes`, `bookmarks`, `follows`, `screenings`, `shop_products`, `driver_standings`, `team_standings`, `driver_race_points`, `repost_replies`, `repost_reply_likes`, `reply_likes`).
+    *   Storage buckets (`avatars`, `thread-images`, `reply-images`).
+    *   Authentication methods (email/password, Google OAuth).
+*   **React Native Reanimated:** For declarative animations and gestures.
+*   **Zustand:** Lightweight state management library for engagement metrics.
+*   **NativeWind:** Tailwind CSS for React Native.
+*   **`lucide-react-native`:** Icon library.
+*   **`react-native-image-colors`:** For extracting dominant colors from images (used in `useDominantColor` hook).
+*   **`react-native-modal`:** For custom modal implementations.
+*   **`react-native-safe-area-context`:** For handling safe areas on different devices.
+
+### 4.2. Data Structures & Services
+
+*   **`data/drivers.ts` & `data/teams.ts`:** Static data for driver and team bios, facts, and images.
+*   **`lib/supabase.ts`:** Supabase client initialization with environment variables.
+*   **`lib/newsService.ts`:** Fetches news from an RSS-to-JSON proxy.
+*   **`lib/globalNewsService.ts`:** Manages news caching and loading.
+*   **`lib/radioCardData.ts`:** Static data for radio cards.
+*   **`lib/utils.ts`:** Utility functions for:
+    *   `cn`: Class name concatenation (NativeWind).
+    *   `formatThreadTimestamp`: Compact timestamp formatting.
+    *   `getResponsiveImageStyle`, `getCompactImageStyle`, `getVeryCompactImageStyle`: Responsive image sizing based on screen width.
+
+## 5. Assets
+
+All assets must be properly bundled and accessible within the Android application.
+
+*   **Fonts:**
+    *   `assets/fonts/Formula1-Bold_web_0.ttf`
+    *   `assets/fonts/Formula1-Regular_web_0.ttf`
+    *   `assets/fonts/Formula1-Wide_web_0.ttf`
+    *   (From Google Fonts, implicitly used by Expo): `RacingSansOne_400Regular`, `Inter_400Regular`, `Inter_600SemiBold`.
+*   **GIFs:**
+    *   `assets/gif/f1car2-unscreen.gif`
+    *   `assets/gif/obnoxious-racing-car-unscreen.gif`
+*   **Images:**
+    *   `assets/images/favicon.png` (Admin logo)
+    *   `assets/images/icon.png`
+    *   `assets/images/drivers/*` (Individual driver images)
+    *   `assets/images/team/*` (Team car images)
+*   **Team Logos:**
+    *   `team-logos/alpine.png`
+    *   `team-logos/astonmartin.png`
+    *   `team-logos/ferrari.png`
+    *   `team-logos/fia.png`
+    *   `team-logos/haas.png`
+    *   `team-logos/mclaren.png`
+    *   `team-logos/mercedes.png`
+    *   `team-logos/racingbulls.png`
+    *   `team-logos/redbull.png`
+    *   `team-logos/stake.png`
+    *   `team-logos/williams.png`
+
+## 6. Considerations for Android Implementation
+
+*   **Platform-Specific Code:** Pay close attention to `.android.tsx` files and `Platform.OS` checks. These indicate existing Android-specific implementations that should be maintained or adapted.
+*   **Performance:**
+    *   Optimize image loading and caching to prevent out-of-memory errors and ensure smooth scrolling.
+    *   Profile animations to ensure 60 FPS performance, especially on older devices.
+    *   Virtualization for long lists (e.g., `FlatList` or `SectionList` where appropriate) to improve performance.
+*   **Offline Capabilities:** The news service already includes caching. Ensure this works robustly on Android.
+*   **Deep Linking:** Configure Android Manifest for deep linking to allow external links to open the app at specific content.
+*   **Image Handling:** Implement robust image picking, resizing, and upload logic, considering device storage and network constraints.
+*   **Font Embedding:** Ensure all custom fonts are correctly embedded and rendered across all Android versions.
+*   **Supabase Setup:** Proper initialization and configuration of Supabase client for Android, including handling session persistence.
+*   **User Experience:** Ensure haptic feedback is correctly implemented for interactive elements.
+*   **Accessibility:** Consider accessibility features for Android users (e.g., screen readers, larger text).
+
+---
