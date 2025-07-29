@@ -1,29 +1,71 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { 
+  useSharedValue, 
+  withSpring, 
+  useAnimatedStyle,
+  interpolate,
+  Extrapolate
+} from 'react-native-reanimated';
+import { 
+  MessageCircle, 
+  Newspaper, 
+  Clapperboard, 
+  ShoppingCart, 
+  Trophy
+} from 'lucide-react-native';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const TABS = [
-  { name: 'Threads', path: '/community', icon: '\ud83d\udcac' },
-  { name: 'News', path: '/news', icon: '\ud83d\udcf0' },
-  { name: 'Screenings', path: '/screenings', icon: '\ud83c\udfac' },
-  { name: 'Shop', path: '/shop', icon: '\ud83d\udecd\ufe0f' },
-  { name: 'Standings', path: '/drivers', icon: '\ud83c\udfc6' },
+  { 
+    name: 'Threads', 
+    path: '/community', 
+    icon: MessageCircle,
+    activeIcon: MessageCircle
+  },
+  { 
+    name: 'News', 
+    path: '/news', 
+    icon: Newspaper,
+    activeIcon: Newspaper
+  },
+  { 
+    name: 'Screenings', 
+    path: '/screenings', 
+    icon: Clapperboard,
+    activeIcon: Clapperboard
+  },
+  { 
+    name: 'Shop', 
+    path: '/shop', 
+    icon: ShoppingCart,
+    activeIcon: ShoppingCart
+  },
+  { 
+    name: 'Standings', 
+    path: '/drivers', 
+    icon: Trophy,
+    activeIcon: Trophy
+  },
 ];
 
-export default function CustomBottomNav({ state, descriptors, navigation }) {
+interface CustomBottomNavProps {
+  state: any;
+  descriptors: any;
+  navigation: any;
+}
+
+export default function CustomBottomNav({ state, descriptors, navigation }: CustomBottomNavProps) {
   const router = useRouter();
   const pathname = usePathname();
 
   return (
-    <SafeAreaView
-      edges={['bottom']}
-      className="absolute left-0 right-0 bottom-0 z-50"
-      style={{ backgroundColor: 'transparent' }}
-    >
-      <View className="mx-auto mb-1 w-[96%] max-w-2xl rounded-xl bg-gradient-to-br from-[#23272f] to-[#111216] shadow-kodama-lg flex-row justify-between items-center px-1 py-0.5 border border-[#23272f]/80 backdrop-blur-sm">
-        {state.routes.map((route, index) => {
+    <SafeAreaView edges={['bottom']} style={styles.container}>
+      <View style={styles.navContainer}>
+        {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const label = options.tabBarLabel !== undefined
               ? options.tabBarLabel
@@ -56,39 +98,38 @@ export default function CustomBottomNav({ state, descriptors, navigation }) {
 
           if (!tab) return null;
 
+          const IconComponent = tab.icon;
+
           return (
             <TouchableOpacity
               key={route.key}
               onPress={onPress}
               onLongPress={onLongPress}
-              activeOpacity={0.8}
-              className="flex-1 items-center py-1.5"
+              activeOpacity={0.6}
+              style={styles.tabButton}
             >
               <Animated.View
-                style={{
-                  transform: [{ scale: isFocused ? 1.1 : 1 }],
-                  shadowColor: isFocused ? '#fff' : 'transparent',
-                  shadowOpacity: isFocused ? 0.15 : 0,
-                  shadowRadius: isFocused ? 6 : 0,
-                  shadowOffset: { width: 0, height: 1 },
-                }}
-                className={`rounded-lg ${isFocused ? 'bg-[#23272f]/80' : ''} px-1.5 py-0.5 mb-0.5`}
+                style={[
+                  styles.iconContainer,
+                  isFocused && styles.activeIconContainer
+                ]}
               >
-                <Text className="text-lg" style={{
-                  color: isFocused ? '#fff' : '#b0b3b8',
-                  fontWeight: isFocused ? 'bold' : 'normal',
-                }}>{tab.icon}</Text>
+                <IconComponent 
+                  size={isFocused ? 26 : 24} 
+                  color={isFocused ? '#ffffff' : '#9ca3af'} 
+                  strokeWidth={isFocused ? 2.5 : 2}
+                />
               </Animated.View>
               <Text
-                className={`text-[10px] ${isFocused ? 'font-bold text-white' : 'text-[#b0b3b8]'}`}
-                style={{
-                  textShadowColor: isFocused ? '#23272f' : 'transparent',
-                  textShadowRadius: isFocused ? 1 : 0,
-                }}
+                style={[
+                  styles.tabLabel,
+                  isFocused && styles.activeTabLabel
+                ]}
                 numberOfLines={1}
               >
                 {tab.name}
               </Text>
+              {isFocused && <View style={styles.activeIndicator} />}
             </TouchableOpacity>
           );
         })}
@@ -96,3 +137,91 @@ export default function CustomBottomNav({ state, descriptors, navigation }) {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 50,
+    backgroundColor: 'transparent',
+  },
+  navContainer: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    backgroundColor: '#0f0f0f',
+    borderRadius: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: '#1f1f1f',
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    position: 'relative',
+    minHeight: 60,
+  },
+  iconContainer: {
+    padding: 10,
+    borderRadius: 16,
+    marginBottom: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  activeIconContainer: {
+    backgroundColor: '#dc2626',
+    shadowColor: '#dc2626',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  tabLabel: {
+    fontSize: 8,
+    color: '#9ca3af',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 2,
+    letterSpacing: 0.2,
+  },
+  activeTabLabel: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: -4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#dc2626',
+    shadowColor: '#dc2626',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+});

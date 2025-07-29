@@ -12,6 +12,7 @@ import { AuthModalProps, AuthMode } from './AuthModal.types.android';
 import styles from './AuthModal.styles.android';
 
 export const AuthModal: FC<AuthModalProps> = ({ visible, onClose, onSuccess }) => {
+  console.log('AuthModal rendered with visible:', visible);
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);

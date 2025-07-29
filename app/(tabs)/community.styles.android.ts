@@ -133,5 +133,5 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
 });
-
 export default styles;
+

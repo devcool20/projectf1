@@ -46,7 +46,7 @@ const TEAM_IMAGES = {
 };
 
 // Use the same TEAM_COLORS mapping as for drivers
-const TEAM_COLORS = {
+const TEAM_COLORS: { [key: string]: string } = {
   'McLaren': '#FF8700',
   'Ferrari': '#DC0000',
   'Red Bull': '#0600EF',

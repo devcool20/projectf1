@@ -50,7 +50,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
   // Helper function to safely get user display name
   const getUserDisplayName = (profile: Profile | null | undefined): string => {
     if (!profile) return 'Anonymous';
-    return profile.displayName || profile.display_name || profile.username || 'Anonymous';
+    return profile.full_name || profile.username || 'Anonymous';
   };
 
   // Helper function to safely get user data
@@ -66,7 +66,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
     
     return {
       username: profile.username || 'Anonymous',
-      displayName: profile.displayName || profile.display_name || profile.username || 'Anonymous',
+      displayName: profile.full_name || profile.username || 'Anonymous',
       avatarUrl: profile.avatar_url || null,
       favoriteTeam: profile.favorite_team || null
     };
@@ -104,96 +104,48 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
     }
   };
 
-  const fetchReplies = useCallback(async () => {
-    if (!thread) {
-      setError('Thread data is missing');
-      setLoadingReplies(false);
-      return;
-    }
-    
+  const fetchReplies = useCallback(async (currentThread: any) => {
+    if (!currentThread) return;
     setLoadingReplies(true);
-    setError(null);
-    
     try {
-      const { data, error } = await supabase
+      const { data: replies, error: repliesError } = await supabase
         .from('replies')
-        .select(`*, profiles:user_id (username, avatar_url, favorite_team, display_name)`)
-        .eq('thread_id', thread.id)
+        .select(`
+          *,
+          profiles:user_id (username, avatar_url, favorite_team)
+        `)
+        .eq('thread_id', currentThread.id)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching replies:', error);
+      if (repliesError) {
+        console.error('Error fetching replies:', repliesError);
         setError('Failed to fetch replies');
-        throw error;
+        throw repliesError;
       }
       
-      if (!data) {
+      if (!replies) {
         setReplies([]);
         return;
       }
 
       // Ensure all replies have valid profile data
-      const validatedReplies = data.map(reply => ({
+      const validatedReplies = replies.map(reply => ({
         ...reply,
         profiles: reply.profiles || null
       }));
 
-      const { data: likesData, error: likesError } = await supabase
-        .from('likes')
-        .select('reply_id')
-        .in('reply_id', validatedReplies.map(r => r.id));
-      
-      if (likesError) {
-        console.error('Error fetching likes:', likesError);
-        // Don't throw here, just continue without likes data
-      }
-
-      const likeCountMap = (likesData || []).reduce((acc: any, like: any) => {
-        if (like && like.reply_id) {
-          acc[like.reply_id] = (acc[like.reply_id] || 0) + 1;
-        }
-        return acc;
-      }, {});
-
-      if (session && session.user) {
-        const { data: userLikesData, error: userLikesError } = await supabase
-          .from('likes')
-          .select('reply_id')
-          .in('reply_id', validatedReplies.map(r => r.id))
-          .eq('user_id', session.user.id);
-        
-        if (userLikesError) {
-          console.error('Error fetching user likes:', userLikesError);
-          // Don't throw here, just continue without user likes data
-        }
-
-        const likedReplyIds = new Set((userLikesData || []).map(l => l && l.reply_id).filter(Boolean));
-        
-        const repliesWithStatus = validatedReplies.map(r => ({
-          ...r,
-          isLiked: likedReplyIds.has(r.id),
-          likeCount: likeCountMap[r.id] || 0,
-        }));
-        setReplies(repliesWithStatus);
-      } else {
-        const repliesWithCounts = validatedReplies.map(r => ({
-          ...r,
-          likeCount: likeCountMap[r.id] || 0,
-        }));
-        setReplies(repliesWithCounts);
-      }
+      setReplies(validatedReplies);
     } catch (error) {
       console.error('Error fetching replies:', error);
-      setError('Failed to load replies. Please try again.');
-      setReplies([]);
+      setError('Failed to fetch replies');
     } finally {
       setLoadingReplies(false);
     }
-  }, [thread, session]);
+  }, []);
 
   useEffect(() => {
     if (thread) {
-      fetchReplies();
+      fetchReplies(thread);
       setThreadData(thread);
     }
   }, [thread]);
@@ -303,7 +255,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
       
       setNewReply('');
       setReplyImage(null);
-      await fetchReplies();
+      await fetchReplies(thread);
     } catch (error) {
       console.error('Error posting reply:', error);
       Alert.alert('Error', 'Failed to post reply. Please try again.');
@@ -317,7 +269,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
         text: 'Delete', style: 'destructive', onPress: async () => {
           try {
             await supabase.from('replies').delete().eq('id', replyId);
-            fetchReplies();
+            fetchReplies(thread);
           } catch (error) {
             console.error('Error deleting reply:', error);
             Alert.alert('Error', 'Failed to delete reply.');
@@ -395,7 +347,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
             style={{ backgroundColor: '#dc2626', padding: 12, borderRadius: 8 }}
             onPress={() => {
               setError(null);
-              fetchReplies();
+              fetchReplies(thread);
             }}
           >
             <Text style={{ color: 'white', fontSize: 14 }}>Try Again</Text>
@@ -555,7 +507,7 @@ const ThreadView: FC<ThreadViewProps> = ({ thread, onClose, session }) => {
                   style={{ backgroundColor: '#dc2626', padding: 8, borderRadius: 6 }}
                   onPress={() => {
                     setError(null);
-                    fetchReplies();
+                    fetchReplies(thread);
                   }}
                 >
                   <Text style={{ color: 'white', fontSize: 12 }}>Retry</Text>

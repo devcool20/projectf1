@@ -1,98 +1,94 @@
-import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-const { width: screenWidth } = Dimensions.get('window');
-
-const isSmallWeb = Platform.OS === 'web' && screenWidth < 450;
-const isVerySmallWeb = Platform.OS === 'web' && screenWidth < 400;
-
-const styles = StyleSheet.create({
+export default StyleSheet.create({
   container: {
-    width: '100%',
-    padding: isSmallWeb ? 8 : 16,
-    paddingLeft: isSmallWeb ? 4 : 16,
-    alignItems: isSmallWeb ? 'flex-start' : 'stretch',
-    backgroundColor: '#ffe5e5', // soft reddish background
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
     marginRight: 12,
-    backgroundColor: '#e3e3e3', // --muted
   },
   userInfo: {
-    justifyContent: 'center',
     flex: 1,
   },
   userNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 4,
   },
   username: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#000000',
+    marginRight: 8,
   },
   teamLogo: {
-    width: 24, // Changed from 20 to 24
-    height: 24, // Changed from 20 to 24
-    marginLeft: 8,
+    width: 20,
+    height: 20,
   },
   timestamp: {
-    fontSize: 12,
-    color: '#505050',
+    fontSize: 14,
+    color: '#666666',
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  repostIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingLeft: 52,
+  },
+  repostText: {
+    fontSize: 14,
+    color: '#666666',
+    marginLeft: 4,
   },
   content: {
-    color: '#000000',
-    marginVertical: 8,
-    lineHeight: 20,
     fontSize: 16,
+    color: '#000000',
+    lineHeight: 24,
+    marginBottom: 12,
   },
   imageContainer: {
-    marginTop: 12,
-    alignSelf: isSmallWeb ? 'flex-start' : 'center',
-    marginLeft: isVerySmallWeb ? 8 : isSmallWeb ? 0 : undefined,
-    marginRight: isVerySmallWeb ? 8 : undefined,
-    width: isSmallWeb ? '95vw' : undefined,
-    maxWidth: isSmallWeb ? '95vw' : undefined,
-    backgroundColor: '#ffe5e5', // soft reddish background
-    borderRadius: 10,
+    marginBottom: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   postImage: {
-    height: isSmallWeb ? 180 : 320,
-    borderRadius: 10, // Using --radius: 0.625rem = 10px
-    width: isSmallWeb ? '95vw' : 300,
-    maxWidth: isSmallWeb ? '95vw' : '100%',
-    minWidth: isSmallWeb ? 0 : undefined,
-    marginLeft: isVerySmallWeb ? 0 : isSmallWeb ? 0 : undefined,
-    marginRight: isVerySmallWeb ? 0 : undefined,
-    paddingLeft: isVerySmallWeb ? 0 : undefined,
-    paddingRight: isVerySmallWeb ? 0 : undefined,
+    width: '100%',
+    height: 200,
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 12,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   actionText: {
     fontSize: 14,
-    color: '#505050',
+    color: '#666666',
     marginLeft: 4,
   },
+  likedText: {
+    color: '#dc2626',
+  },
 });
-
-export default styles;

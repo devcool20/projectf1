@@ -1,21 +1,24 @@
 export interface PostCardProps {
   username: string;
   avatarUrl?: string;
-  timestamp: string;
   content: string;
   imageUrl?: string;
+  timestamp: string;
   likes: number;
   comments: number;
-
-  isLiked: boolean;
-  canDelete: boolean;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
   favoriteTeam?: string;
-  userId?: string; // Add userId for profile modal
-  userEmail?: string; // Add userEmail for admin check
-  isAdmin?: boolean; // Add isAdmin prop
-  canAdminDelete?: boolean; // Add admin delete capability
-  onLikePress: () => void;
+  userId: string;
+  userEmail?: string;
   onCommentPress: () => void;
-  onDeletePress: () => void;
-  onProfilePress?: (userId: string) => void; // Add profile press handler
+  onLikePress: () => void;
+  onBookmarkPress?: () => void;
+  onRepostPress?: () => void;
+  onDeletePress?: () => void;
+  onProfilePress?: (userId: string) => void;
+  canDelete?: boolean;
+  isAdmin?: boolean;
+  canAdminDelete?: boolean;
+  threadType?: 'thread' | 'repost';
 } 

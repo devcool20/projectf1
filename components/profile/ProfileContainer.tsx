@@ -7,7 +7,7 @@ import { EditProfileModal } from './EditProfileModal';
 import PostCard from '../PostCard';  // Import PostCard
 import ReplyCard from '../community/ReplyCard';  // Import ReplyCard
 import TwitterStyleReplyCard from '../community/TwitterStyleReplyCard';  // Import TwitterStyleReplyCard
-import { AnimatedThreadView } from '../community/AnimatedThreadView';  // Import AnimatedThreadView
+import { AnimatedThreadView } from '../community/AnimatedThreadView';  // Import regular white-themed AnimatedThreadView
 import RepostModal from '../RepostModal';  // Import RepostModal
 import { getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import ProfileCarLoadingAnimation from '../ProfileCarLoadingAnimation';
@@ -1111,7 +1111,7 @@ export default function ProfileContainer({
       await supabase.from('repost_replies').delete().eq('user_id', userId);
 
       console.log('Deleting repost likes...');
-      await supabase.from('repost_likes').delete().eq('user_id', userId);
+      await supabase.from('likes').delete().eq('user_id', userId).not('repost_id', 'is', null);
 
       console.log('Deleting reposts...');
       await supabase.from('reposts').delete().eq('user_id', userId);

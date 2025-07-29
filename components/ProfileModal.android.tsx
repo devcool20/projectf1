@@ -116,7 +116,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({
       await supabase.from('repost_replies').delete().eq('user_id', userId);
 
       console.log('Deleting repost likes...');
-      await supabase.from('repost_likes').delete().eq('user_id', userId);
+      await supabase.from('likes').delete().eq('user_id', userId).not('repost_id', 'is', null);
 
       console.log('Deleting reposts...');
       await supabase.from('reposts').delete().eq('user_id', userId);
