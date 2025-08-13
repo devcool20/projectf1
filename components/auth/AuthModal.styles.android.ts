@@ -21,24 +21,24 @@ const styles = StyleSheet.create({
     color: '#3a3a3a',
     marginBottom: 24,
     textAlign: 'center',
-    fontFamily: 'Architects Daughter',
+    fontFamily: 'Formula1-Regular',
   },
   errorText: {
     color: '#dc2626',
     marginBottom: 16,
     textAlign: 'center',
     fontSize: 14,
-    fontFamily: 'Architects Daughter',
+    fontFamily: 'Formula1-Regular',
   },
   input: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#ffffff',
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     fontSize: 16,
-    fontFamily: 'Architects Daughter',
+    fontFamily: 'Inter',
     borderWidth: 1,
-    borderColor: '#ffffff', // Always white, invisible on white bg
+    borderColor: '#ffffff',
   },
   button: {
     backgroundColor: '#606060',
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
-    fontFamily: 'Architects Daughter',
+    fontFamily: 'Formula1-Regular',
   },
   buttonTextDisabled: {
     color: '#747272',
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     color: '#606060',
     textAlign: 'center',
     fontSize: 14,
-    fontFamily: 'Architects Daughter',
+    fontFamily: 'Formula1-Regular',
   },
 });
 

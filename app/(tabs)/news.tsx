@@ -370,6 +370,7 @@ export default function NewsScreen() {
           fontWeight: 'bold',
           color: '#fff',
           marginBottom: 12,
+          fontFamily: 'Formula1-Regular'
         }}>
           F1 News
         </Text>

@@ -11,20 +11,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e5e5',
     backgroundColor: '#ffffff',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#3a3a3a',
+    fontFamily: 'Formula1-Regular',
   },
   // Main content area
   contentRow: {
@@ -53,21 +55,69 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderBottomWidth: 1,
-    borderColor: '#ffffff', // --border
-    padding: 16,
+    borderColor: '#e5e5e5', // web border
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#ffffff', // --card
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+    backgroundColor: '#ffffff',
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#dc2626',
+  },
+  tabText: {
+    fontSize: 15,
+    color: '#657786',
+    fontWeight: '600',
+    fontFamily: 'Formula1-Regular',
+  },
+  activeTabText: {
+    color: '#dc2626',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+    backgroundColor: '#ffffff',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#3a3a3a',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    marginRight: 8,
   },
   feedHeaderText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#3a3a3a', // --foreground
-    fontFamily: 'Architects Daughter',
+    fontFamily: 'Formula1-Regular',
   },
   feedHeaderMutedText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#505050', // --muted-foreground
-    fontFamily: 'Architects Daughter',
+    fontFamily: 'Formula1-Regular',
   },
   // Create thread section
   createThreadContainer: {
@@ -85,13 +135,15 @@ const styles = StyleSheet.create({
   },
   textInput: {
     fontSize: 18,
-    color: '#000000',
-    backgroundColor: 'transparent',
+    color: '#3a3a3a',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#ffffff',
-    padding: 0,
+    borderColor: '#e5e5e5',
+    padding: 12,
+    borderRadius: 8,
     lineHeight: 24,
     minHeight: 40,
+    fontFamily: 'Inter',
   },
   imagePreviewContainer: {
     position: 'relative',
@@ -121,11 +173,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#dc2626', // F1 red theme
+    fontFamily: 'Formula1-Regular',
   },
   // Thread feed item
   threadTouchable: {
     borderBottomWidth: 1,
-    borderColor: '#9ca3af',
+    borderColor: '#e5e5e5',
     backgroundColor: '#ffffff',
   },
   // Activity Indicator

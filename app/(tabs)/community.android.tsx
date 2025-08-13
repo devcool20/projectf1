@@ -18,8 +18,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { AuthModal } from '@/components/auth/AuthModal.android';
 import PostCard from '@/components/post-card/index.android';
-import ThreadView from '@/components/community/ThreadView.android';
-import { AnimatedThreadView } from '@/components/community/AnimatedThreadView.android';
+import { AnimatedThreadView } from '@/components/community/AnimatedThreadView.tsx';
 import { User, Camera, X, Menu, MessageCircle, Newspaper, Clapperboard, ShoppingCart, Trophy, Bookmark, Heart, Search, MoreHorizontal, Repeat2 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal.android';
@@ -75,6 +74,8 @@ export default function CommunityScreen() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'for-you' | 'following'>('for-you');
   const [followingThreads, setFollowingThreads] = useState<any[]>([]);
+  const [followingLoading, setFollowingLoading] = useState(false);
+  const [newContentAvailable, setNewContentAvailable] = useState(false);
   const [showRepostModal, setShowRepostModal] = useState(false);
   const [selectedThreadForRepost, setSelectedThreadForRepost] = useState<any>(null);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -88,6 +89,125 @@ export default function CommunityScreen() {
 
   const isCurrentUserAdmin = () => currentUserEmail === ADMIN_EMAIL;
   const isUserAdmin = (userId: string) => userId === adminUserId;
+  // Following feed fetch (web-parity)
+  const fetchFollowingThreads = useCallback(async (
+    currentSession: any,
+    offset: number = 0,
+    limit: number = FEED_LIMIT,
+    isInitialLoad: boolean = true
+  ) => {
+    if (!currentSession) {
+      setFollowingThreads([]);
+      setFollowingLoading(false);
+      return;
+    }
+
+    if (loadingMore && !isInitialLoad) return;
+
+    if (isInitialLoad) {
+      setFollowingLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      // Who am I following
+      const { data: followsData, error: followsError } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', currentSession.user.id);
+      if (followsError) throw followsError;
+      const followingUserIds = (followsData || []).map((f: any) => f.following_id).filter(Boolean);
+      if (!followingUserIds.length) {
+        setFollowingThreads([]);
+        setFollowingLoading(false);
+        return;
+      }
+
+      const fetchLimitWithBuffer = limit + 1;
+
+      // Threads from followed users
+      const { data: threadsData, error: threadsError } = await supabase
+        .from('threads')
+        .select(`*, profiles:user_id (username, avatar_url, favorite_team), likes:likes!thread_id(count), replies:replies!thread_id(count)`) 
+        .in('user_id', followingUserIds)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + fetchLimitWithBuffer - 1);
+      if (threadsError) throw threadsError;
+
+      // Reposts from followed users
+      const { data: repostsData, error: repostsError } = await supabase
+        .from('reposts')
+        .select(`*, profiles:user_id (username, avatar_url, favorite_team)`) 
+        .in('user_id', followingUserIds)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + fetchLimitWithBuffer - 1);
+      if (repostsError) throw repostsError;
+
+      // Engagement state for current user
+      const [userLikesData, userBookmarksData] = await Promise.all([
+        supabase.from('likes').select('thread_id, repost_id').eq('user_id', currentSession.user.id),
+        supabase.from('bookmarks').select('thread_id').in('thread_id', threadsData.map((t: any) => t.id)).eq('user_id', currentSession.user.id)
+      ]);
+
+      const likedThreadIds = new Set((userLikesData.data || []).map((l: any) => l.thread_id));
+      const likedRepostIds = new Set((userLikesData.data || []).map((l: any) => l.repost_id));
+      const bookmarkedThreadIds = new Set((userBookmarksData.data || []).map((b: any) => b.thread_id));
+
+      const processedThreads = (threadsData || []).map((t: any) => ({
+        ...t,
+        type: 'thread',
+        isLiked: likedThreadIds.has(t.id),
+        isBookmarked: bookmarkedThreadIds.has(t.id),
+        likeCount: t.likes?.[0]?.count || 0,
+        replyCount: t.replies?.[0]?.count || 0,
+      }));
+
+      const processedReposts = (repostsData || []).map((r: any) => ({
+        ...r,
+        type: 'repost',
+        isLiked: likedRepostIds.has(r.id),
+        likeCount: 0,
+        replyCount: 0,
+      }));
+
+      let combined = [...processedThreads, ...processedReposts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // De-duplicate by unique id for following feed
+      const seen = new Set<string>();
+      combined = combined.filter((item: any) => {
+        const key = item.uniqueId || `${item.type}-${item.id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      const fetchedEnough = combined.length > limit;
+      const pageItems = combined.slice(0, limit);
+      if (isInitialLoad) {
+        setFollowingThreads(pageItems);
+      } else {
+        setFollowingThreads(prev => {
+          const merged = [...prev, ...pageItems];
+          const seenMerge = new Set<string>();
+          return merged.filter((item: any) => {
+            const key = item.uniqueId || `${item.type}-${item.id}`;
+            if (seenMerge.has(key)) return false;
+            seenMerge.add(key);
+            return true;
+          });
+        });
+      }
+      setHasMore(fetchedEnough);
+    } catch (e) {
+      console.error('Error fetching following feed:', e);
+      if (isInitialLoad) setFollowingThreads([]);
+      setHasMore(false);
+    } finally {
+      setFollowingLoading(false);
+      setLoadingMore(false);
+    }
+  }, [loadingMore]);
 
   // Sidebar functions
   const openSidebar = () => {
@@ -186,6 +306,15 @@ export default function CommunityScreen() {
       let allContent = [...processedThreads, ...processedReposts]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+      // De-duplicate by unique id
+      const seen = new Set<string>();
+      allContent = allContent.filter((item: any) => {
+        const key = item.uniqueId || `${item.type}-${item.id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
       // Check if there are more items
       if (allContent.length > limit) {
         allContent = allContent.slice(0, limit);
@@ -226,7 +355,16 @@ export default function CommunityScreen() {
         setThreads(allContent);
         setOffset(limit);
       } else {
-        setThreads(prev => [...prev, ...allContent]);
+        setThreads(prev => {
+          const combined = [...prev, ...allContent];
+          const dedupSeen = new Set<string>();
+          return combined.filter((item: any) => {
+            const key = item.uniqueId || `${item.type}-${item.id}`;
+            if (dedupSeen.has(key)) return false;
+            dedupSeen.add(key);
+            return true;
+          });
+        });
         setOffset(prev => prev + limit);
       }
     } catch (error) {
@@ -431,6 +569,33 @@ export default function CommunityScreen() {
     setIsViewingThread(true);
   };
 
+  const openThreadById = useCallback(async (threadId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('threads')
+        .select(`
+          *,
+          profiles:user_id (username, avatar_url, favorite_team),
+          likes:likes!thread_id(count),
+          replies:replies!thread_id(count)
+        `)
+        .eq('id', threadId)
+        .single();
+      if (error) throw error;
+      const thread = {
+        ...data,
+        type: 'thread',
+        likeCount: data.likes?.[0]?.count || 0,
+        replyCount: data.replies?.[0]?.count || 0,
+      };
+      setSelectedThread(thread);
+      setIsViewingThread(true);
+    } catch (e) {
+      console.error('Failed to open thread by id:', e);
+      Alert.alert('Error', 'Unable to open thread');
+    }
+  }, []);
+
   const handleCloseThread = () => {
     setIsViewingThread(false);
     setSelectedThread(null);
@@ -539,8 +704,9 @@ export default function CommunityScreen() {
   const handleTabPress = (tab: 'for-you' | 'following') => {
     setActiveTab(tab);
     if (tab === 'following') {
-      // Fetch following threads logic would go here
-      setThreads(followingThreads);
+      if (session && followingThreads.length === 0) {
+        fetchFollowingThreads(session);
+      }
     } else {
       fetchThreads(session);
     }
@@ -580,6 +746,22 @@ export default function CommunityScreen() {
 
     return () => subscription.unsubscribe();
   }, [fetchThreads]);
+
+  // New content indicator via realtime
+  useEffect(() => {
+    const channel = supabase
+      .channel('realtime-feed')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'threads' }, () => {
+        setNewContentAvailable(true);
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reposts' }, () => {
+        setNewContentAvailable(true);
+      })
+      .subscribe();
+    return () => {
+      try { supabase.removeChannel(channel); } catch {}
+    };
+  }, []);
 
   useEffect(() => {
     if (searchQuery) {
@@ -683,18 +865,7 @@ export default function CommunityScreen() {
     )
   );
 
-  if (isViewingThread && selectedThread) {
-    return (
-      <ThreadView
-        thread={selectedThread}
-        onClose={handleCloseThread}
-        session={session}
-        onProfilePress={handleProfilePress}
-        onRepostPress={handleRepostPress}
-        onDeleteRepost={(repostId) => handleDeleteThread(repostId, 'repost')}
-      />
-    );
-  }
+  // Keep base screen rendered; overlay animated thread view below
 
   if (isViewingProfile && selectedProfile) {
     return (
@@ -711,6 +882,28 @@ export default function CommunityScreen() {
     <SafeAreaView style={styles.container}>
       {renderHeader()}
       {renderTabs()}
+      {newContentAvailable && (
+        <TouchableOpacity
+          onPress={() => {
+            setNewContentAvailable(false);
+            if (activeTab === 'following') {
+              fetchFollowingThreads(session);
+            } else {
+              fetchThreads(session);
+            }
+          }}
+          style={{
+            alignSelf: 'center',
+            backgroundColor: '#dc2626',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 16,
+            marginBottom: 8,
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>New posts available — Tap to refresh</Text>
+        </TouchableOpacity>
+      )}
       {renderSearchBar()}
       
       {/* Sidebar Backdrop */}
@@ -784,7 +977,7 @@ export default function CommunityScreen() {
       </Animated.View>
       
       <FlatList
-        data={showBookmarks ? bookmarkedThreads : (showSearch ? searchResults : threads)}
+        data={showBookmarks ? bookmarkedThreads : (showSearch ? searchResults : (activeTab === 'following' ? followingThreads : threads))}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handleThreadPress(item)} style={styles.threadTouchable}>
             <PostCard
@@ -899,6 +1092,18 @@ export default function CommunityScreen() {
           </View>
         </SafeAreaView>
       </Modal>
+
+      {/* Animated Thread View Overlay */}
+      <AnimatedThreadView
+        thread={selectedThread}
+        onClose={handleCloseThread}
+        session={session}
+        onProfilePress={handleProfilePress}
+        onRepostPress={handleRepostPress}
+        onThreadIdPress={openThreadById}
+        onDeleteRepost={(repostId) => handleDeleteThread(repostId, 'repost')}
+        isVisible={isViewingThread && !!selectedThread}
+      />
     </SafeAreaView>
   );
 }

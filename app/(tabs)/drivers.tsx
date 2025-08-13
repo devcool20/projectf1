@@ -368,6 +368,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     letterSpacing: 1,
     textAlign: 'center',
+    fontFamily: 'Formula1-Regular',
   },
   
   // Tab Section

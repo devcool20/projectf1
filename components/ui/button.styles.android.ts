@@ -64,8 +64,8 @@ export const textStyles = StyleSheet.create({
   // Base text style
   base: {
     fontSize: 14,
-    fontWeight: '500',
-    fontFamily: 'Architects Daughter',
+    fontWeight: '600',
+    fontFamily: 'Formula1-Regular',
   },
   
   // Text variants
@@ -86,6 +86,6 @@ export const textStyles = StyleSheet.create({
   },
   cta: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: '700',
   },
 }); 

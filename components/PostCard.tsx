@@ -158,7 +158,7 @@ export default function PostCard({
         {/* Content Column */}
         <View style={{ flex: 1, paddingLeft: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }} selectable={false}>{username}</Text>
+            <Text style={{ fontWeight: '600', color: '#3a3a3a', fontSize: 15, fontFamily: 'Formula1-Regular' }} selectable={false}>{username}</Text>
             {logoToShow && (
               <Image 
                 source={logoToShow} 
@@ -178,8 +178,8 @@ export default function PostCard({
               </View>
             )}
           </View>
-                      <Text style={{ fontSize: 13, color: '#888', marginTop: -2, marginLeft: 2, fontFamily: 'Formula1-Regular' }} selectable={false}>{formatThreadTimestamp(timestamp)}</Text>
-          <Text style={{ color: '#000000', marginVertical: 8, fontSize: 14, lineHeight: 18, fontFamily: 'Formula1-Regular' }} selectable={false}>{displayedContent}</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', marginTop: -2, marginLeft: 2, fontFamily: 'Inter' }} selectable={false}>{formatThreadTimestamp(timestamp)}</Text>
+          <Text style={{ color: '#3a3a3a', marginVertical: 8, fontSize: 14, lineHeight: 20, fontFamily: 'Inter' }} selectable={false}>{displayedContent}</Text>
           {shouldTruncate && (
             <TouchableOpacity onPress={() => setExpanded(true)}>
               <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 13, marginBottom: 4, fontFamily: 'Formula1-Regular' }}>Read more</Text>
@@ -204,7 +204,7 @@ export default function PostCard({
                     height = maxHeight;
                     width = imgW * (maxHeight / imgH);
                   }
-                  return { borderRadius: 12, width, height, backgroundColor: '#f3f4f6', marginTop: 8 };
+                  return { borderRadius: 8, width, height, backgroundColor: '#f3f4f6', marginTop: 8 };
                 })()}
                 resizeMode="cover"
               />
@@ -222,7 +222,7 @@ export default function PostCard({
                 size={14}
                 accessibilityLabel="Like post"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{likes}</Text>
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Inter' }}>{likes}</Text>
             </View>
             {/* Comment */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
@@ -234,7 +234,7 @@ export default function PostCard({
                 size={14}
                 accessibilityLabel="Comment"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{comments}</Text>
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Inter' }}>{comments}</Text>
             </View>
             {/* Repost */}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
@@ -246,7 +246,7 @@ export default function PostCard({
                 size={14}
                 accessibilityLabel="Repost"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{reposts}</Text>
+              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Inter' }}>{reposts}</Text>
             </View>
             {/* Bookmark */}
             <EngagementButton

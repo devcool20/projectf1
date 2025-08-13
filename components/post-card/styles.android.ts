@@ -27,18 +27,20 @@ export default StyleSheet.create({
     marginBottom: 4,
   },
   username: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#3a3a3a',
     marginRight: 8,
+    fontFamily: 'Formula1-Regular',
   },
   teamLogo: {
     width: 20,
     height: 20,
   },
   timestamp: {
-    fontSize: 14,
-    color: '#666666',
+    fontSize: 12,
+    color: '#6b7280',
+    fontFamily: 'Inter',
   },
   deleteButton: {
     padding: 4,
@@ -55,10 +57,11 @@ export default StyleSheet.create({
     marginLeft: 4,
   },
   content: {
-    fontSize: 16,
-    color: '#000000',
-    lineHeight: 24,
+    fontSize: 14,
+    color: '#3a3a3a',
+    lineHeight: 20,
     marginBottom: 12,
+    fontFamily: 'Inter',
   },
   imageContainer: {
     marginBottom: 12,
@@ -68,6 +71,7 @@ export default StyleSheet.create({
   postImage: {
     width: '100%',
     height: 200,
+    borderRadius: 8,
   },
   actions: {
     flexDirection: 'row',
@@ -84,9 +88,10 @@ export default StyleSheet.create({
     paddingHorizontal: 8,
   },
   actionText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666666',
     marginLeft: 4,
+    fontFamily: 'Inter',
   },
   likedText: {
     color: '#dc2626',

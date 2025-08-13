@@ -39,11 +39,11 @@ const EngagementButton: FC<EngagementButtonProps> = ({
   const getDefaultActiveColor = () => {
     switch (type) {
       case 'like':
-        return '#ef4444'; // red
+        return '#dc2626'; // F1 red per PRD
       case 'repost':
-        return '#22c55e'; // green
+        return '#10b981'; // green per PRD
       case 'bookmark':
-        return '#fbbf24'; // yellow
+        return '#f59e0b'; // amber per PRD
       default:
         return '#6b7280';
     }

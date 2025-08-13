@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { Heart, MessageCircle, Trash2 } from 'lucide-react-native';
+import { Heart, MessageCircle, Trash2, Bookmark, Repeat2, MoreHorizontal } from 'lucide-react-native';
 import { PostCardProps } from './types.android';
 import styles from './styles.android';
 import EngagementButton from '../engagement-button';
+import { formatThreadTimestamp } from '@/lib/utils';
 
 const TEAM_LOGOS: { [key: string]: any } = {
   'Red Bull Racing': require('@/team-logos/redbull.png'),
@@ -32,11 +33,14 @@ const PostCard: FC<PostCardProps> = ({
   comments,
 
   isLiked,
+  isBookmarked,
   favoriteTeam,
   userId,
   userEmail,
   onCommentPress,
   onLikePress,
+  onBookmarkPress,
+  onRepostPress,
   onDeletePress,
   onProfilePress,
   canDelete = false,
@@ -88,7 +92,7 @@ const PostCard: FC<PostCardProps> = ({
               />
             )}
           </View>
-          <Text style={styles.timestamp}>{new Date(timestamp).toLocaleString()}</Text>
+          <Text style={styles.timestamp}>{formatThreadTimestamp(timestamp)}</Text>
         </View>
       </View>
       <Text style={styles.content}>{content}</Text>
@@ -111,14 +115,20 @@ const PostCard: FC<PostCardProps> = ({
             {likes > 0 && <Text style={styles.actionText}>{likes}</Text>}
           </View>
           <TouchableOpacity onPress={onCommentPress} style={styles.actionButton}>
-            <MessageCircle size={20} color="#505050" />
+            <MessageCircle size={20} color="#6b7280" />
             {comments > 0 && <Text style={styles.actionText}>{comments}</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onRepostPress} style={styles.actionButton}>
+            <Repeat2 size={20} color="#6b7280" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onBookmarkPress} style={styles.actionButton}>
+            <Bookmark size={20} color={isBookmarked ? '#f59e0b' : '#6b7280'} fill={isBookmarked ? '#f59e0b' : 'transparent'} />
           </TouchableOpacity>
 
         </View>
         {showDeleteButton && (
           <TouchableOpacity onPress={onDeletePress}>
-            <Trash2 size={18} color="#505050" />
+            <MoreHorizontal size={18} color="#6b7280" />
           </TouchableOpacity>
         )}
       </View>

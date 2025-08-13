@@ -197,12 +197,13 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   tabLabel: {
-    fontSize: 8,
+    fontSize: 10,
     color: '#9ca3af',
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 2,
     letterSpacing: 0.2,
+    fontFamily: 'Formula1-Regular',
   },
   activeTabLabel: {
     color: '#ffffff',
