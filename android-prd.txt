@@ -1,411 +1,431 @@
-# Product Requirements Document: projectF1 Android Application
+# Product Requirements Document: projectF1 Android Application - Web Parity Implementation
 
-**Version:** 1.0
-**Date:** July 27, 2025
-**Author:** Gemini CLI
+**Version:** 2.0
+**Date:** January 27, 2025
+**Author:** AI Assistant
 
-## 1. Introduction
+## 1. Executive Summary
 
-This document outlines the functional and non-functional requirements for the Android version of the projectF1 application. The primary goal is to replicate the existing web application's features, user experience (UX), and visual design with pixel-perfect accuracy on the Android platform. This PRD will serve as a comprehensive guide for the development team, ensuring consistency and a high-quality user experience across both platforms.
+This PRD outlines the comprehensive requirements to make the Android version of projectF1 look and function exactly like the web version. The goal is pixel-perfect parity between platforms, ensuring every button, component, layout, animation, and interaction matches the web experience precisely.
 
-The web application has been optimized for mobile view, and this document leverages that existing design and functionality as the baseline for the Android implementation.
+## 2. Design System & Visual Parity Requirements
 
-## 2. Overall Architecture & Structure
+### 2.1. Color Scheme (Exact Web Match)
 
-The Android application will largely mirror the web application's architecture, leveraging React Native's cross-platform capabilities where applicable, and implementing platform-specific components as needed.
+**Primary Colors:**
+- Background: `#f9f9f9` (light) / `#2b2b2b` (dark)
+- Foreground: `#3a3a3a` (light) / `#dcdcdc` (dark)
+- Card: `#ffffff` (light) / `#333333` (dark)
+- Primary: `#606060` (light) / `#b0b0b0` (dark)
+- Secondary: `#dedede` (light) / `#5a5a5a` (dark)
+- Muted: `#e3e3e3` (light) / `#454545` (dark)
+- Accent: `#f3eac8` (light) / `#e0e0e0` (dark)
+- Destructive: `#c87a7a` (light) / `#d9afaf` (dark)
+- Border: `#747272` (light) / `#4f4f4f` (dark)
+- F1 Red (CTA): `#dc2626`
 
-### 2.1. Routing & Navigation
+**Gradients:**
+- Warm: `linear-gradient(135deg, #f3eac8 0%, #dedede 100%)`
+- Primary: `linear-gradient(135deg, #606060 0%, #606060 100%)`
+- F1: `linear-gradient(135deg, #dc2626 0%, #c87a7a 100%)`
+- Card: `linear-gradient(135deg, #ffffff 0%, #e3e3e3 100%)`
 
-*   **Framework:** Expo Router will be used for navigation, maintaining the existing route structure.
-*   **Tab-based Navigation:** The primary navigation will be via a custom bottom tab bar, replicating the `CustomBottomNav` component.
-    *   Tabs: Community (Threads), News, Screenings, Shop, Drivers (Standings).
-    *   Tab icons and labels must match the web version.
-    *   Active tab styling (scale, shadow, text color) must be identical.
-*   **Nested Routes:** Support for nested routes within tabs (e.g., `/community/thread/[id]`, `/profile/[id]`, `/standings/[name]`, `/team/[name]`).
-*   **Deep Linking:** The application must support deep linking to specific threads, profiles, and standings pages (e.g., `projectf1://community?thread=123`).
-*   **Header:** Custom headers will be implemented per screen, replicating the web's `HeaderRight` component and back button functionality.
+### 2.2. Typography (Exact Web Match)
 
-### 2.2. State Management
+**Font Families:**
+- Primary: `'Architects Daughter', sans-serif`
+- Formula1: `'Formula1-Bold', 'Formula1-Regular', 'Formula1-Wide'`
+- Racing: `'RacingSansOne', sans-serif`
+- Inter: `'Inter', sans-serif`
 
-*   **Authentication:** `AuthContext.tsx` will manage user session, loading state, and onboarding status.
-*   **Standings:** `StandingsContext.tsx` will provide global access to driver and team standings data.
-*   **Engagement Metrics:** `useEngagementStore` (Zustand) will manage real-time likes, bookmarks, and reply counts for threads and replies, ensuring optimistic UI updates.
-*   **Global News Service:** `globalNewsService.ts` will handle news fetching, caching, and filtering, providing a centralized news data source.
+**Font Sizes & Weights:**
+- Headers: 20-24px, bold (700)
+- Body: 14-16px, regular (400)
+- Captions: 12-14px, medium (500)
+- Buttons: 14-16px, semibold (600)
+- Letter spacing: 0.5px (tracking-normal)
 
-### 2.3. Data Fetching & Persistence
+### 2.3. Spacing & Layout (Exact Web Match)
 
-*   **Backend:** Supabase will be the primary backend for authentication, database (PostgreSQL), and storage (for images).
-*   **Real-time Updates:** Supabase subscriptions will be utilized for real-time updates where appropriate (e.g., new threads, replies, likes).
-*   **Local Storage/Cache:** `localStorage` (or equivalent for React Native) will be used for caching news articles (`globalNewsService.ts`) and onboarding status.
+**Spacing Scale:**
+- xs: 4px
+- sm: 8px
+- md: 16px
+- lg: 24px
+- xl: 32px
+- 2xl: 48px
 
-### 2.4. Styling & Theming
+**Border Radius:**
+- sm: 4px
+- md: 6px
+- lg: 8px
+- xl: 12px
+- 2xl: 16px
 
-*   **Styling Framework:** NativeWind (Tailwind CSS for React Native) will be used for utility-first styling, replicating the web's `className` usage.
-*   **Direct StyleSheet:** `StyleSheet.create` will be used for complex layouts and animations where NativeWind might be less efficient or expressive.
-*   **Inline Styles:** Used sparingly for dynamic styles.
-*   **Fonts:** Custom fonts (`Formula1-Bold`, `Formula1-Regular`, `Formula1-Wide`, `RacingSansOne`, `Inter`) must be embedded and used consistently.
-*   **Color Scheme:** Support for light/dark mode via `useColorScheme` (though the current web app appears to be primarily dark-themed).
-*   **Responsive Design:** Layouts must adapt to different screen sizes and orientations, utilizing `Dimensions` API and conditional styling (`isSmallScreen`).
+**Shadows:**
+- sm: `1px 4px 5px 0px hsl(0 0% 0% / 0.03), 1px 1px 2px -1px hsl(0 0% 0% / 0.03)`
+- md: `1px 4px 5px 0px hsl(0 0% 0% / 0.03), 1px 2px 4px -1px hsl(0 0% 0% / 0.03)`
+- lg: `1px 4px 5px 0px hsl(0 0% 0% / 0.03), 1px 4px 6px -1px hsl(0 0% 0% / 0.03)`
 
-### 2.5. Assets
+## 3. Component-Level Parity Requirements
 
-*   **Images:** All static image assets (driver photos, team logos, product images, event images, favicon, app icon) must be included and optimized for Android.
-*   **GIFs:** Loading animations (`f1car2-unscreen.gif`, `obnoxious-racing-car-unscreen.gif`) must be supported.
-*   **Icons:** `lucide-react-native` will provide vector icons.
+### 3.1. Navigation & Layout Components
 
-## 3. Core Features Breakdown
+#### 3.1.1. CustomBottomNav (Exact Web Match)
+**Current Android Issues to Fix:**
+- Background color should be `#0f0f0f` with `#1f1f1f` border
+- Active tab background should be `#dc2626` with glow effect
+- Tab icons should be 24px (inactive) / 26px (active)
+- Icon colors: `#9ca3af` (inactive) / `#ffffff` (active)
+- Text colors: `#9ca3af` (inactive) / `#ffffff` (active)
+- Active indicator: 6px red dot with glow
+- Shadow: `shadowColor: '#000000', shadowOffset: {width: 0, height: 8}, shadowOpacity: 0.4, shadowRadius: 16, elevation: 12`
 
-This section details each major feature, including its sub-features and minute UI/UX requirements.
+**Required Changes:**
+```typescript
+// Update CustomBottomNav.tsx styles
+navContainer: {
+  backgroundColor: '#0f0f0f',
+  borderWidth: 1,
+  borderColor: '#1f1f1f',
+  shadowColor: '#000000',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.4,
+  shadowRadius: 16,
+  elevation: 12,
+}
+```
 
-### 3.1. Authentication & User Management
+#### 3.1.2. Header Components (Exact Web Match)
+**HeaderRight Component:**
+- Background: `#ffffff` (light) / `#333333` (dark)
+- Border bottom: `#e5e5e5`
+- Title font: `Formula1-Regular`
+- Search icon: `#3a3a3a`
+- Menu icon: `#3a3a3a`
+- Elevation: 2px shadow
 
-*   **AuthModal (`components/auth/AuthModal.tsx`):**
-    *   **Sign-in:** Email/password.
-    *   **Sign-up:** Email/password.
-    *   **Google Sign-in:** OAuth integration.
-    *   **Error Handling:** Display clear error messages (e.g., "Invalid credentials", "Email already exists").
-    *   **Loading States:** Show activity indicators during API calls.
-    *   **Password Visibility Toggle:** Eye icon to show/hide password.
-    *   **Animated Modal:** Scale and opacity animations for modal entry/exit.
-*   **EnhancedSignupModal (`components/auth/EnhancedSignupModal.tsx`):**
-    *   **Purpose:** Collect additional user details after initial sign-up (especially for Google users).
-    *   **Fields:** Email (pre-filled for Google), Password (optional for Google), Username, Profile Picture, Favorite Team.
-    *   **Username Availability Check:** Real-time validation with visual feedback (check/error icon).
-    *   **Profile Picture Upload:**
-        *   Integration with `expo-image-picker` for gallery access.
-        *   Image resizing/compression using `expo-image-manipulator` to optimize upload size.
-        *   Preview of selected image.
-    *   **Favorite Team Selection:** Grid of F1 team logos with names, visual selection indicator.
-    *   **Privacy Notice:** Text regarding Terms of Service and Privacy Policy.
-    *   **Loading State:** "Creating Profile..." button state.
-*   **ProfileContainer (`components/profile/ProfileContainer.tsx`):**
-    *   **Profile Header:**
-        *   Back button (`ArrowLeft` icon).
-        *   Username and post/reply counts in header.
-        *   "Edit Profile" button (for own profile) or "Follow/Following" button (for other profiles).
-    *   **Avatar Display:** Circular avatar with optional edit icon overlay (for own profile).
-    *   **User Info:**
-        *   Full Name, Username (`@` prefix).
-        *   Bio (multi-line text).
-        *   Favorite Team logo/name or Admin badge (`FIA` team logo for admin).
-    *   **Followers/Following Counts:** Display numerical counts.
-        *   Tappable to open respective modals (`FollowersModal`, `FollowingModal`).
-    *   **Action Buttons (Own Profile):**
-        *   "Logout" button (`LogOut` icon).
-        *   "Delete Profile" button (with confirmation modal).
-    *   **Action Buttons (Other Profiles):**
-        *   "Follow" / "Following" button (`UserPlus`/`UserMinus` icons), with loading state.
-    *   **Tabs:** "Posts" and "Replies" tabs to switch content view.
-    *   **Content Display:**
-        *   **Posts Tab:** List of `PostCard` and `RepostCard` components.
-        *   **Replies Tab:** List of `TwitterStyleReplyCard` components.
-    *   **Loading/Error States:** Show `ProfileCarLoadingAnimation` or error messages.
-    *   **Refresh Control:** Pull-to-refresh functionality.
-*   **EditProfileModal (`components/profile/EditProfileModal.tsx`):**
-    *   **Fields:** Username, Full Name, Bio, Favorite Team, Avatar.
-    *   **Avatar Upload:** Same functionality as `EnhancedSignupModal`.
-    *   **Team Selection:** Same grid selection as `EnhancedSignupModal`.
-    *   **Save/Cancel Buttons:** Update profile or revert changes.
-    *   **Loading State:** Activity indicator on save.
-*   **OtherUserProfileModal (`components/OtherUserProfileModal.tsx`):**
-    *   **Purpose:** Display a simplified view of another user's profile.
-    *   **Fields:** Avatar, Username, Favorite Team.
-    *   **Follow/Unfollow Button:** Functionality to follow/unfollow the displayed user.
-    *   **Loading State:** `ProfileCarLoadingAnimation`.
-*   **LockedScreen (`components/auth/LockedScreen.tsx`):**
-    *   **Purpose:** Displayed when a feature requires authentication.
-    *   **Visuals:** Lock icon, animated sparkle, F1 car animation.
-    *   **Call to Action:** "Get Started" button to trigger authentication.
-    *   **Feature Highlights:** Bullet points describing benefits of signing up.
-*   **OnboardingModal (`components/onboarding/OnboardingModal.tsx`):**
-    *   **Purpose:** Introduce new users to the app's features.
-    *   **Visuals:** "Welcome to projectF1" with animated sparkles, F1 car animation.
-    *   **Feature List:** Scrollable list of app features with icons, titles, and descriptions.
-    *   **Call to Action:** "Get Started" button to initiate sign-up.
-    *   **Animated Modal:** Scale and opacity animations for modal entry/exit.
+### 3.2. Button Components (Exact Web Match)
 
-### 3.2. Community (Threads/Posts/Reposts/Replies)
+#### 3.2.1. Primary Button Variants
+**Default Button:**
+- Background: `#606060`
+- Text color: `#f0f0f0`
+- Border radius: 6px
+- Padding: 16px horizontal, 8px vertical
+- Height: 40px
+- Font: `Formula1-Regular`, 14px, semibold
 
-*   **CommunityScreen (`app/(tabs)/community.tsx`):**
-    *   **Feed Display:** Main scrollable feed showing a mix of `PostCard` and `RepostCard` components.
-    *   **"For You" / "Following" Tabs:** Switch between general feed and feed from followed users.
-    *   **Post Creation:**
-        *   Text input for content.
-        *   Image upload (`ImagePicker` integration).
-        *   "Post" button.
-        *   `CreateThread` component (modal).
-    *   **Search Functionality:**
-        *   Search bar (`TextInput` with `Search` icon).
-        *   Real-time search for threads and profiles.
-        *   Display search results (threads and profiles).
-    *   **Sidebar Navigation:** (`Menu` icon to open/close).
-        *   List of main navigation items (Threads, News, Screenings, Shop, Drivers, Profile, Bookmarks).
-        *   "Post" button within sidebar.
-    *   **Refresh Control:** Pull-to-refresh for the feed.
-    *   **Pagination:** Infinite scroll to load more threads/reposts.
-    *   **New Threads Indicator:** Visual cue when new content is available.
-*   **PostCard (`components/PostCard.tsx`):**
-    *   **User Info:** Avatar (circular), Username, Favorite Team logo/Admin badge, Timestamp (formatted compactly, e.g., "5m", "2h", "Jul 25").
-    *   **Content:** Text content (with "Read more" truncation for long posts), Image display (responsive sizing).
-    *   **Engagement Bar:**
-        *   **Likes:** `Heart` icon, count, active/inactive state.
-        *   **Comments:** `MessageCircle` icon, count.
-        *   **Reposts:** `Repeat2` icon, count.
-        *   **Bookmarks:** `Bookmark` icon, active/inactive state.
-    *   **Actions:**
-        *   Tapping on avatar/username navigates to profile.
-        *   Tapping on image opens full-screen preview.
-        *   Tapping on post content (outside engagement bar) opens `ThreadView`.
-        *   "More" (`MoreHorizontal`) icon for delete option (only for post owner or admin).
-*   **RepostCard (`components/RepostCard.tsx`):**
-    *   **Structure:** Similar to `PostCard` but with an embedded "original thread preview".
-    *   **Repost User Info:** Avatar, Username, Team logo/Admin badge, Timestamp.
-    *   **Repost Content:** Optional text and image.
-    *   **Original Thread Preview:**
-        *   Bordered box containing original post's avatar, username, content, and image.
-        *   Tappable to navigate to the original thread.
-    *   **Engagement Bar:** Likes, Comments, Reposts (counts and active states).
-    *   **Actions:** Like/Unlike, Repost, Delete (for repost owner or admin).
-*   **RepostModal (`components/RepostModal.tsx`):**
-    *   **Purpose:** Allow users to repost a thread with optional additional content.
-    *   **Fields:** Text input ("Add your thoughts..."), Image upload.
-    *   **Original Thread Preview:** Displays the thread being reposted.
-    *   **"Repost" Button:** Submits the repost.
-*   **AnimatedThreadView (`components/community/AnimatedThreadView.tsx`):**
-    *   **Purpose:** Full-screen modal view for a single thread and its replies.
-    *   **Animations:** Slide-in/slide-out animation from the right.
-    *   **Header:** Back button, "Thread" title.
-    *   **Main Thread Content:** Displays the `PostCard` or `RepostCard` content.
-    *   **Reply Input:**
-        *   Text input for new replies.
-        *   Image upload for replies.
-        *   "Reply" button.
-        *   Current user's avatar displayed next to input.
-    *   **Replies Section:**
-        *   List of `TwitterStyleReplyCard` components.
-        *   Loading indicator for replies.
-        *   "No replies yet" message.
-    *   **Reply Actions:**
-        *   Tapping on reply avatar/username navigates to profile.
-        *   Liking replies (`Heart` icon, count).
-        *   Replying to a specific user (`@username` pre-fill in input).
-        *   Deleting replies (for reply owner or admin).
-    *   **Image Preview Modal:** Full-screen modal to view images from posts/replies.
-*   **TwitterStyleReplyCard (`components/community/TwitterStyleReplyCard.tsx`):**
-    *   **Structure:** Replicates Twitter's reply display with a vertical line connecting the original post's avatar to the reply's avatar.
-    *   **Original Thread Context:** Displays a compact version of the original thread (avatar, username, content, image).
-    *   **Reply Content:** Avatar, username, timestamp, content, image.
-    *   **Engagement Bar:** Likes (with count), Comments (placeholder).
-    *   **Actions:** Like/Unlike, navigate to profile/thread.
-*   **BookmarkCard (`components/community/BookmarkCard.tsx`):**
-    *   **Purpose:** Display bookmarked threads/reposts in the "Bookmarks" section.
-    *   **Content:** Similar to `PostCard` but with a prominent `Bookmark` icon and a delete action for the bookmark.
-    *   **Actions:** Tapping opens the `ThreadView`.
+**CTA Button:**
+- Background: `#dc2626` (F1 red)
+- Text color: `#ffffff`
+- Border radius: 6px
+- Padding: 16px horizontal, 8px vertical
+- Height: 40px
+- Font: `Formula1-Regular`, 14px, bold
 
-### 3.3. News Feed
+**Outline Button:**
+- Background: transparent
+- Border: 1px solid `#ffffff`
+- Text color: `#3a3a3a`
+- Border radius: 6px
 
-*   **NewsScreen (`app/(tabs)/news.tsx`):**
-    *   **Header:** "F1 News" title.
-    *   **Search Bar:** `TextInput` with `Search` icon, clear button (`X` icon).
-    *   **Filter Button:** `Filter` icon to toggle source filter options.
-    *   **Source Filters:** Horizontal scrollable list of source buttons (e.g., "All Sources", "Formula 1 Official", "ESPN F1").
-    *   **Article List:** Scrollable list of news articles.
-    *   **Article Card (`renderArticleCard` function):**
-        *   Hero Image (if available).
-        *   Source badge, formatted published date.
-        *   Title (truncated to 2 lines).
-        *   Description/Content (truncated to 4 lines).
-        *   Author, Category.
-        *   "Read full article" link (`ExternalLink` icon).
-    *   **"Load More" Button:** Appears at the bottom to fetch additional articles.
-    *   **Loading/Error States:** Activity indicator, "No articles found" message.
-    *   **Refresh Control:** Pull-to-refresh.
-*   **NewsArticleDetail (`components/news/NewsArticleDetail.tsx`):**
-    *   **Purpose:** Display full content of a selected news article.
-    *   **Header:** Back button, Source name, Share icon, External Link icon, Close icon.
-    *   **Content:** Full image, title, meta info (date, author), category badge, full article text.
-    *   **Source Attribution:** Footer with source name and published date.
+**Secondary Button:**
+- Background: `#e3e3e3`
+- Text color: `#3a3a3a`
+- Border radius: 6px
 
-### 3.4. Standings (Drivers & Teams)
+#### 3.2.2. EngagementButton (Exact Web Match)
+**Visual Requirements:**
+- Icon size: 14px (default)
+- Inactive color: `#6b7280`
+- Active colors:
+  - Like: `#dc2626` (F1 red)
+  - Repost: `#10b981` (green)
+  - Bookmark: `#f59e0b` (amber)
+- Animation: Scale 1.2 on press
+- Haptic feedback: Light impact
 
-*   **StandingsScreen (`app/(tabs)/drivers.tsx`):**
-    *   **Header:** "Standings 2025" title.
-    *   **Tabs:** "Drivers" and "Teams" for switching views.
-    *   **Loading Animation:** `CarLoadingAnimation` displayed during data fetch.
-    *   **Driver List (`renderList` function):**
-        *   **Hero Driver:** Top driver displayed prominently with large image, position, name (first name, colored last name), team, points.
-        *   **Other Drivers:** List items with position, avatar, name (first name, colored last name), team, points.
-        *   Tappable to navigate to `DriverDetailScreen`.
-    *   **Team List (`renderList` function):**
-        *   List items with position, team logo, team name, car model, points.
-        *   Tappable to navigate to `TeamDetailScreen`.
-    *   **Animations:** Fade animation when switching tabs.
-*   **DriverDetailScreen (`app/standings/[name].tsx`):**
-    *   **Header:** Back button.
-    *   **Hero Section:** Driver image, position, name (first name, colored last name), team.
-    *   **Stats Grid:** Points, Wins, Podiums, Poles (numerical display).
-    *   **Details Section:** Nationality, Date of Birth, Team.
-    *   **Biography Section:** Multi-line text bio.
-    *   **Points Progression Chart:** `DriverPointsBarChart` visualizing points per round.
-    *   **Loading/Error States:** Activity indicator or "Driver not found" message.
-*   **TeamDetailScreen (`app/team/[name].tsx`):**
-    *   **Header:** Back button.
-    *   **Hero Section:** Team logo, position, team name, car model.
-    *   **Stats Grid:** Points, Wins, Podiums, Poles (numerical display).
-    *   **Details Section:** Base Location, Team Principal, First Entry.
-    *   **Team History Section:** Multi-line text bio.
-    *   **Loading/Error States:** Activity indicator or "Team not found" message.
-*   **DriverPointsBarChart (`components/DriverPointsBarChart.tsx`):**
-    *   **Purpose:** Visualize driver points progression over rounds.
-    *   **UI:** Bar chart with Y-axis (points), X-axis (rounds), bars colored by team.
-    *   **Labels:** Numerical labels for points and rounds.
+### 3.3. Card Components (Exact Web Match)
 
-### 3.5. Shop
+#### 3.3.1. PostCard Component
+**Layout Structure:**
+- Padding: 16px
+- Background: `#ffffff`
+- Border: 1px solid `#e5e5e5`
+- Border radius: 12px
+- Shadow: `shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2`
 
-*   **ShopScreen (`app/(tabs)/shop.tsx`):**
-    *   **Header:** "F1 Shop" title.
-    *   **Product List:** Scrollable list of `ProductCard` components.
-    *   **ProductCard (`components/ProductCard.tsx`):**
-        *   Product Image.
-        *   Product Name.
-        *   Price (formatted with currency symbol, e.g., "$29.99").
-        *   Team Badge (gradient background with team colors).
-        *   Featured Badge ("⭐ FEATURED").
-        *   Category.
-        *   Description.
-        *   "🛒 Buy Now" button (links to external URL).
-    *   **Loading/Empty States:** Activity indicator, "No Products Available" message.
-    *   **Refresh Control:** Pull-to-refresh.
+**User Info Section:**
+- Avatar: 40px circular, border radius 20px
+- Username: `Formula1-Regular`, 14px, `#3a3a3a`
+- Team logo: 16px x 16px
+- Timestamp: `Inter`, 12px, `#6b7280`
 
-### 3.6. Screenings
+**Content Section:**
+- Text: `Inter`, 14px, `#3a3a3a`, line height 1.5
+- Image: Border radius 8px, max height 300px
+- "Read more" link: `#dc2626`, `Formula1-Regular`
 
-*   **ScreeningsScreen (`app/(tabs)/screenings.tsx`):**
-    *   **Header:** "🎬 F1 Screenings" title.
-    *   **Event List:** Scrollable list of screening events.
-    *   **Event Card (inline rendering):**
-        *   Header Image (if available).
-        *   Grand Prix Name.
-        *   Date, Time, Location, Country.
-        *   Round Number, Season.
-    *   **Loading/Empty States:** Activity indicator, "No Screenings Available" message.
-    *   **Refresh Control:** Pull-to-refresh.
+**Engagement Bar:**
+- Icons: 16px, spacing 24px between items
+- Counts: `Inter`, 12px, `#6b7280`
+- Active states: Respective brand colors
 
-### 3.7. UI/UX Elements
+#### 3.3.2. RepostCard Component
+**Additional Requirements:**
+- Repost indicator: "Reposted by @username" text
+- Original post container: Border 1px solid `#e5e5e5`, background `#f9f9f9`, padding 12px, border radius 8px
+- Nested avatar: 32px circular
 
-*   **CustomBottomNav (`components/CustomBottomNav.tsx`):**
-    *   **Appearance:** Rounded-edge, semi-transparent background with gradient.
-    *   **Items:** Icons and text labels for each tab.
-    *   **Active State:** Scale animation, bold text, distinct background for the active tab.
-    *   **Shadows:** Subtle shadows for depth.
-*   **CarLoadingAnimation (`components/CarLoadingAnimation.tsx`):**
-    *   **Purpose:** Generic loading animation.
-    *   **Visual:** F1 car GIF moving across the screen.
-    *   **Looping:** Continuous animation.
-*   **ProfileCarLoadingAnimation (`components/ProfileCarLoadingAnimation.tsx`):**
-    *   **Purpose:** Specific loading animation for profile-related screens.
-    *   **Visual:** Different F1 car GIF moving across the screen.
-    *   **Looping:** Continuous animation.
-*   **AnimatedRadioCards (`components/AnimatedRadioCards.tsx`):**
-    *   **Purpose:** Display famous F1 radio messages.
-    *   **Visual:** Two cards, one partially visible on each side, sliding into view when tapped.
-    *   **Animations:** Slide and opacity animations.
-    *   **RadioCard (`components/RadioCard.tsx`):**
-        *   Team color, team icon, driver name.
-        *   Driver and team responses.
-        *   Sound wave visualization.
-*   **Modals:** Consistent styling for all modal components (background overlay, rounded corners, shadows, close buttons).
-*   **Buttons:** Consistent styling for all buttons (`Button` component from `components/ui/button.tsx`), including variants (default, destructive, outline, secondary, ghost, link, cta) and sizes.
-*   **Cards:** Consistent styling for `Card` components (`components/ui/card.tsx`) with headers, titles, descriptions, and content.
-*   **Inputs:** Consistent styling for `Input` components (`components/ui/input.tsx`).
-*   **EngagementButton (`components/engagement-button/index.tsx`):**
-    *   **Purpose:** Reusable component for like, repost, bookmark actions.
-    *   **Visual:** Icon (Heart, Repeat2, Bookmark), active/inactive states.
-    *   **Animations:** Scale, rotate, color interpolation, haptic feedback on press.
+### 3.4. Modal Components (Exact Web Match)
 
-## 4. Technical Details & Dependencies (for Android Implementation)
+#### 3.4.1. AuthModal
+**Visual Requirements:**
+- Background overlay: `rgba(0, 0, 0, 0.5)`
+- Modal background: `#ffffff`
+- Border radius: 16px
+- Padding: 24px
+- Shadow: `shadowColor: '#000', shadowOffset: {width: 0, height: 10}, shadowOpacity: 0.25, shadowRadius: 20, elevation: 10`
 
-The following technical considerations and dependencies are crucial for the Android implementation:
+**Form Elements:**
+- Input borders: 1px solid `#e5e5e5`
+- Input background: `#ffffff`
+- Input text: `Inter`, 14px, `#3a3a3a`
+- Placeholder: `#9ca3af`
+- Focus state: Border `#dc2626`
 
-### 4.1. Core Frameworks & Libraries
+#### 3.4.2. ThreadView Modal
+**Layout Requirements:**
+- Full screen modal
+- Header: Back button, "Thread" title, close button
+- Content: Scrollable with padding 16px
+- Reply input: Fixed bottom, background `#ffffff`, border top 1px solid `#e5e5e5`
 
-*   **React Native:** The primary framework for cross-platform development.
-*   **Expo:** Managed workflow for simplified development, including:
-    *   `expo-router`: File-system based routing.
-    *   `expo-font`: Custom font loading.
-    *   `expo-image-picker`: Accessing device photo library.
-    *   `expo-image-manipulator`: Image resizing and compression.
-    *   `expo-linear-gradient`: Gradient backgrounds.
-    *   `expo-haptics`: Haptic feedback.
-    *   `expo-linking`: Deep linking.
-*   **Supabase:**
-    *   `@supabase/supabase-js`: JavaScript client library for Supabase.
-    *   `react-native-url-polyfill`: Required for Supabase in React Native environment.
-    *   Database schema (tables: `profiles`, `threads`, `reposts`, `replies`, `likes`, `bookmarks`, `follows`, `screenings`, `shop_products`, `driver_standings`, `team_standings`, `driver_race_points`, `repost_replies`, `repost_reply_likes`, `reply_likes`).
-    *   Storage buckets (`avatars`, `thread-images`, `reply-images`).
-    *   Authentication methods (email/password, Google OAuth).
-*   **React Native Reanimated:** For declarative animations and gestures.
-*   **Zustand:** Lightweight state management library for engagement metrics.
-*   **NativeWind:** Tailwind CSS for React Native.
-*   **`lucide-react-native`:** Icon library.
-*   **`react-native-image-colors`:** For extracting dominant colors from images (used in `useDominantColor` hook).
-*   **`react-native-modal`:** For custom modal implementations.
-*   **`react-native-safe-area-context`:** For handling safe areas on different devices.
+### 3.5. Profile Components (Exact Web Match)
 
-### 4.2. Data Structures & Services
+#### 3.5.1. ProfileContainer
+**Header Section:**
+- Background: `#ffffff`
+- Avatar: 80px circular
+- Username: `Formula1-Bold`, 20px, `#3a3a3a`
+- Bio: `Inter`, 14px, `#6b7280`, line height 1.5
+- Team logo: 24px x 24px
 
-*   **`data/drivers.ts` & `data/teams.ts`:** Static data for driver and team bios, facts, and images.
-*   **`lib/supabase.ts`:** Supabase client initialization with environment variables.
-*   **`lib/newsService.ts`:** Fetches news from an RSS-to-JSON proxy.
-*   **`lib/globalNewsService.ts`:** Manages news caching and loading.
-*   **`lib/radioCardData.ts`:** Static data for radio cards.
-*   **`lib/utils.ts`:** Utility functions for:
-    *   `cn`: Class name concatenation (NativeWind).
-    *   `formatThreadTimestamp`: Compact timestamp formatting.
-    *   `getResponsiveImageStyle`, `getCompactImageStyle`, `getVeryCompactImageStyle`: Responsive image sizing based on screen width.
+**Stats Section:**
+- Followers/Following: `Formula1-Regular`, 16px, `#3a3a3a`
+- Counts: `Formula1-Bold`, 18px, `#3a3a3a`
 
-## 5. Assets
+**Tabs Section:**
+- Background: `#ffffff`
+- Border bottom: 1px solid `#e5e5e5`
+- Active tab: Border bottom 2px solid `#dc2626`
+- Tab text: `Formula1-Regular`, 15px, `#657786` (inactive) / `#dc2626` (active)
 
-All assets must be properly bundled and accessible within the Android application.
+### 3.6. Standings Components (Exact Web Match)
 
-*   **Fonts:**
-    *   `assets/fonts/Formula1-Bold_web_0.ttf`
-    *   `assets/fonts/Formula1-Regular_web_0.ttf`
-    *   `assets/fonts/Formula1-Wide_web_0.ttf`
-    *   (From Google Fonts, implicitly used by Expo): `RacingSansOne_400Regular`, `Inter_400Regular`, `Inter_600SemiBold`.
-*   **GIFs:**
-    *   `assets/gif/f1car2-unscreen.gif`
-    *   `assets/gif/obnoxious-racing-car-unscreen.gif`
-*   **Images:**
-    *   `assets/images/favicon.png` (Admin logo)
-    *   `assets/images/icon.png`
-    *   `assets/images/drivers/*` (Individual driver images)
-    *   `assets/images/team/*` (Team car images)
-*   **Team Logos:**
-    *   `team-logos/alpine.png`
-    *   `team-logos/astonmartin.png`
-    *   `team-logos/ferrari.png`
-    *   `team-logos/fia.png`
-    *   `team-logos/haas.png`
-    *   `team-logos/mclaren.png`
-    *   `team-logos/mercedes.png`
-    *   `team-logos/racingbulls.png`
-    *   `team-logos/redbull.png`
-    *   `team-logos/stake.png`
-    *   `team-logos/williams.png`
+#### 3.6.1. Drivers Screen
+**Header:**
+- Title: `Formula1-Regular`, 24px, `#ffffff`
+- Background: `#000000`
 
-## 6. Considerations for Android Implementation
+**Tab Row:**
+- Background: `#1a1a1a`
+- Border radius: 30px
+- Padding: 4px
+- Active tab: Background `#ffffff`, text `#000000`
+- Inactive tab: Text `#aaaaaa`
 
-*   **Platform-Specific Code:** Pay close attention to `.android.tsx` files and `Platform.OS` checks. These indicate existing Android-specific implementations that should be maintained or adapted.
-*   **Performance:**
-    *   Optimize image loading and caching to prevent out-of-memory errors and ensure smooth scrolling.
-    *   Profile animations to ensure 60 FPS performance, especially on older devices.
-    *   Virtualization for long lists (e.g., `FlatList` or `SectionList` where appropriate) to improve performance.
-*   **Offline Capabilities:** The news service already includes caching. Ensure this works robustly on Android.
-*   **Deep Linking:** Configure Android Manifest for deep linking to allow external links to open the app at specific content.
-*   **Image Handling:** Implement robust image picking, resizing, and upload logic, considering device storage and network constraints.
-*   **Font Embedding:** Ensure all custom fonts are correctly embedded and rendered across all Android versions.
-*   **Supabase Setup:** Proper initialization and configuration of Supabase client for Android, including handling session persistence.
-*   **User Experience:** Ensure haptic feedback is correctly implemented for interactive elements.
-*   **Accessibility:** Consider accessibility features for Android users (e.g., screen readers, larger text).
+**Driver Cards:**
+- Background: `#111111`
+- Border radius: 12px
+- Padding: 12px
+- Shadow: `shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.2, shadowRadius: 4, elevation: 2`
+- Driver image: 60-80px circular
+- Position: `Formula1-Bold`, 18px, `#ffffff`
+- Name: `Formula1-Regular`, 16px, `#ffffff`
+- Team: `Formula1-Regular`, 14px, `#aaaaaa`
+- Points: `Formula1-Bold`, 16px, `#ffffff`
+
+### 3.7. News Components (Exact Web Match)
+
+#### 3.7.1. News Screen
+**Header:**
+- Title: `Formula1-Bold`, 24px, `#3a3a3a`
+- Search bar: Background `#ffffff`, border 1px solid `#e5e5e5`, border radius 8px
+
+**Article Cards:**
+- Background: `#ffffff`
+- Border radius: 12px
+- Shadow: `shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2`
+- Image: Border radius 8px, height 200px
+- Title: `Formula1-Regular`, 16px, `#3a3a3a`, 2 lines max
+- Description: `Inter`, 14px, `#6b7280`, 4 lines max
+- Source badge: Background `#f3eac8`, text `#5d4037`, `Formula1-Regular`, 12px
+
+### 3.8. Shop Components (Exact Web Match)
+
+#### 3.8.1. ProductCard
+**Layout:**
+- Background: `#ffffff`
+- Border radius: 12px
+- Shadow: `shadowColor: '#000', shadowOffset: {width: 0, height: 2}, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2`
+- Image: Border radius 8px, height 200px
+
+**Content:**
+- Product name: `Formula1-Bold`, 16px, `#3a3a3a`
+- Price: `Formula1-Bold`, 18px, `#dc2626`
+- Team badge: Gradient background with team colors, `Formula1-Regular`, 12px, `#ffffff`
+- Featured badge: Background `#f3eac8`, text `#5d4037`, `Formula1-Regular`, 12px
+- Buy button: Background `#dc2626`, text `#ffffff`, `Formula1-Regular`, 14px, border radius 6px
+
+## 4. Animation & Interaction Parity
+
+### 4.1. Loading Animations (Exact Web Match)
+**CarLoadingAnimation:**
+- GIF: `f1car2-unscreen.gif`
+- Duration: 1000ms
+- Loop: Continuous
+- Position: Center screen
+
+**ProfileCarLoadingAnimation:**
+- GIF: `obnoxious-racing-car-unscreen.gif`
+- Duration: 1000ms
+- Loop: Continuous
+- Position: Center screen
+
+### 4.2. Button Animations (Exact Web Match)
+**Press Animation:**
+- Scale: 0.95 on press
+- Duration: 150ms
+- Easing: `ease-in-out`
+
+**Hover Animation (Web equivalent):**
+- Scale: 1.02 on press
+- Duration: 200ms
+- Easing: `ease-out`
+
+### 4.3. Modal Animations (Exact Web Match)
+**Entry Animation:**
+- Scale: 0.9 to 1.0
+- Opacity: 0 to 1
+- Duration: 300ms
+- Easing: `ease-out`
+
+**Exit Animation:**
+- Scale: 1.0 to 0.9
+- Opacity: 1 to 0
+- Duration: 200ms
+- Easing: `ease-in`
+
+### 4.4. Tab Animations (Exact Web Match)
+**Tab Switch Animation:**
+- Fade: 0 to 1
+- Duration: 300ms
+- Easing: `ease-in-out`
+
+**Active Tab Indicator:**
+- Scale: 1.0 to 1.1
+- Duration: 200ms
+- Easing: `ease-out`
+
+## 5. Responsive Design Parity
+
+### 5.1. Screen Size Adaptations
+**Small Screens (< 375px):**
+- Font sizes: Reduce by 2px
+- Padding: Reduce by 4px
+- Image sizes: Reduce by 20%
+- Button heights: Reduce by 4px
+
+**Medium Screens (375px - 414px):**
+- Standard sizes as defined above
+
+**Large Screens (> 414px):**
+- Font sizes: Increase by 2px
+- Padding: Increase by 4px
+- Image sizes: Increase by 20%
+- Button heights: Increase by 4px
+
+### 5.2. Orientation Handling
+**Portrait Mode:**
+- Standard layout as defined above
+
+**Landscape Mode:**
+- Adjust navigation to side panel
+- Reduce image heights by 30%
+- Increase horizontal padding
+
+## 6. Implementation Checklist
+
+### 6.1. Critical Components to Update
+- [ ] CustomBottomNav.tsx - Fix colors, shadows, active states
+- [ ] Button components - Match web variants exactly
+- [ ] PostCard.tsx - Fix layout, colors, typography
+- [ ] RepostCard.tsx - Add repost indicator styling
+- [ ] AuthModal.tsx - Match web modal styling
+- [ ] ProfileContainer.tsx - Fix header, tabs, stats layout
+- [ ] Drivers screen - Fix dark theme, card styling
+- [ ] News screen - Fix article card layout
+- [ ] Shop screen - Fix product card styling
+
+### 6.2. Style System Updates
+- [ ] Update global.css equivalent for Android
+- [ ] Fix color variables in tailwind config
+- [ ] Update button style variants
+- [ ] Fix shadow definitions
+- [ ] Update font loading and usage
+
+### 6.3. Animation Updates
+- [ ] Fix button press animations
+- [ ] Update modal entry/exit animations
+- [ ] Fix tab switch animations
+- [ ] Update loading animation timing
+
+### 6.4. Asset Updates
+- [ ] Ensure all fonts are properly loaded
+- [ ] Verify all images are optimized for Android
+- [ ] Check GIF animations work correctly
+- [ ] Update icon sizes to match web
+
+## 7. Testing Requirements
+
+### 7.1. Visual Testing
+- [ ] Screenshot comparison with web version
+- [ ] Color accuracy testing on different devices
+- [ ] Font rendering consistency
+- [ ] Animation smoothness verification
+
+### 7.2. Interaction Testing
+- [ ] Button press feedback
+- [ ] Modal animations
+- [ ] Tab switching
+- [ ] Scroll performance
+- [ ] Image loading and caching
+
+### 7.3. Device Testing
+- [ ] Small screen devices (iPhone SE, Pixel 4a)
+- [ ] Medium screen devices (iPhone 12, Pixel 5)
+- [ ] Large screen devices (iPhone 12 Pro Max, Pixel 6 Pro)
+- [ ] Different Android versions (API 21+)
+
+## 8. Success Criteria
+
+The Android version will be considered successful when:
+
+1. **Visual Parity:** 100% pixel-perfect match with web version
+2. **Interaction Parity:** All animations and interactions match web behavior
+3. **Performance:** 60fps animations, smooth scrolling, fast loading
+4. **Accessibility:** Proper contrast ratios, readable fonts, screen reader support
+5. **Cross-device Consistency:** Same experience across all Android devices
+
+## 9. Timeline & Milestones
+
+**Week 1:** Core component updates (buttons, cards, navigation)
+**Week 2:** Screen-level updates (community, profile, standings)
+**Week 3:** Modal and animation updates
+**Week 4:** Testing, refinement, and final polish
 
 ---
+
+This PRD ensures that every aspect of the Android version will look and function exactly like the web version, providing users with a consistent experience across platforms.
