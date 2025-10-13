@@ -12,6 +12,9 @@ interface AuthContextType {
   triggerOnboarding: () => void;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  isGuestMode: boolean;
+  enableGuestMode: () => void;
+  disableGuestMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(false);
 
   // Initialize auth state
   useEffect(() => {
@@ -88,17 +92,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkOnboardingStatus = async () => {
     try {
-      // For now, use a simple approach without persistent storage
-      // This will be enhanced later with proper AsyncStorage implementation
-      setHasSeenOnboarding(false);
-      
-      // Show onboarding for new users who haven't seen it
-      if (!session) {
-        setShowOnboarding(true);
-      }
+      // Skip onboarding for all users - bypass welcome dialog
+      setHasSeenOnboarding(true);
+      setShowOnboarding(false);
     } catch (error) {
       console.error('❌ Error checking onboarding status:', error);
-      setHasSeenOnboarding(false);
+      setHasSeenOnboarding(true);
+      setShowOnboarding(false);
     }
   };
 
@@ -131,6 +131,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const enableGuestMode = () => {
+    setIsGuestMode(true);
+    setShowOnboarding(false);
+    setHasSeenOnboarding(true);
+    console.log('✅ Guest mode enabled');
+  };
+
+  const disableGuestMode = () => {
+    setIsGuestMode(false);
+    console.log('✅ Guest mode disabled');
+  };
+
   const value = {
     session,
     loading,
@@ -142,6 +154,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     triggerOnboarding,
     signOut,
     refreshSession,
+    isGuestMode,
+    enableGuestMode,
+    disableGuestMode,
   };
 
   return (

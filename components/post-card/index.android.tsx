@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Trash2, Bookmark, Repeat2, MoreHorizontal } from 
 import { PostCardProps } from './types.android';
 import styles from './styles.android';
 import EngagementButton from '../engagement-button';
+import { GuestModeWrapper } from '../engagement-button/GuestModeWrapper';
 import { formatThreadTimestamp } from '@/lib/utils';
 
 const TEAM_LOGOS: { [key: string]: any } = {
@@ -104,26 +105,34 @@ const PostCard: FC<PostCardProps> = ({
       <View style={styles.actions}>
         <View style={styles.actionButtons}>
           <View style={styles.actionButton}>
-            <EngagementButton
-              icon={Heart}
-              active={isLiked || false}
-              onPress={onLikePress}
-              type="like"
-              size={20}
-              accessibilityLabel="Like post"
-            />
+            <GuestModeWrapper onPress={onLikePress}>
+              <EngagementButton
+                icon={Heart}
+                active={isLiked || false}
+                onPress={onLikePress}
+                type="like"
+                size={20}
+                accessibilityLabel="Like post"
+              />
+            </GuestModeWrapper>
             {likes > 0 && <Text style={styles.actionText}>{likes}</Text>}
           </View>
-          <TouchableOpacity onPress={onCommentPress} style={styles.actionButton}>
-            <MessageCircle size={20} color="#6b7280" />
-            {comments > 0 && <Text style={styles.actionText}>{comments}</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onRepostPress} style={styles.actionButton}>
-            <Repeat2 size={20} color="#6b7280" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onBookmarkPress} style={styles.actionButton}>
-            <Bookmark size={20} color={isBookmarked ? '#f59e0b' : '#6b7280'} fill={isBookmarked ? '#f59e0b' : 'transparent'} />
-          </TouchableOpacity>
+          <GuestModeWrapper onPress={onCommentPress}>
+            <TouchableOpacity onPress={onCommentPress} style={styles.actionButton}>
+              <MessageCircle size={20} color="#6b7280" />
+              {comments > 0 && <Text style={styles.actionText}>{comments}</Text>}
+            </TouchableOpacity>
+          </GuestModeWrapper>
+          <GuestModeWrapper onPress={onRepostPress}>
+            <TouchableOpacity onPress={onRepostPress} style={styles.actionButton}>
+              <Repeat2 size={20} color="#6b7280" />
+            </TouchableOpacity>
+          </GuestModeWrapper>
+          <GuestModeWrapper onPress={onBookmarkPress}>
+            <TouchableOpacity onPress={onBookmarkPress} style={styles.actionButton}>
+              <Bookmark size={20} color={isBookmarked ? '#f59e0b' : '#6b7280'} fill={isBookmarked ? '#f59e0b' : 'transparent'} />
+            </TouchableOpacity>
+          </GuestModeWrapper>
 
         </View>
         {showDeleteButton && (

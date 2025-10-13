@@ -20,6 +20,7 @@ import Animated, {
 
 interface LockedScreenProps {
   onGetStarted: () => void;
+  onContinueAsGuest: () => void;
   title?: string;
   subtitle?: string;
 }
@@ -27,9 +28,10 @@ interface LockedScreenProps {
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export function LockedScreen({ 
-  onGetStarted, 
-  title = "Unlock This Feature", 
-  subtitle = "Sign up to access all projectF1 features and join the community!" 
+  onGetStarted,
+  onContinueAsGuest,
+  title = "Join the F1 Community", 
+  subtitle = "Sign up to share your thoughts, engage with other fans, and stay updated with the latest F1 news!" 
 }: LockedScreenProps) {
   const pulseValue = useSharedValue(1);
   const sparkleOpacity = useSharedValue(0);
@@ -94,29 +96,28 @@ export function LockedScreen({
           />
         </View>
 
-        {/* Get Started Button */}
-        <Animated.View style={[styles.buttonContainer, buttonStyle]}>
-          <TouchableOpacity style={styles.button} onPress={onGetStarted}>
-            <Text style={styles.buttonText}>Get Started</Text>
-            <Zap size={20} color="#ffffff" style={styles.buttonIcon} />
+        {/* Buttons Section */}
+        <View style={styles.buttonsSection}>
+          {/* Get Started Button */}
+          <Animated.View style={[styles.buttonContainer, buttonStyle]}>
+            <TouchableOpacity style={styles.button} onPress={onGetStarted}>
+              <Text style={styles.buttonText}>Sign up</Text>
+              <Zap size={20} color="#ffffff" style={styles.buttonIcon} />
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Continue as Guest Button */}
+          <TouchableOpacity style={styles.guestButton} onPress={onContinueAsGuest}>
+            <Text style={styles.guestButtonText}>Continue as guest</Text>
           </TouchableOpacity>
-        </Animated.View>
+          
+          <Text style={styles.guestNote}>
+            Note: Guests can browse content but cannot post or interact
+          </Text>
+        </View>
 
         {/* Feature highlights */}
-        <View style={styles.features}>
-          <View style={styles.featureItem}>
-            <View style={styles.featureDot} />
-            <Text style={styles.featureText}>Join the F1 community</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <View style={styles.featureDot} />
-            <Text style={styles.featureText}>Share your thoughts</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <View style={styles.featureDot} />
-            <Text style={styles.featureText}>Get latest news</Text>
-          </View>
-        </View>
+       
       </View>
     </View>
   );
@@ -214,6 +215,34 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 4,
+  },
+  buttonsSection: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  guestButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 30,
+    marginTop: 12,
+    borderWidth: 2,
+    borderColor: '#666666',
+  },
+  guestButtonText: {
+    color: '#666666',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Formula1-Regular',
+  },
+  guestNote: {
+    color: '#666666',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 12,
+    fontFamily: 'Formula1-Regular',
+    fontStyle: 'italic',
   },
   features: {
     alignItems: 'flex-start',

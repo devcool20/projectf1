@@ -193,8 +193,16 @@ export function OnboardingModal({ visible, onClose, onSignUp }: OnboardingModalP
               <Text style={styles.ctaSubtitle}>Join thousands of F1 fans and start your racing journey!</Text>
               
               <TouchableOpacity style={styles.signUpButton} onPress={onSignUp}>
-                <Text style={styles.signUpButtonText}>Get Started</Text>
+                <Text style={styles.signUpButtonText}>Sign Up</Text>
               </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.continueButton} onPress={onClose}>
+                <Text style={styles.continueButtonText}>Continue without signup</Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.noteText}>
+                Note: Without signup you can browse content but cannot post or interact
+              </Text>
             </Animated.View>
           </ScrollView>
         </Animated.View>
@@ -399,5 +407,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     fontFamily: 'Formula1-Bold',
+  },
+  continueButton: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 40,
+    paddingVertical: 16,
+    borderRadius: 30,
+    minWidth: 200,
+    alignItems: 'center',
+    marginTop: 12,
+    borderWidth: 2,
+    borderColor: '#666666',
+  },
+  continueButtonText: {
+    color: '#666666',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Formula1-Regular',
+  },
+  noteText: {
+    color: '#666666',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 16,
+    fontFamily: 'Formula1-Regular',
+    fontStyle: 'italic',
   },
 }); 

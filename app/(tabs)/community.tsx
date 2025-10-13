@@ -165,7 +165,7 @@ export default function CommunityScreen() {
   const [hasNewThreads, setHasNewThreads] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
 
-  const { session, triggerOnboarding } = useAuth();
+  const { session, triggerOnboarding, isGuestMode, enableGuestMode } = useAuth();
   const { likes, bookmarks, setLike, setBookmark, replyCounts } = useEngagementStore();
 
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -2874,9 +2874,10 @@ export default function CommunityScreen() {
       }
 
       {/* Locked Screen for non-authenticated users */}
-      {!session && (
+      {!session && !isGuestMode && (
         <LockedScreen
           onGetStarted={handleGetStarted}
+          onContinueAsGuest={enableGuestMode}
           title="Join the F1 Community"
           subtitle="Sign up to share your thoughts, engage with other fans, and stay updated with the latest F1 news!"
         />
