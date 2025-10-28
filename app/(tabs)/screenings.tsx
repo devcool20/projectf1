@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, ScrollView, RefreshControl, Image } from 'react-native';
+import { ScreeningGrid } from '@/components/screenings/ScreeningGrid';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
 
@@ -54,11 +55,11 @@ export default function ScreeningsScreen() {
       >
         <View className="w-full max-w-md pb-24">
           {/* Header */}
-          <View className="bg-[#23272f] p-6 shadow-kodama-lg">
-            <Text style={{ fontSize: 24, fontWeight: '600', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
+          <View className="px-4 py-2">
+            <Text style={{ fontSize: 20, fontWeight: '600', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
               🎬 F1 Screenings
             </Text>
-            <Text style={{ color: '#b0b3b8', marginTop: 4, fontFamily: 'Formula1-Regular' }}>
+            <Text style={{ color: '#b0b3b8', marginTop: 2, fontSize: 14, fontFamily: 'Formula1-Regular' }}>
               Watch Formula 1 races with fellow fans
             </Text>
           </View>
@@ -83,81 +84,53 @@ export default function ScreeningsScreen() {
                 </Text>
               </View>
             ) : (
-              <View className="space-y-4">
-                {screenings.map((screening) => (
+              <ScreeningGrid 
+                screenings={screenings}
+                renderScreening={(screening) => (
                   <View key={screening.id} className="bg-[#23272f] rounded-2xl shadow-kodama-lg overflow-hidden">
                     {/* Header Image */}
                     {screening.image_url ? (
                       <Image
                         source={{ uri: screening.image_url }}
-                        className="w-full h-48"
+                        style={{ width: '100%', aspectRatio: 16/9 }}
                         resizeMode="cover"
                       />
                     ) : (
-                      <View className="w-full h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                        <Text className="text-4xl">🏁</Text>
+                      <View style={{ width: '100%', aspectRatio: 16/9, backgroundColor: '#181a20', justifyContent: 'center', alignItems: 'center' }}>
+                        <Text className="text-2xl">🏁</Text>
                       </View>
                     )}
 
-                    {/* Content */}
-                    <View className="p-4">
-                      {/* Grand Prix Name */}
-                      <Text style={{ fontSize: 20, fontWeight: '600', color: '#ffffff', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
-                        {screening.grand_prix_name}
-                      </Text>
+                     {/* Content */}
+                     <View className="p-3">
+                       {/* Grand Prix Name */}
+                       <Text style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>
+                         {screening.grand_prix_name}
+                       </Text>
 
-                      {/* Date and Time */}
-                      <View className="mb-3">
-                        <View className="flex-row items-center mb-1">
-                          <Text className="text-base mr-2">📅</Text>
-                          <Text style={{ fontSize: 16, fontWeight: '500', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
-                            {new Date(screening.date).toLocaleDateString('en-US', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </Text>
-                        </View>
-                        <View className="flex-row items-center mb-1">
-                          <Text className="text-base mr-2">⏰</Text>
-                          <Text style={{ fontSize: 16, fontWeight: '500', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
-                            {new Date(`2000-01-01T${screening.timing}`).toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true
-                            })}
-                          </Text>
-                        </View>
-                      </View>
+                      
 
-                      {/* Location */}
-                      <View className="mb-3">
-                        <View className="flex-row items-center mb-1">
-                          <Text className="text-base mr-2">📍</Text>
-                          <Text style={{ fontSize: 16, fontWeight: '500', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
-                            {screening.location}
-                          </Text>
-                        </View>
-                        {screening.country && (
-                                                  <Text style={{ fontSize: 14, color: '#b0b3b8', marginLeft: 24, fontFamily: 'Formula1-Regular' }}>
-                          {screening.country}
-                        </Text>
-                        )}
-                      </View>
+                       {/* Date */}
+                       <Text style={{ fontSize: 10, color: '#ffffff', fontFamily: 'Formula1-Regular', marginBottom: 1 }}>
+                         Mar {new Date(screening.date).getDate()}
+                       </Text>
 
-                      {/* Round Number */}
-                      {screening.round_number && (
-                        <View className="pt-3 border-t border-[#23272f]">
-                          <Text style={{ fontSize: 12, color: '#b0b3b8', textAlign: 'center', fontFamily: 'Formula1-Regular' }}>
-                            Round {screening.round_number} • {screening.season}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+                       {/* Time and Round */}
+                       <View className="flex-row items-center">
+                         <Text style={{ fontSize: 10, color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
+                           ⏰ {new Date(`2000-01-01T${screening.timing}`).toLocaleTimeString('en-US', {
+                             hour: 'numeric',
+                             minute: '2-digit'
+                           })} PM
+                         </Text>
+                         <Text style={{ fontSize: 10, color: '#ffffff', fontFamily: 'Formula1-Regular', marginLeft: 8 }}>
+                           Round {screening.round_number}
+                         </Text>
+                       </View>
+                     </View>
                   </View>
-                ))}
-              </View>
+                )}
+              />
             )}
           </View>
         </View>

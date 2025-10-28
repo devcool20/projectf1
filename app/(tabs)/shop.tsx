@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, SafeAreaView, ScrollView, RefreshControl, Image, Pressable, Linking, Alert } from 'react-native';
+import { ProductGrid } from '@/components/shop/ProductGrid';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
 
@@ -101,7 +102,7 @@ export default function ShopScreen() {
       >
         <View className="w-full max-w-md pb-24">
           {/* Header - more compact */}
-          <View className="bg-[#23272f] px-4 py-2 shadow-kodama-lg">
+          <View className="px-4 py-2">
             <Text style={{ fontSize: 20, fontWeight: '600', color: '#ffffff', fontFamily: 'Formula1-Regular' }}>
               🛒 F1 Shop
             </Text>
@@ -130,34 +131,25 @@ export default function ShopScreen() {
                 </Text>
               </View>
             ) : (
-              <View className="space-y-4">
-                {products.map((product) => (
+              <ProductGrid 
+                products={products}
+                renderProduct={(product) => (
                   <View key={product.id} className="bg-[#23272f] rounded-2xl shadow-kodama-lg overflow-hidden">
                     {/* Image Placeholder with aspect ratio and contain mode */}
-                    <View style={{ width: '100%', aspectRatio: 4/3, backgroundColor: '#181a20', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+                    <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#181a20', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
                       {product.image_url ? (
                         <Image
                           source={{ uri: product.image_url }}
                           style={{ width: '100%', height: '100%' }}
-                          resizeMode="cover"
+                          resizeMode="contain"
                         />
                       ) : (
                         <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
-                          <Text className="text-4xl">🛍️</Text>
+                          <Text className="text-2xl">🛍️</Text>
                         </View>
                       )}
                     </View>
 
-                    {/* Team Badge */}
-                    {product.team && (
-                      <View 
-                        className={`absolute top-3 right-3 bg-gradient-to-r ${getTeamColors(product.team)} px-2 py-1 rounded-full`}
-                      >
-                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '500', fontFamily: 'Formula1-Regular' }}>
-                          {product.team}
-                        </Text>
-                      </View>
-                    )}
 
                     {/* Featured Badge */}
                     {product.featured && (
@@ -167,44 +159,37 @@ export default function ShopScreen() {
                     )}
 
                     {/* Content */}
-                    <View className="p-4">
+                    <View className="p-3">
                       {/* Product Name */}
-                      <Text style={{ fontSize: 20, fontWeight: '600', color: '#ffffff', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#ffffff', marginBottom: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={2}>
                         {product.product_name}
                       </Text>
 
-                      {/* Price */}
-                      <View className="mb-3">
-                        <Text style={{ fontSize: 18, fontWeight: '600', color: '#dc2626', fontFamily: 'Formula1-Regular' }}>
+                      {/* Price and Category in one row */}
+                      <View className="flex-row justify-between items-center mb-2">
+                        <Text style={{ fontSize: 16, fontWeight: '600', color: '#dc2626', fontFamily: 'Formula1-Regular' }}>
                           {formatPrice(product.price, product.currency)}
                         </Text>
                         {product.category && (
-                          <Text style={{ fontSize: 14, color: '#b0b3b8', marginTop: 4, fontFamily: 'Formula1-Regular' }}>
+                          <Text style={{ fontSize: 12, color: '#b0b3b8', fontFamily: 'Formula1-Regular' }}>
                             {product.category}
                           </Text>
                         )}
                       </View>
 
-                      {/* Description */}
-                      {product.description && (
-                        <Text style={{ fontSize: 14, color: '#b0b3b8', lineHeight: 22, marginBottom: 16, fontFamily: 'Formula1-Regular' }}>
-                          {product.description}
-                        </Text>
-                      )}
-
                       {/* Buy Now Button */}
                       <Pressable
                         onPress={() => handleBuyNow(product.product_link)}
-                        className="bg-[#dc2626] rounded-xl py-3 px-4 shadow-lg"
+                        className="bg-[#dc2626] rounded-lg py-2 px-3 shadow-lg"
                       >
-                        <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600', fontSize: 16, fontFamily: 'Formula1-Regular' }}>
-                          🛒 Buy Now
+                        <Text style={{ color: '#ffffff', textAlign: 'center', fontWeight: '600', fontSize: 13, fontFamily: 'Formula1-Regular' }}>
+                          Buy Now
                         </Text>
                       </Pressable>
                     </View>
                   </View>
-                ))}
-              </View>
+                )}
+              />
             )}
           </View>
         </View>
