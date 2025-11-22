@@ -1,40 +1,69 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
+import { View, Platform, useWindowDimensions, StyleSheet } from 'react-native';
 import { Database } from '@/types/supabase';
 
 type ScreeningData = Database['public']['Tables']['screenings']['Row'];
 
 interface ScreeningGridProps {
   screenings: ScreeningData[];
-  renderScreening: (screening: ScreeningData) => React.ReactNode;
+  renderScreening: (screening: ScreeningData, index: number) => React.ReactNode;
 }
 
 export function ScreeningGrid({ screenings, renderScreening }: ScreeningGridProps) {
-  // Only apply grid layout on web
+  const { width } = useWindowDimensions();
+  const isSmallWeb = width < 768;
+
+  // Web Layout (Responsive Grid)
   if (Platform.OS === 'web') {
     return (
-      <View style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 20,
-        width: '100%',
-        maxWidth: 900,
-        margin: '0 auto',
-        padding: '16px 24px',
-      }}>
-        {screenings.slice(0, 9).map((screening) => (
-          <View key={screening.id} style={{ width: '100%' }}>
-            {renderScreening(screening)}
-          </View>
-        ))}
+      <View style={styles.webContainer}>
+        <View style={styles.webGrid}>
+          {screenings.map((screening, index) => (
+            <View key={screening.id} style={styles.gridItem}>
+              {renderScreening(screening, index)}
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
 
-  // Return regular vertical layout for mobile
+  // Mobile Layout (Vertical Stack with spacing)
   return (
-    <View className="space-y-4">
-      {screenings.map(renderScreening)}
+    <View style={styles.mobileContainer}>
+      {screenings.map((screening, index) => (
+        <View key={screening.id} style={styles.mobileItem}>
+          {renderScreening(screening, index)}
+        </View>
+      ))}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  webContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
+  webGrid: {
+    // @ts-ignore - React Native Web supports grid layout in styles
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '24px',
+    padding: 24,
+    width: '100%',
+    maxWidth: 1200,
+  },
+  gridItem: {
+    height: '100%',
+  },
+  mobileContainer: {
+    padding: 16,
+    gap: 16,
+  },
+  mobileItem: {
+    width: '100%',
+    marginBottom: 16,
+  },
+});

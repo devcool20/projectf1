@@ -5,6 +5,7 @@ import { HoverableCard } from '@/components/shop/HoverableCard';
 import { supabase } from '@/lib/supabase';
 import { Database } from '@/types/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 
 type ProductData = Database['public']['Tables']['shop_products']['Row'];
 
@@ -89,14 +90,21 @@ export default function ShopScreen() {
       >
         <View className="w-full pb-24">
           {/* Header */}
-          <View className="px-6 py-8 items-center">
-            <Text style={{ fontSize: 32, fontWeight: '700', color: '#ffffff', fontFamily: 'Formula1-Regular', marginBottom: 8 }}>
+          <Animated.View 
+            entering={FadeInUp.duration(800).springify()}
+            className="px-6 py-10 items-center w-full"
+          >
+            <LinearGradient
+              colors={['rgba(220, 38, 38, 0.2)', 'transparent']}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 200 }}
+            />
+            <Text style={{ fontSize: 32, fontWeight: '700', color: '#ffffff', fontFamily: 'Formula1-Regular', marginBottom: 8, textAlign: 'center' }}>
               F1 Shop
             </Text>
-            <Text style={{ color: '#b0b3b8', fontSize: 16, fontFamily: 'Formula1-Regular', textAlign: 'center', maxWidth: 600 }}>
+            <Text style={{ color: '#b0b3b8', fontSize: 16, fontFamily: 'Formula1-Regular', textAlign: 'center', maxWidth: 600, lineHeight: 24 }}>
               Official merchandise, team gear, and exclusive collections for the ultimate F1 fan.
             </Text>
-          </View>
+          </Animated.View>
 
           {/* Content */}
           <View className="w-full items-center">
