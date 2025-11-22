@@ -2,13 +2,6 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { 
-  useSharedValue, 
-  withSpring, 
-  useAnimatedStyle,
-  interpolate,
-  Extrapolate
-} from 'react-native-reanimated';
 import { 
   MessageCircle, 
   Clapperboard, 
@@ -98,21 +91,16 @@ export default function CustomBottomNav({ state, descriptors, navigation }: Cust
               key={route.key}
               onPress={onPress}
               onLongPress={onLongPress}
-              activeOpacity={0.6}
+              activeOpacity={0.7}
               style={styles.tabButton}
             >
-              <Animated.View
-                style={[
-                  styles.iconContainer,
-                  isFocused && styles.activeIconContainer
-                ]}
-              >
+              <View style={styles.iconContainer}>
                 <IconComponent 
-                  size={isFocused ? 26 : 24} 
-                  color={isFocused ? '#ffffff' : '#9ca3af'} 
+                  size={24} 
+                  color={isFocused ? '#dc2626' : '#6e767d'} 
                   strokeWidth={isFocused ? 2.5 : 2}
                 />
-              </Animated.View>
+              </View>
               <Text
                 style={[
                   styles.tabLabel,
@@ -122,7 +110,6 @@ export default function CustomBottomNav({ state, descriptors, navigation }: Cust
               >
                 {tab.name}
               </Text>
-              {isFocused && <View style={styles.activeIndicator} />}
             </TouchableOpacity>
           );
         })}
@@ -141,81 +128,46 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   navContainer: {
-    marginHorizontal: 20,
-    marginBottom: 12,
-    backgroundColor: '#0f0f0f',
-    borderRadius: 24,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 32,
+    height: 60,
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    shadowColor: '#000000',
+    justifyContent: 'space-around',
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: '#333',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 4,
     },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
-    borderWidth: 1,
-    borderColor: '#1f1f1f',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   tabButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    position: 'relative',
-    minHeight: 10,
+    height: '100%',
   },
   iconContainer: {
-    padding: 8,
-    borderRadius: 14,
-    marginBottom: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  activeIconContainer: {
-    backgroundColor: '#dc2626',
-    shadowColor: '#dc2626',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
+    marginBottom: 2,
   },
   tabLabel: {
-    fontSize: 9,
-    color: '#9ca3af',
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: 1,
-    letterSpacing: 0.1,
+    fontSize: 10,
+    color: '#6e767d',
+    fontWeight: '500',
     fontFamily: 'Formula1-Regular',
+    marginTop: 2,
   },
   activeTabLabel: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: -4,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#dc2626',
-    shadowColor: '#dc2626',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
-    elevation: 4,
+    color: '#dc2626',
+    fontWeight: '600',
   },
 });
