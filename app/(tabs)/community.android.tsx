@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { AuthModal } from '@/components/auth/AuthModal.android';
 import PostCard from '@/components/post-card/index.android';
 import { AnimatedThreadView } from '@/components/community/AnimatedThreadView.tsx';
-import { User, Camera, X, Menu, MessageCircle, Newspaper, Clapperboard, ShoppingCart, Trophy, Bookmark, Heart, Search, MoreHorizontal, Repeat2 } from 'lucide-react-native';
+import { User, Camera, X, Menu, MessageCircle, Clapperboard, ShoppingCart, Trophy, Bookmark, Heart, Search, MoreHorizontal, Repeat2 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal.android';
 import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
@@ -33,7 +33,6 @@ const { width: screenWidth } = Dimensions.get('window');
 
 const NAV_ITEMS = [
   { href: '/community', icon: MessageCircle, name: 'Threads' },
-  { href: '/news', icon: Newspaper, name: 'News' },
   { href: '/screenings', icon: Clapperboard, name: 'Screenings' },
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
   { href: '/drivers', icon: Trophy, name: 'Drivers' },

@@ -11,7 +11,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { 
   MessageCircle, 
-  Newspaper, 
   Clapperboard, 
   ShoppingCart, 
   Trophy
@@ -25,12 +24,6 @@ const TABS = [
     path: '/community', 
     icon: MessageCircle,
     activeIcon: MessageCircle
-  },
-  { 
-    name: 'News', 
-    path: '/news', 
-    icon: Newspaper,
-    activeIcon: Newspaper
   },
   { 
     name: 'Screenings', 

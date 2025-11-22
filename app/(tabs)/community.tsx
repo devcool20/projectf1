@@ -21,7 +21,6 @@ import {
 import { supabase } from '@/lib/supabase';
 import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { globalNewsService } from '@/lib/globalNewsService';
 import { useRouter, useLocalSearchParams, usePathname } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { ThreadView } from '@/components/community/ThreadView';
@@ -30,7 +29,7 @@ import BookmarkCard from '@/components/community/BookmarkCard';
 import RepostModal from '@/components/RepostModal';
 
 
-import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, Newspaper, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, Search } from 'lucide-react-native';
+import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, Search } from 'lucide-react-native';
 import EngagementButton from '@/components/engagement-button';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
@@ -49,7 +48,6 @@ function useColorScheme(): ColorSchemeName {
 
 const NAV_ITEMS = [
   { href: '/community', icon: MessageCircle, name: 'Threads' },
-  { href: '/news', icon: Newspaper, name: 'News' },
   { href: '/screenings', icon: Clapperboard, name: 'Screenings' },
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
   { href: '/drivers', icon: Trophy, name: 'Drivers' },
@@ -206,14 +204,6 @@ export default function CommunityScreen() {
   useEffect(() => {
     fetchCurrentUserAvatar();
   }, [session, fetchCurrentUserAvatar]);
-
-  // Initialize news service on app startup
-  useEffect(() => {
-    // Initialize news service in background
-    globalNewsService.initialize().catch(error => {
-      console.error('Failed to initialize news service:', error);
-    });
-  }, []);
 
   // Function to check for new threads
   const checkForNewThreads = useCallback(async () => {

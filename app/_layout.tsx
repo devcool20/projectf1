@@ -2,7 +2,6 @@ import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { useEffect, useState } from 'react';
 import { SplashScreen } from 'expo-router';
-import { globalNewsService } from '@/lib/globalNewsService';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { StandingsProvider } from '@/contexts/StandingsContext';
 import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
@@ -100,11 +99,6 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
-
-  // Initialize global news service on app startup
-  useEffect(() => {
-    globalNewsService.initialize();
-  }, []);
 
   if (!fontsLoaded && !fontError) {
     return null;

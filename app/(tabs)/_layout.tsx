@@ -37,7 +37,6 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" options={{ headerShown: false }} />
       <Tabs.Screen name="community" options={{ headerShown: false }} />
-      <Tabs.Screen name="news" options={{ headerShown: false }} />
       <Tabs.Screen name="screenings" options={{ headerShown: false }} />
       <Tabs.Screen name="shop" options={{ headerShown: false }} />
       <Tabs.Screen name="drivers" options={{ headerShown: false }} />
