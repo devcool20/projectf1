@@ -35,7 +35,7 @@ const NAV_ITEMS = [
   { href: '/community', icon: MessageCircle, name: 'Threads' },
   { href: '/screenings', icon: Clapperboard, name: 'Screenings' },
   { href: '/shop', icon: ShoppingCart, name: 'Shop' },
-  { href: '/drivers', icon: Trophy, name: 'Drivers' },
+  { href: '/standings', icon: Trophy, name: 'Standings' },
   { href: '/profile', icon: User, name: 'Profile' },
   { href: '/bookmarks', icon: Bookmark, name: 'Bookmarks' }
 ];

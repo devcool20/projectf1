@@ -32,7 +32,7 @@ const TABS = [
   },
   { 
     name: 'Standings', 
-    path: '/drivers', 
+    path: '/standings', 
     icon: Trophy,
     activeIcon: Trophy
   },
