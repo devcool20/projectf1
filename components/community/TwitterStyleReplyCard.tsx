@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Image, Dimensions, LayoutChangeEvent } from 'react-native';
-import { Heart, MessageCircle, Bookmark, MoreHorizontal } from 'lucide-react-native';
-import { formatThreadTimestamp, getResponsiveImageStyle, getCompactImageStyle, getVeryCompactImageStyle } from '@/lib/utils';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { Heart, MessageCircle } from 'lucide-react-native';
+import { formatThreadTimestamp, getResponsiveImageStyle } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { useEngagementStore } from './engagementStore';
 
@@ -21,8 +21,6 @@ const TEAM_LOGOS: { [key: string]: any } = {
 
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
-
-// Using imported utility functions from lib/utils.ts
 
 export type TwitterStyleReplyCardProps = {
   reply: any;
@@ -44,31 +42,13 @@ export default function TwitterStyleReplyCard({
   const { replyLikes, setReplyLike } = useEngagementStore();
   const isLiked = replyLikes[reply.id] || false;
   const avatarSize = 40;
-  const avatarMargin = 12;
-  const parentAvatarRef = useRef<View>(null);
-  const replyAvatarRef = useRef<View>(null);
-
-  // State to store the TOP Y coordinate of the avatar wrappers
-  const [parentAvatarTopY, setParentAvatarTopY] = useState<number | null>(null);
-  const [replyAvatarTopY, setReplyAvatarTopY] = useState<number | null>(null);
 
   useEffect(() => {
     fetchReplyEngagement();
-    // No longer logging layout Y values here, as it's not relevant for data fetching.
-    // The line rendering itself will re-render when state changes.
   }, [reply.id, session]);
-
-  // Measure the TOP Y position of the parent and reply avatars' containers
-  const onParentAvatarLayout = (event: LayoutChangeEvent) => {
-    setParentAvatarTopY(event.nativeEvent.layout.y);
-  };
-  const onReplyAvatarLayout = (event: LayoutChangeEvent) => {
-    setReplyAvatarTopY(event.nativeEvent.layout.y);
-  };
 
   const fetchReplyEngagement = async () => {
     try {
-      // Fetch like count for this reply
       const { data: likesData, error: likesError } = await supabase
         .from('likes')
         .select('user_id')
@@ -78,7 +58,6 @@ export default function TwitterStyleReplyCard({
       
       setReplyLikeCount(likesData?.length || 0);
 
-      // Check if current user has liked this reply and update Zustand store
       if (session?.user) {
         const userLiked = likesData?.some(like => like.user_id === session.user.id);
         setReplyLike(reply.id, userLiked || false);
@@ -89,13 +68,10 @@ export default function TwitterStyleReplyCard({
   };
 
   const handleLikePress = async () => {
-    if (!session?.user) {
-      return;
-    }
+    if (!session?.user) return;
 
     try {
       if (isLiked) {
-        // Remove like
         const { error } = await supabase
           .from('likes')
           .delete()
@@ -106,7 +82,6 @@ export default function TwitterStyleReplyCard({
         setReplyLike(reply.id, false);
         setReplyLikeCount(prev => prev - 1);
       } else {
-        // Add like
         const { error } = await supabase
           .from('likes')
           .insert({
@@ -123,151 +98,129 @@ export default function TwitterStyleReplyCard({
     }
   };
 
-  // Determine which logo to show for the reply author
   const getLogoToShow = (userProfile: any) => {
-    if (userProfile?.email === ADMIN_EMAIL) {
-      return ADMIN_LOGO;
-    }
+    if (userProfile?.email === ADMIN_EMAIL) return ADMIN_LOGO;
     if (userProfile?.favorite_team && TEAM_LOGOS[userProfile.favorite_team]) {
       return TEAM_LOGOS[userProfile.favorite_team];
     }
     return null;
   };
 
-  // Determine which logo to show for the original thread author
-  const getThreadLogoToShow = (threadProfile: any) => {
-    if (threadProfile?.email === ADMIN_EMAIL) {
-      return ADMIN_LOGO;
-    }
-    if (threadProfile?.favorite_team && TEAM_LOGOS[threadProfile.favorite_team]) {
-      return TEAM_LOGOS[threadProfile.favorite_team];
-    }
-    return null;
-  };
-
   const replyLogo = getLogoToShow(reply.profiles);
-  const threadLogo = getThreadLogoToShow(reply.threads?.profiles);
+  const threadLogo = getLogoToShow(reply.threads?.profiles);
 
   return (
     <TouchableOpacity 
       onPress={() => onThreadPress?.(reply.threads?.id)}
       activeOpacity={0.7}
-      style={{ backgroundColor: '#ffffff' }}
+      style={{ backgroundColor: '#ffffff', padding: 16 }}
     >
-    <View style={{ padding: 16, backgroundColor: '#ffffff', position: 'relative', minHeight: 120 }}>
-      {/* Line connecting avatars */}
-      {parentAvatarTopY !== null && replyAvatarTopY !== null && (
-        <View
-          style={{
-            position: 'absolute',
-            // Adjust left to center the line in the avatar column, considering card padding (16)
-            left: 16 + avatarSize / 2 - (4 / 2), // 16px padding + half avatar width - half line width
-            top: parentAvatarTopY + avatarSize, // Starts at the bottom of the parent avatar
-            height: replyAvatarTopY - (parentAvatarTopY + avatarSize), // Height covers the gap
-            width: 4, // Line thickness
-            backgroundColor: '#e0e0e0', // Light gray color for the line
-            zIndex: 100, // Ensure it draws on top
-          }}
-        />
-      )}
-      {/* Original thread block */}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 }}>
-        {/* Attach onLayout to the View wrapping the avatar for accurate Y position */}
-        <View ref={parentAvatarRef} onLayout={onParentAvatarLayout}>
+      {/* Parent Thread Section */}
+      <View style={{ flexDirection: 'row' }}>
+        {/* Left Column: Avatar + Line */}
+        <View style={{ width: 40, alignItems: 'center' }}>
           <TouchableOpacity onPress={(e) => {
             e.stopPropagation();
             onProfilePress?.(reply.threads?.user_id);
-          }}>
+          }} style={{ zIndex: 2 }}>
             <Image
               source={{
                 uri: reply.threads?.profiles?.avatar_url ||
                   `https://ui-avatars.com/api/?name=${reply.threads?.profiles?.username?.charAt(0)}&background=random`
               }}
-              style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2, backgroundColor: '#f3f4f6' }}
+              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
             />
           </TouchableOpacity>
+          
+          {/* Vertical Line connecting to next section */}
+          <View style={{ 
+            width: 2, 
+            flex: 1, 
+            backgroundColor: '#cfd9de',
+            marginVertical: 4
+          }} />
         </View>
-        <View style={{ flex: 1, marginLeft: avatarMargin }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontWeight: '600', color: '#000', fontSize: 15 }} className="font-formula1-regular">
+
+        {/* Right Column: Content */}
+        <View style={{ flex: 1, paddingLeft: 12, paddingBottom: 24 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, height: 20 }}>
+            <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 15, marginRight: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={1}>
               {reply.threads?.profiles?.username || 'Unknown User'}
             </Text>
             {threadLogo && (
               <Image 
                 source={threadLogo} 
-                style={{ width: 24, height: 22, marginLeft: 4 }}
+                style={{ width: 16, height: 16, marginRight: 4 }}
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }} className="font-formula1-regular">
-              {formatThreadTimestamp(reply.threads?.created_at)}
+            <Text style={{ fontSize: 14, color: '#536471', fontFamily: 'Inter' }}>
+              · {formatThreadTimestamp(reply.threads?.created_at)}
             </Text>
           </View>
-            <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }} className="font-formula1-regular">
-              {reply.threads?.content || 'Original thread content'}
-            </Text>
-            {reply.threads?.image_url && (
-              <View style={{ alignItems: 'center', marginTop: 4 }}>
-                <Image
-                  source={{ uri: reply.threads.image_url }}
-                  style={getResponsiveImageStyle(screenWidth)}
-                  resizeMode="cover"
-                />
-              </View>
-            )}
+          
+          <Text style={{ color: '#0f1419', fontSize: 15, lineHeight: 20, fontFamily: 'Inter' }} numberOfLines={3}>
+            {reply.threads?.content || 'Original thread content'}
+          </Text>
         </View>
       </View>
-      {/* Reply block */}
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-        {/* Attach onLayout to the View wrapping the avatar for accurate Y position */}
-        <View ref={replyAvatarRef} onLayout={onReplyAvatarLayout}>
+
+      {/* Reply Section */}
+      <View style={{ flexDirection: 'row' }}>
+        {/* Left Column: Avatar only */}
+        <View style={{ width: 40, alignItems: 'center' }}>
           <TouchableOpacity onPress={(e) => {
             e.stopPropagation();
             onProfilePress?.(reply.user_id);
-          }}>
+          }} style={{ zIndex: 2 }}>
             <Image
               source={{
                 uri: reply.profiles?.avatar_url ||
                   `https://ui-avatars.com/api/?name=${reply.profiles?.username?.charAt(0)}&background=random`
               }}
-              style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2, backgroundColor: '#f3f4f6' }}
+              style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
             />
           </TouchableOpacity>
         </View>
-        <View style={{ flex: 1, marginLeft: avatarMargin }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontWeight: '600', color: '#000', fontSize: 15 }} className="font-formula1-regular">
+
+        {/* Right Column: Content */}
+        <View style={{ flex: 1, paddingLeft: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, height: 20 }}>
+            <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 15, marginRight: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={1}>
               {reply.profiles?.username || 'Unknown User'}
             </Text>
             {replyLogo && (
               <Image 
                 source={replyLogo} 
-                style={{ width: 24, height: 22, marginLeft: 4 }}
+                style={{ width: 16, height: 16, marginRight: 4 }}
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 11, color: '#888', marginLeft: 8 }} className="font-formula1-regular">
-              {formatThreadTimestamp(reply.created_at)}
+            <Text style={{ fontSize: 14, color: '#536471', fontFamily: 'Inter' }}>
+              · {formatThreadTimestamp(reply.created_at)}
             </Text>
           </View>
-          <Text style={{ color: '#888', fontSize: 11, marginTop: 2 }} className="font-formula1-regular">
-            Replying to @{reply.threads?.profiles?.username || 'unknown'}
+          
+          <Text style={{ color: '#536471', fontSize: 13, marginBottom: 4, fontFamily: 'Inter' }}>
+            Replying to <Text style={{ color: '#1d9bf0' }}>@{reply.threads?.profiles?.username || 'unknown'}</Text>
           </Text>
-          <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 8 }} className="font-formula1-regular">
+          
+          <Text style={{ color: '#0f1419', fontSize: 15, lineHeight: 20, marginBottom: 8, fontFamily: 'Inter' }}>
             {reply.content}
           </Text>
+
           {reply.image_url && (
-            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ marginTop: 8, marginBottom: 8 }}>
               <Image
                 source={{ uri: reply.image_url }}
-                style={getResponsiveImageStyle(screenWidth)}
+                style={[getResponsiveImageStyle(screenWidth), { borderRadius: 12 }]}
                 resizeMode="cover"
               />
             </View>
           )}
+
           {/* Engagement Bar */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-            {/* Likes */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
             <TouchableOpacity 
               onPress={(e) => {
                 e.stopPropagation();
@@ -276,24 +229,23 @@ export default function TwitterStyleReplyCard({
               style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
             >
               <Heart 
-                size={14} 
-                color={isLiked ? '#dc2626' : '#666666'} 
-                fill={isLiked ? '#dc2626' : 'none'} 
+                size={18} 
+                color={isLiked ? '#f91880' : '#536471'} 
+                fill={isLiked ? '#f91880' : 'none'} 
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }} className="font-formula1-regular">
-                {replyLikeCount}
-              </Text>
+              {replyLikeCount > 0 && (
+                <Text style={{ marginLeft: 4, color: isLiked ? '#f91880' : '#536471', fontSize: 13, fontFamily: 'Inter' }}>
+                  {replyLikeCount}
+                </Text>
+              )}
             </TouchableOpacity>
 
-            {/* Comments (Reply to Reply - could be implemented later) */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-              <MessageCircle size={14} color="#666666" />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>0</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <MessageCircle size={18} color="#536471" />
             </View>
           </View>
         </View>
       </View>
-    </View>
     </TouchableOpacity>
   );
 }

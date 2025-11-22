@@ -139,8 +139,8 @@ export default function PostCard({
   };
   
   return (
-    <View style={{ width: '100%', padding: 16 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 2 }}>
+    <View style={{ width: '100%', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f0f2f5' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
         {/* Avatar Column */}
         <TouchableOpacity 
           onPress={() => {
@@ -149,44 +149,83 @@ export default function PostCard({
             }
           }}
           disabled={!userId || !onProfilePress}
+          style={{ marginRight: 12 }}
         >
           <Image
             source={{ uri: avatarUrl || `https://ui-avatars.com/api/?name=${username.charAt(0)}&background=random` }}
-            style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12, backgroundColor: '#f3f4f6' }}
+            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
           />
         </TouchableOpacity>
+
         {/* Content Column */}
-        <View style={{ flex: 1, paddingLeft: 8 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ fontWeight: '600', color: '#3a3a3a', fontSize: 15, fontFamily: 'Formula1-Regular' }} selectable={false}>{username}</Text>
-            {logoToShow && (
-              <Image 
-                source={logoToShow} 
-                style={{ width: 30, height: 28, marginLeft: 4 }}
-                resizeMode="contain"
-              />
-            )}
+        <View style={{ flex: 1 }}>
+          {/* Header: Name, Team, Time */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Text 
+                style={{ 
+                  fontWeight: '700', 
+                  color: '#0f1419', 
+                  fontSize: 16, 
+                  fontFamily: 'Formula1-Regular',
+                  marginRight: 4 
+                }} 
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                selectable={false}
+              >
+                {username}
+              </Text>
+              
+              {logoToShow && (
+                <Image 
+                  source={logoToShow} 
+                  style={{ width: 16, height: 16, marginHorizontal: 4 }}
+                  resizeMode="contain"
+                />
+              )}
+
+              <Text style={{ fontSize: 14, color: '#536471', fontFamily: 'Inter', marginLeft: 4 }}>· {formatThreadTimestamp(timestamp)}</Text>
+            </View>
+
             {showDelete && (
-              <View style={{ marginLeft: 'auto' }}>
-                <TouchableOpacity
-                  ref={menuAnchorRef}
-                  onPress={openMenu}
-                  style={{ padding: 4 }}
-                >
-                  <MoreHorizontal size={20} color="#888" />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                ref={menuAnchorRef}
+                onPress={openMenu}
+                style={{ padding: 4 }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MoreHorizontal size={18} color="#536471" />
+              </TouchableOpacity>
             )}
           </View>
-          <Text style={{ fontSize: 12, color: '#6b7280', marginTop: -2, marginLeft: 2, fontFamily: 'Inter' }} selectable={false}>{formatThreadTimestamp(timestamp)}</Text>
-          <Text style={{ color: '#3a3a3a', marginVertical: 8, fontSize: 14, lineHeight: 20, fontFamily: 'Inter' }} selectable={false}>{displayedContent}</Text>
+
+          {/* Post Content */}
+          <Text 
+            style={{ 
+              color: '#0f1419', 
+              marginBottom: 12, 
+              fontSize: 15, 
+              lineHeight: 22, 
+              fontFamily: 'Inter' 
+            }} 
+            selectable={false}
+          >
+            {displayedContent}
+          </Text>
+          
           {shouldTruncate && (
             <TouchableOpacity onPress={() => setExpanded(true)}>
-              <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 13, marginBottom: 4, fontFamily: 'Formula1-Regular' }}>Read more</Text>
+              <Text style={{ color: '#1d9bf0', fontSize: 15, marginBottom: 12, fontFamily: 'Inter' }}>Show more</Text>
             </TouchableOpacity>
           )}
+
+          {/* Post Image */}
           {imageUrl && (
-            <TouchableOpacity onPress={() => onImagePress && imageUrl && onImagePress(imageUrl)}>
+            <TouchableOpacity 
+              onPress={() => onImagePress && imageUrl && onImagePress(imageUrl)}
+              style={{ marginBottom: 12 }}
+            >
               <Image
                 source={{ uri: imageUrl }}
                 style={(() => {
@@ -195,71 +234,83 @@ export default function PostCard({
                   }
                   const imgW = imageDimensions.width;
                   const imgH = imageDimensions.height;
+                  
+                  // Calculate aspect ratio but cap max height
                   const aspectRatio = imgW / imgH;
-                  const maxWidth = screenWidth < 400 ? screenWidth - 120 : 280;
-                  const maxHeight = 400;
-                  let width = maxWidth;
-                  let height = imgH * (maxWidth / imgW);
-                  if (height > maxHeight) {
-                    height = maxHeight;
-                    width = imgW * (maxHeight / imgH);
-                  }
-                  return { borderRadius: 8, width, height, backgroundColor: '#f3f4f6', marginTop: 8 };
+                  const displayWidth = '100%';
+                  
+                  return { 
+                    borderRadius: 16, 
+                    width: '100%', 
+                    aspectRatio: aspectRatio,
+                    maxHeight: 500,
+                    backgroundColor: '#f3f4f6',
+                    borderWidth: 1,
+                    borderColor: 'rgba(0,0,0,0.05)'
+                  };
                 })()}
                 resizeMode="cover"
               />
             </TouchableOpacity>
           )}
+
           {/* Engagement Bar */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-            {/* Like */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-              <EngagementButton
-                icon={Heart}
-                active={isLiked || false}
-                onPress={onLikePress}
-                type="like"
-                size={14}
-                accessibilityLabel="Like post"
-              />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Inter' }}>{likes}</Text>
-            </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', maxWidth: 400, paddingRight: 16 }}>
             {/* Comment */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <EngagementButton
                 icon={MessageCircle}
                 active={false}
                 onPress={onCommentPress}
                 type="comment"
-                size={14}
+                size={18}
                 accessibilityLabel="Comment"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Inter' }}>{comments}</Text>
+              <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter' }}>{comments > 0 ? comments : ''}</Text>
             </View>
+
             {/* Repost */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <EngagementButton
                 icon={Repeat2}
                 active={false}
                 onPress={onRepostPress || (() => {})}
                 type="repost"
-                size={14}
+                size={18}
                 accessibilityLabel="Repost"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Inter' }}>{reposts}</Text>
+              <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter' }}>{reposts > 0 ? reposts : ''}</Text>
             </View>
+
+            {/* Like */}
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <EngagementButton
+                icon={Heart}
+                active={isLiked || false}
+                onPress={onLikePress}
+                type="like"
+                size={18}
+                accessibilityLabel="Like post"
+              />
+              <Text style={{ marginLeft: 4, color: isLiked ? '#f91880' : '#536471', fontSize: 13, fontFamily: 'Inter' }}>{likes > 0 ? likes : ''}</Text>
+            </View>
+
             {/* Bookmark */}
             <EngagementButton
               icon={Bookmark}
               active={isBookmarked || false}
               onPress={onBookmarkPress}
               type="bookmark"
-              size={14}
+              size={18}
               accessibilityLabel="Bookmark post"
             />
+            
+            {/* Share (Placeholder for visual balance if needed, currently just spacing) */}
+            {/* <Share size={18} color="#536471" /> */}
           </View>
         </View>
       </View>
+      
       {/* Three-dot menu modal */}
       <Modal
         visible={menuVisible}
