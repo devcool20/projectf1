@@ -29,7 +29,7 @@ export default function StandingsDetailScreen() {
           onPress={() => router.back()}
           style={{
             position: 'absolute',
-            top: 76,
+            top: 100,
             left: 2,
             zIndex: 10,
           }}

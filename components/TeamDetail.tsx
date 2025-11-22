@@ -94,7 +94,7 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team }) => {
         {/* Back button */}
         <TouchableOpacity
           onPress={handleBack}
-          style={{ position: 'absolute', top: 16, left: 12, zIndex: 10, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 20, padding: 6 }}
+          style={{ position: 'absolute', top: 46, left: 12, zIndex: 10, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 20, padding: 6 }}
           activeOpacity={0.7}
         >
           <Ionicons name="arrow-back" size={28} color="#fff" />

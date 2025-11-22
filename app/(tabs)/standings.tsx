@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, SafeAreaView, Image, TouchableOpacity, Animated, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, Image, TouchableOpacity, Animated, StyleSheet, Dimensions, Platform, useWindowDimensions } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -8,8 +8,33 @@ import { HoverableCard } from '@/components/shop/HoverableCard';
 import { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import AnimatedReanimated from 'react-native-reanimated';
 
-const { width: screenWidth } = Dimensions.get('window');
-const isSmallScreen = screenWidth < 400;
+// Preload all images when module loads for instant display
+const preloadImages = () => {
+  if (Platform.OS === 'web') {
+    // For web, preload by creating image elements
+    const allImages = [
+      ...Object.values(DRIVER_IMAGES),
+      ...Object.values(TEAM_IMAGES),
+    ];
+    
+    allImages.forEach((imageSource) => {
+      try {
+        const resolved = Image.resolveAssetSource(imageSource);
+        if (resolved && resolved.uri) {
+          const img = new window.Image();
+          img.src = resolved.uri;
+        }
+      } catch (e) {
+        // Silently fail if image can't be preloaded
+      }
+    });
+  } else {
+    // For native, React Native caches require() images automatically
+    // But we can still warm up the cache by accessing them
+    Object.values(DRIVER_IMAGES);
+    Object.values(TEAM_IMAGES);
+  }
+};
 
 const DRIVER_IMAGES = {
   'Max Verstappen': require('../../assets/images/drivers/max.png'),
@@ -92,7 +117,13 @@ type TeamStanding = {
   image_url?: string | null;
 };
 
+// Preload images immediately when module loads
+preloadImages();
+
 export default function StandingsScreen() {
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web' && width > 768;
+  
   const [activeTab, setActiveTab] = useState<'drivers' | 'teams'>('drivers');
   const [drivers, setDrivers] = useState<DriverStanding[]>([]);
   const [teams, setTeams] = useState<TeamStanding[]>([]);
@@ -152,11 +183,11 @@ export default function StandingsScreen() {
     return (
       <AnimatedReanimated.View entering={FadeInDown.duration(600).springify()} style={{ marginBottom: 24 }}>
         <HoverableCard
-          style={styles.heroContainer}
+          style={[styles.heroContainer, isWeb && styles.heroContainerWeb]}
           onPress={() => router.push(`/standings/${driver.driver_name.toLowerCase().replace(/ /g, '-')}` as any)}
         >
           {/* Image Container with Aspect Ratio */}
-          <View style={styles.heroImageWrapper}>
+          <View style={[styles.heroImageWrapper, isWeb && styles.heroImageWrapperWeb]}>
             <LinearGradient
               colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.8)"]}
               style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0 }}
@@ -164,7 +195,7 @@ export default function StandingsScreen() {
             {imageSrc ? (
               <Image
                 source={imageSrc}
-                style={styles.heroImage}
+                style={[styles.heroImage, isWeb && styles.heroImageWeb]}
                 resizeMode="contain"
               />
             ) : (
@@ -211,7 +242,7 @@ export default function StandingsScreen() {
       return (
         <>
           {renderHero(sortedDrivers[0])}
-          <View style={styles.listContainer}>
+          <View style={[styles.listContainer, isWeb && styles.listContainerWeb]}>
             {restDrivers.map((driver, idx) => {
               const imageSrc = DRIVER_IMAGES[driver.driver_name as keyof typeof DRIVER_IMAGES];
               const [firstName, lastName] = driver.driver_name.split(' ');
@@ -221,6 +252,7 @@ export default function StandingsScreen() {
                 <AnimatedReanimated.View 
                   key={driver.id} 
                   entering={FadeInDown.delay(idx * 50).duration(400)}
+                  style={isWeb ? { width: '48%' } : undefined}
                 >
                   <HoverableCard
                     style={styles.card}
@@ -236,7 +268,7 @@ export default function StandingsScreen() {
                         <Image
                           source={imageSrc}
                           style={styles.cardImage}
-                          resizeMode="cover" // Changed to cover for zoom
+                          resizeMode="cover"
                         />
                       ) : (
                         <View style={styles.cardImageFallback}>
@@ -269,7 +301,7 @@ export default function StandingsScreen() {
     
     const sortedTeams = [...teams].sort((a, b) => b.points - a.points);
     return (
-        <View style={[styles.listContainer, { marginTop: 20 }]}>
+        <View style={[styles.listContainer, { marginTop: 20 }, isWeb && styles.listContainerWeb]}>
         {sortedTeams.map((team, idx) => {
           const imageSrc = TEAM_IMAGES[team.team_name as keyof typeof TEAM_IMAGES];
           const teamColor = TEAM_COLORS[team.team_name] || '#fff';
@@ -278,6 +310,7 @@ export default function StandingsScreen() {
             <AnimatedReanimated.View 
                 key={team.id} 
                 entering={FadeInDown.delay(idx * 50).duration(400)}
+                style={isWeb ? { width: '48%' } : undefined}
             >
             <HoverableCard
               style={[styles.card, { paddingVertical: 16 }]}
@@ -290,7 +323,11 @@ export default function StandingsScreen() {
 
               <View style={[styles.cardImageContainer, { backgroundColor: 'transparent', width: 50, height: 50, borderRadius: 8, borderWidth: 0 }]}>
                 {imageSrc ? (
-                  <Image source={imageSrc} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                  <Image 
+                    source={imageSrc} 
+                    style={{ width: '100%', height: '100%' }} 
+                    resizeMode="contain"
+                  />
                 ) : (
                   <View style={styles.cardImageFallback}>
                     <Text style={styles.cardImageFallbackText}>{team.team_name[0]}</Text>
@@ -316,7 +353,7 @@ export default function StandingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.standingsOuter}>
+      <View style={[styles.standingsOuter, isWeb && styles.standingsOuterWeb]}>
         <AnimatedReanimated.View entering={FadeInUp.duration(600)} style={styles.header}>
           <Text style={[styles.headerTitle, { fontFamily: 'Formula1-Regular' }]}>Standings 2025</Text>
         </AnimatedReanimated.View>
@@ -367,6 +404,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingBottom: 0,
   },
+  standingsOuterWeb: {
+    maxWidth: 1200,
+  },
   header: {
     alignItems: 'center',
     marginTop: 20,
@@ -411,6 +451,11 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     gap: 12,
+  },
+  listContainerWeb: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   // Cards
   card: {
@@ -458,7 +503,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '180%', // Zoomed in
     height: '180%', // Zoomed in
-    marginTop: 0,
+    marginTop: 0, // Remove top margin to keep head in frame from top
     marginRight: 40, // Remove top margin to keep head in frame from top
   },
   cardImageFallback: {
@@ -515,20 +560,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333',
   },
+  heroContainerWeb: {
+    height: 400, // Taller on web
+  },
   heroImageWrapper: {
-    width: '111%',
-    height: 400, // Height for hero image
+    width: '100%',
+    height: 205, // Height for hero image
     backgroundColor: '#1a1d24',
     alignItems: 'center',
     justifyContent: 'flex-end',
     position: 'relative',
     overflow: 'hidden',
   },
+  heroImageWrapperWeb: {
+    height: 400, // Taller on web
+  },
   heroImage: {
     width: '100%',
     height: '100%',
     position: 'absolute',
     bottom: 0,
+  },
+  heroImageWeb: {
+    width: '80%', // Constrain width on large screens
+    height: '95%',
   },
   heroImageFallback: {
     flex: 1,
