@@ -795,16 +795,16 @@ export function AnimatedThreadView({
           <View style={{
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 14,
-            paddingHorizontal: 18,
+            paddingVertical: 10,
+            paddingHorizontal: 16,
             borderBottomWidth: 1,
             borderBottomColor: '#e5e5e5',
             backgroundColor: '#ffffff'
           }}>
-            <TouchableOpacity onPress={handleCloseWithAnimation} style={{ marginRight: 16 }}>
-              <ArrowLeft size={28} color="#3a3a3a" />
+            <TouchableOpacity onPress={handleCloseWithAnimation} style={{ marginRight: 12 }}>
+              <ArrowLeft size={24} color="#3a3a3a" />
             </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontWeight: '600', color: '#3a3a3a', fontFamily: 'Formula1-Regular' }}>
+            <Text style={{ fontSize: 18, fontWeight: '600', color: '#3a3a3a', fontFamily: 'Formula1-Regular' }}>
               Thread
             </Text>
           </View>
@@ -825,37 +825,37 @@ export function AnimatedThreadView({
                   <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity 
                       onPress={() => onProfilePress?.(threadData.user_id)}
-                      style={{ marginRight: 12 }}
+                      style={{ marginRight: 10 }}
                     >
                       <Image
                         source={{ 
                           uri: threadData.profiles?.avatar_url || 
                                `https://ui-avatars.com/api/?name=${threadData.profiles?.username?.charAt(0) || 'U'}&background=random` 
                         }}
-                        style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
+                        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
                       />
                     </TouchableOpacity>
 
                     <View style={{ flex: 1 }}>
                       {/* Repost user info */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                        <Text style={{ fontWeight: '600', color: '#000', fontSize: 14, fontFamily: 'Formula1-Regular' }}>
                           {threadData.profiles?.username || 'Unknown User'}
                         </Text>
                         {threadData.profiles?.is_admin ? (
                           <Image 
                             source={require('@/assets/images/favicon.png')} 
-                            style={{ width: 24, height: 22, marginLeft: 4 }}
+                            style={{ width: 14, height: 14, marginLeft: 4 }}
                             resizeMode="contain"
                           />
                         ) : threadData.profiles?.favorite_team && TEAM_LOGOS[threadData.profiles.favorite_team] && (
                           <Image 
                             source={TEAM_LOGOS[threadData.profiles.favorite_team]} 
-                            style={{ width: 24, height: 22, marginLeft: 4 }}
+                            style={{ width: 14, height: 14, marginLeft: 4 }}
                             resizeMode="contain"
                           />
                         )}
-                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ fontSize: 12, color: '#888', marginLeft: 6, fontFamily: 'Formula1-Regular' }}>
                           {formatThreadTimestamp(threadData.created_at)}
                         </Text>
                       </View>
@@ -967,36 +967,36 @@ export function AnimatedThreadView({
                   <View style={{ flexDirection: 'row' }}>
                     <TouchableOpacity 
                       onPress={() => onProfilePress?.(threadData.user_id)}
-                      style={{ marginRight: 12 }}
+                      style={{ marginRight: 10 }}
                     >
                       <Image
                         source={{ 
                           uri: threadData.profiles?.avatar_url || 
                                `https://ui-avatars.com/api/?name=${threadData.profiles?.username?.charAt(0) || 'U'}&background=random` 
                         }}
-                        style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
+                        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
                       />
                     </TouchableOpacity>
 
                                           <View style={{ flex: 1 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                                                  <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                                  <Text style={{ fontWeight: '600', color: '#000', fontSize: 14, fontFamily: 'Formula1-Regular' }}>
                           {threadData.profiles?.username || 'Unknown User'}
                         </Text>
                         {threadData.profiles?.is_admin ? (
                           <Image 
                             source={require('@/assets/images/favicon.png')} 
-                            style={{ width: 24, height: 22, marginLeft: 4 }}
+                            style={{ width: 14, height: 14, marginLeft: 4 }}
                             resizeMode="contain"
                           />
                         ) : threadData.profiles?.favorite_team && TEAM_LOGOS[threadData.profiles.favorite_team] && (
                           <Image 
                             source={TEAM_LOGOS[threadData.profiles.favorite_team]} 
-                            style={{ width: 24, height: 22, marginLeft: 4 }}
+                            style={{ width: 14, height: 14, marginLeft: 4 }}
                             resizeMode="contain"
                           />
                         )}
-                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ fontSize: 12, color: '#888', marginLeft: 6, fontFamily: 'Formula1-Regular' }}>
                           {formatThreadTimestamp(threadData.created_at)}
                         </Text>
                       </View>

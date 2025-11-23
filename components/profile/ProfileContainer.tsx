@@ -1351,285 +1351,192 @@ return (
         alignItems: 'center', 
         justifyContent: 'space-between', 
         paddingHorizontal: 16, 
-        paddingVertical: 16, 
+        paddingVertical: 12, 
         borderBottomWidth: 1, 
         borderBottomColor: '#e5e5e5',
         backgroundColor: '#ffffff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1
+        zIndex: 10
       }}>
         <TouchableOpacity 
           onPress={onBack} 
           style={{ 
-            padding: 10, 
-            borderRadius: 25,
-            backgroundColor: 'rgba(0, 0, 0, 0.05)',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 1
+            padding: 8, 
           }}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color="#1a1a1a" />
+          <ArrowLeft size={24} color="#1a1a1a" />
         </TouchableOpacity>
+        
         <View style={{ flex: 1, alignItems: 'center' }}>
-                      <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#1a1a1a', marginBottom: 2 }} className="font-formula1-bold">{profile.username}</Text>
-          <Text style={{ color: '#657786', fontSize: 13 }}>{threads.length} posts • {replies.length} replies</Text>
+          <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#1a1a1a', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{profile.username}</Text>
+          <Text style={{ color: '#657786', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{threads.length} posts</Text>
         </View>
+
         {session?.user?.id === userId ? (
           <TouchableOpacity 
-            onPress={() => setEditModal(true)} 
-            style={{ 
-              paddingHorizontal: 16, 
-              paddingVertical: 10,
-              borderRadius: 25,
-              borderWidth: 1,
-              borderColor: '#dc2626',
-              backgroundColor: '#dc2626',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 2,
-              elevation: 1
-            }}
-            activeOpacity={0.8}
+            onPress={handleLogout}
+            style={{ padding: 8 }}
+            activeOpacity={0.7}
           >
-            <Text style={{ fontWeight: '600', color: '#ffffff', fontSize: 14, fontFamily: 'Formula1-Regular' }}>Edit Profile</Text>
+            <LogOut size={20} color="#dc2626" />
           </TouchableOpacity>
-        ) : session && (
-          <TouchableOpacity 
-            onPress={handleFollowToggle} 
-            style={{ 
-              paddingHorizontal: 20, 
-              paddingVertical: 10,
-              borderRadius: 25,
-              borderWidth: 1,
-              borderColor: isFollowing ? '#ffffff' : '#dc2626',
-              backgroundColor: isFollowing ? '#ffffff' : '#dc2626',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 2,
-              elevation: 1
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={{ 
-              fontWeight: '600', 
-              color: isFollowing ? '#1a1a1a' : '#ffffff', 
-              fontSize: 14,
-              fontFamily: 'Formula1-Regular'
-            }}>
-              {isFollowing ? 'Following' : 'Follow'}
-            </Text>
-          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 40 }} /> // Spacer to balance layout
         )}
       </View>
-      {/* Profile Header with Avatar and Edit Icon */}
-      <View style={{ 
-        padding: 16, 
-        backgroundColor: '#ffffff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0'
-      }}>
-        {/* Avatar and Edit Icon */}
+
+      {/* Profile Info Section */}
+      <View style={{ backgroundColor: '#ffffff' }}>
         <View style={{ 
-          alignItems: 'center', 
-          marginBottom: 16 
+          padding: 16, 
+          paddingBottom: 0,
+          backgroundColor: '#ffffff',
+          alignItems: 'center'
         }}>
-          <View style={{ position: 'relative' }}>
+          {/* Avatar */}
+          <View style={{ marginBottom: 16, position: 'relative' }}>
             <Image 
               source={{ uri: profile.avatar_url || `https://ui-avatars.com/api/?name=${profile.username?.charAt(0) || 'U'}&background=f5f5f5&color=666` }} 
               style={{ 
-                width: 100, 
-                height: 100, 
-                borderRadius: 50, 
+                width: 80, 
+                height: 80, 
+                borderRadius: 40, 
                 backgroundColor: '#f5f5f5',
-                borderWidth: 3,
+                borderWidth: 2,
                 borderColor: '#ffffff',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4
               }} 
             />
-            {session?.user?.id === userId && (
-              <TouchableOpacity 
-                onPress={() => setEditModal(true)} 
-                style={{ 
-                  position: 'absolute', 
-                  bottom: 2, 
-                  right: 2, 
-                  backgroundColor: '#ffffff', 
-                  borderRadius: 16, 
-                  padding: 6, 
-                  borderWidth: 2, 
-                  borderColor: '#ffffff',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.15,
-                  shadowRadius: 3,
-                  elevation: 3
-                }}
-                activeOpacity={0.8}
-              >
-                <Pencil size={16} color="#1a1a1a" />
-              </TouchableOpacity>
-            )}
           </View>
-        </View>
 
-        {/* Profile Info */}
-        <View style={{ alignItems: 'center', marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+          {/* Name & Handle */}
+          <View style={{ alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ 
+                fontWeight: '700', 
+                fontSize: 20, 
+                color: '#0f1419', 
+                marginRight: 4,
+                fontFamily: 'Formula1-Regular'
+              }}>
+                {profile.full_name || profile.username}
+              </Text>
+              <AdminOrTeamIcon isAdmin={isUserAdmin(profile, session)} team={profile.favorite_team} />
+            </View>
             <Text style={{ 
-              fontWeight: '600', 
-              fontSize: 24, 
-              color: '#1a1a1a', 
-              marginRight: 8,
+              color: '#536471', 
+              fontSize: 14, 
               fontFamily: 'Formula1-Regular'
             }}>
-              {profile.full_name || profile.username}
+              @{profile.username}
             </Text>
-            <AdminOrTeamIcon isAdmin={isUserAdmin(profile, session)} team={profile.favorite_team} />
           </View>
-          <Text style={{ 
-            color: '#657786', 
-            fontSize: 16, 
-            marginBottom: 8,
-            fontFamily: 'Formula1-Regular'
-          }}>
-            @{profile.username}
-          </Text>
+
+          {/* Bio */}
           {profile.bio && (
             <Text style={{ 
-              color: '#1a1a1a', 
-              fontSize: 16, 
-              lineHeight: 22, 
+              color: '#0f1419', 
+              fontSize: 14, 
+              lineHeight: 20, 
               textAlign: 'center',
+              marginBottom: 16,
               paddingHorizontal: 20,
               fontFamily: 'Formula1-Regular'
             }}>
               {profile.bio}
             </Text>
           )}
-        </View>
-      </View>
-      {/* Followers/Following Counts with Logout Button */}
-      <View style={{ 
-        paddingHorizontal: 16, 
-        paddingVertical: 20, 
-        backgroundColor: '#ffffff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0'
-      }}>
-        {/* Stats Row */}
-        <View style={{ 
-          flexDirection: 'row', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          marginBottom: 16
-        }}>
-          <TouchableOpacity 
-            onPress={() => {
-              setShowFollowersModal(true);
-              fetchFollowers();
-            }}
-            style={{ 
-              flexDirection: 'row', 
-              alignItems: 'center', 
-              marginRight: 32,
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              borderRadius: 20,
-              backgroundColor: '#f8f9fa'
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={{ fontWeight: '600', fontSize: 18, color: '#1a1a1a', fontFamily: 'Formula1-Regular' }}>{followersCount}</Text>
-            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 6, fontFamily: 'Formula1-Regular' }}>Followers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => {
-              setShowFollowingModal(true);
-              fetchFollowing();
-            }}
-            style={{ 
-              flexDirection: 'row', 
-              alignItems: 'center',
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              borderRadius: 20,
-              backgroundColor: '#f8f9fa'
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={{ fontWeight: '600', fontSize: 18, color: '#1a1a1a', fontFamily: 'Formula1-Regular' }}>{followingCount}</Text>
-            <Text style={{ color: '#657786', fontSize: 14, marginLeft: 6, fontFamily: 'Formula1-Regular' }}>Following</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Logout and Delete Buttons - only show for current user's profile */}
-        {session?.user?.id === userId && (
-          <View style={{ alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: '#fff5f5',
-                paddingHorizontal: 20,
-                paddingVertical: 12,
-                borderRadius: 25,
-                borderWidth: 1,
-                borderColor: '#fecaca',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-                elevation: 2
+
+          {/* Stats Row */}
+          <View style={{ 
+            flexDirection: 'row', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            marginBottom: 20,
+            gap: 20
+          }}>
+            <TouchableOpacity 
+              onPress={() => {
+                setShowFollowersModal(true);
+                fetchFollowers();
               }}
-              activeOpacity={0.8}
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+              activeOpacity={0.7}
             >
-              <LogOut size={18} color="#dc2626" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#dc2626', fontSize: 14, fontWeight: '600', fontFamily: 'Formula1-Regular' }}>Logout</Text>
+              <Text style={{ fontWeight: '700', fontSize: 15, color: '#0f1419', fontFamily: 'Formula1-Regular' }}>{followersCount}</Text>
+              <Text style={{ color: '#536471', fontSize: 15, marginLeft: 4, fontFamily: 'Formula1-Regular' }}>Followers</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity
-              onPress={() => setShowDeleteConfirmation(true)}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: '#dc2626',
-                paddingHorizontal: 20,
-                paddingVertical: 12,
-                borderRadius: 25,
-                borderWidth: 1,
-                borderColor: '#dc2626',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-                elevation: 2,
-                opacity: 0.8
+            <TouchableOpacity 
+              onPress={() => {
+                setShowFollowingModal(true);
+                fetchFollowing();
               }}
-              activeOpacity={0.8}
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+              activeOpacity={0.7}
             >
-              <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600', fontFamily: 'Formula1-Regular' }}>Delete Profile</Text>
+              <Text style={{ fontWeight: '700', fontSize: 15, color: '#0f1419', fontFamily: 'Formula1-Regular' }}>{followingCount}</Text>
+              <Text style={{ color: '#536471', fontSize: 15, marginLeft: 4, fontFamily: 'Formula1-Regular' }}>Following</Text>
             </TouchableOpacity>
           </View>
-        )}
+
+          {/* Action Buttons (Edit/Follow) */}
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+            {session?.user?.id === userId ? (
+              <TouchableOpacity 
+                onPress={() => setEditModal(true)} 
+                style={{ 
+                  paddingHorizontal: 24, 
+                  paddingVertical: 8,
+                  borderRadius: 9999,
+                  borderWidth: 1,
+                  borderColor: '#cfd9de',
+                  backgroundColor: '#ffffff',
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={{ fontWeight: '600', color: '#0f1419', fontSize: 14, fontFamily: 'Formula1-Regular' }}>Edit Profile</Text>
+              </TouchableOpacity>
+            ) : session && (
+              <TouchableOpacity 
+                onPress={handleFollowToggle} 
+                style={{ 
+                  paddingHorizontal: 24, 
+                  paddingVertical: 8,
+                  borderRadius: 9999,
+                  backgroundColor: isFollowing ? '#ffffff' : '#0f1419',
+                  borderWidth: 1,
+                  borderColor: isFollowing ? '#cfd9de' : '#0f1419',
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={{ 
+                  fontWeight: '600', 
+                  color: isFollowing ? '#0f1419' : '#ffffff', 
+                  fontSize: 14,
+                  fontFamily: 'Formula1-Regular'
+                }}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Delete Profile Link (Only for self) */}
+          {session?.user?.id === userId && (
+            <TouchableOpacity
+              onPress={() => setShowDeleteConfirmation(true)}
+              style={{ marginBottom: 16 }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: '#dc2626', fontSize: 12, fontWeight: '500', fontFamily: 'Formula1-Regular' }}>Delete Account</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
       {/* Tabs for Posts and Replies */}
       <View style={{ 
         flexDirection: 'row', 
         borderBottomWidth: 1, 
-        borderBottomColor: '#e5e5e5',
+        borderBottomColor: '#eff3f4',
         backgroundColor: '#ffffff'
       }}>
         <TouchableOpacity 
@@ -1637,16 +1544,16 @@ return (
           style={{ 
             flex: 1, 
             alignItems: 'center', 
-            paddingVertical: 16, 
-            borderBottomWidth: activeTab === 'posts' ? 2 : 0, 
+            paddingVertical: 14, 
+            borderBottomWidth: activeTab === 'posts' ? 3 : 0, 
             borderBottomColor: activeTab === 'posts' ? '#dc2626' : 'transparent'
           }}
           activeOpacity={0.7}
         >
           <Text style={{ 
-            fontWeight: activeTab === 'posts' ? '600' : '600', 
-            color: activeTab === 'posts' ? '#dc2626' : '#657786',
-            fontSize: 15,
+            fontWeight: activeTab === 'posts' ? '700' : '500', 
+            color: activeTab === 'posts' ? '#0f1419' : '#536471',
+            fontSize: 14,
             fontFamily: 'Formula1-Regular'
           }}>Posts</Text>
         </TouchableOpacity>
@@ -1655,16 +1562,16 @@ return (
           style={{ 
             flex: 1, 
             alignItems: 'center', 
-            paddingVertical: 16, 
-            borderBottomWidth: activeTab === 'replies' ? 2 : 0, 
+            paddingVertical: 14, 
+            borderBottomWidth: activeTab === 'replies' ? 3 : 0, 
             borderBottomColor: activeTab === 'replies' ? '#dc2626' : 'transparent'
           }}
           activeOpacity={0.7}
         >
           <Text style={{ 
-            fontWeight: activeTab === 'replies' ? '600' : '600', 
-            color: activeTab === 'replies' ? '#dc2626' : '#657786',
-            fontSize: 15,
+            fontWeight: activeTab === 'replies' ? '700' : '500', 
+            color: activeTab === 'replies' ? '#0f1419' : '#536471',
+            fontSize: 14,
             fontFamily: 'Formula1-Regular'
           }}>Replies</Text>
         </TouchableOpacity>
@@ -1695,13 +1602,13 @@ return (
                               uri: item.profiles?.avatar_url || 
                                    `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0)}&background=random` 
                             }}
-                            style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
+                            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
                           />
-                          <View style={{ flex: 1, marginLeft: 12 }}>
+                          <View style={{ flex: 1, marginLeft: 10 }}>
                             {/* Repost user info */}
                             <View style={{ marginBottom: 4 }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                                <Text style={{ fontWeight: '600', color: '#000', fontSize: 14, fontFamily: 'Formula1-Regular' }}>
                                   {item.profiles?.username || 'Unknown User'}
                                 </Text>
                                 {item.profiles?.is_admin ? (

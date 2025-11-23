@@ -144,22 +144,22 @@ export default function TwitterStyleReplyCard({
         {/* Right Column: Content */}
         <View style={{ flex: 1, paddingLeft: 12, paddingBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, height: 20 }}>
-            <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 15, marginRight: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={1}>
+            <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 14, marginRight: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={1}>
               {reply.threads?.profiles?.username || 'Unknown User'}
             </Text>
             {threadLogo && (
               <Image 
                 source={threadLogo} 
-                style={{ width: 16, height: 16, marginRight: 4 }}
+                style={{ width: 14, height: 14, marginRight: 4 }}
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 14, color: '#536471', fontFamily: 'Inter' }}>
+            <Text style={{ fontSize: 12, color: '#536471', fontFamily: 'Inter' }}>
               · {formatThreadTimestamp(reply.threads?.created_at)}
             </Text>
           </View>
           
-          <Text style={{ color: '#0f1419', fontSize: 15, lineHeight: 20, fontFamily: 'Inter' }} numberOfLines={3}>
+          <Text style={{ color: '#0f1419', fontSize: 14, lineHeight: 18, fontFamily: 'Inter' }} numberOfLines={3}>
             {reply.threads?.content || 'Original thread content'}
           </Text>
         </View>
@@ -186,26 +186,26 @@ export default function TwitterStyleReplyCard({
         {/* Right Column: Content */}
         <View style={{ flex: 1, paddingLeft: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, height: 20 }}>
-            <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 15, marginRight: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={1}>
+            <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 14, marginRight: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={1}>
               {reply.profiles?.username || 'Unknown User'}
             </Text>
             {replyLogo && (
               <Image 
                 source={replyLogo} 
-                style={{ width: 16, height: 16, marginRight: 4 }}
+                style={{ width: 14, height: 14, marginRight: 4 }}
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 14, color: '#536471', fontFamily: 'Inter' }}>
+            <Text style={{ fontSize: 12, color: '#536471', fontFamily: 'Inter' }}>
               · {formatThreadTimestamp(reply.created_at)}
             </Text>
           </View>
           
-          <Text style={{ color: '#536471', fontSize: 13, marginBottom: 4, fontFamily: 'Inter' }}>
+          <Text style={{ color: '#536471', fontSize: 12, marginBottom: 4, fontFamily: 'Inter' }}>
             Replying to <Text style={{ color: '#1d9bf0' }}>@{reply.threads?.profiles?.username || 'unknown'}</Text>
           </Text>
           
-          <Text style={{ color: '#0f1419', fontSize: 15, lineHeight: 20, marginBottom: 8, fontFamily: 'Inter' }}>
+          <Text style={{ color: '#0f1419', fontSize: 14, lineHeight: 18, marginBottom: 8, fontFamily: 'Inter' }}>
             {reply.content}
           </Text>
 
@@ -229,19 +229,19 @@ export default function TwitterStyleReplyCard({
               style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
             >
               <Heart 
-                size={18} 
+                size={14} 
                 color={isLiked ? '#f91880' : '#536471'} 
                 fill={isLiked ? '#f91880' : 'none'} 
               />
               {replyLikeCount > 0 && (
-                <Text style={{ marginLeft: 4, color: isLiked ? '#f91880' : '#536471', fontSize: 13, fontFamily: 'Inter' }}>
+                <Text style={{ marginLeft: 4, color: isLiked ? '#f91880' : '#536471', fontSize: 12, fontFamily: 'Inter' }}>
                   {replyLikeCount}
                 </Text>
               )}
             </TouchableOpacity>
 
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <MessageCircle size={18} color="#536471" />
+              <MessageCircle size={14} color="#536471" />
             </View>
           </View>
         </View>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -150,6 +150,7 @@ export default function CommunityScreen() {
   const colorScheme = useColorScheme();
   const sidebarTranslateX = useSharedValue(-256);
   const scrollViewRef = useRef<ScrollView>(null);
+  const savedFeedScrollPosition = useRef(0);
   const pathname = usePathname();
   const [isViewingProfile, setIsViewingProfile] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
@@ -1624,6 +1625,7 @@ export default function CommunityScreen() {
                     setIsViewingProfile(false);
                     setSelectedProfile(null);
                     fetchBookmarkedThreads(session);
+                    router.push('/community');
                   } else if (item.href === '/profile') {
     if (session) {
                       setSelectedProfile({ id: session.user.id });
@@ -1643,6 +1645,7 @@ export default function CommunityScreen() {
                     setSelectedProfile(null);
                     setIsViewingThread(false);
                     setSelectedThread(null);
+                    router.push('/community');
     } else {
                     setShowBookmarks(false);
                     setIsViewingProfile(false);
@@ -1765,6 +1768,12 @@ export default function CommunityScreen() {
 
   const handleScroll = useCallback((event: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    
+    // Save scroll position if we are in the main feed view
+    if (!isViewingProfile && !isViewingThread && !showBookmarks) {
+      savedFeedScrollPosition.current = contentOffset.y;
+    }
+
     const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - SCROLL_THRESHOLD;
     if (isCloseToBottom && !loadingMore && hasMore) {
       if (activeTab === 'for-you') {
@@ -1773,7 +1782,21 @@ export default function CommunityScreen() {
         fetchFollowingThreads(session, followingThreads.length, FEED_LIMIT, false);
       }
     }
-  }, [loadingMore, hasMore, threads.length, followingThreads.length, activeTab, session, fetchThreads, fetchFollowingThreads]);
+  }, [loadingMore, hasMore, threads.length, followingThreads.length, activeTab, session, fetchThreads, fetchFollowingThreads, isViewingProfile, isViewingThread, showBookmarks]);
+
+  // Scroll to top when opening sub-views, restore when closing
+  useLayoutEffect(() => {
+    // Use setTimeout to ensure layout is calculated on web
+    const timer = setTimeout(() => {
+      if (isViewingProfile || isViewingThread || showBookmarks) {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      } else {
+        // Restore scroll position when returning to feed
+        scrollViewRef.current?.scrollTo({ y: savedFeedScrollPosition.current, animated: false });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [isViewingProfile, isViewingThread, showBookmarks, selectedProfile, selectedThread]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -2321,7 +2344,7 @@ export default function CommunityScreen() {
             <ScrollView 
               ref={scrollViewRef}
               onScroll={handleScroll}
-              scrollEventThrottle={400}
+              scrollEventThrottle={16}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             >
               <View className="flex-col lg:flex-row justify-center p-0 md:p-4">
@@ -2808,7 +2831,206 @@ export default function CommunityScreen() {
                               )}
                             </>
                           )
-                        ) : null}
+                        ) : (
+                          loading && followingThreads.length === 0 ? (
+                            <ActivityIndicator className="mt-8" />
+                          ) : followingThreads.length === 0 ? (
+                            <View style={{ padding: 40, alignItems: 'center' }}>
+                              <Text style={{ color: '#666666', fontSize: 16, textAlign: 'center', marginBottom: 12 }} className="font-formula1-regular">
+                                You aren't following anyone yet.
+                              </Text>
+                              <Text style={{ color: '#888888', fontSize: 14, textAlign: 'center' }}>
+                                Follow other fans to see their posts and reposts here!
+                              </Text>
+                            </View>
+                          ) : (
+                            <>
+                              {followingThreads.map((item) => (
+                                <View key={item.id} style={{ borderBottomWidth: 1, borderBottomColor: '#9ca3af', backgroundColor: '#ffffff' }}>
+                                  {item.type === 'repost' ? (
+                                    <TouchableOpacity onPress={() => handleThreadPress(item)}>
+                                      <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
+                                        {/* Repost content using PostCard structure */}
+                                        <View style={{ flexDirection: 'row' }}>
+                                          <TouchableOpacity
+                                            onPress={() => handleProfilePress(item.user_id)}
+                                            style={{ marginRight: 12 }}
+                                          >
+                                            <Image
+                                              source={{ 
+                                                uri: item.profiles?.avatar_url || 
+                                                     `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0) || 'U'}&background=random` 
+                                              }}
+                                              style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f3f4f6' }}
+                                            />
+                                          </TouchableOpacity>
+
+                                          <View style={{ flex: 1 }}>
+                                            {/* Repost user info */}
+                                            <View style={{ marginBottom: 4 }}>
+                                              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                                <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                                                  {item.profiles?.username || 'Unknown User'}
+                                                </Text>
+                                                {item.profiles?.is_admin ? (
+                                                  <Image 
+                                                    source={require('@/assets/images/favicon.png')} 
+                                                    style={{ width: 24, height: 22, marginLeft: 4 }}
+                                                    resizeMode="contain"
+                                                  />
+                                                ) : item.profiles?.favorite_team && TEAM_LOGOS[item.profiles.favorite_team] && (
+                                                  <Image 
+                                                    source={TEAM_LOGOS[item.profiles.favorite_team]} 
+                                                    style={{ width: 24, height: 22, marginLeft: 4 }}
+                                                    resizeMode="contain"
+                                                  />
+                                                )}
+                                                {/* More options button for repost owner or admin */}
+                                                {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
+                                                  <TouchableOpacity
+                                                    onPress={(e) => openRepostDeleteMenu(item.id, e)}
+                                                    style={{ 
+                                                      marginLeft: 'auto',
+                                                      padding: 4
+                                                    }}
+                                                  >
+                                                    <MoreHorizontal size={20} color="#888" />
+                                                  </TouchableOpacity>
+                                                )}
+                                              </View>
+                                              <Text style={{ fontSize: 11, color: '#888', fontFamily: 'Formula1-Regular' }}>
+                                                {formatThreadTimestamp(item.created_at) || ''}
+                                              </Text>
+                                            </View>
+
+                                            {/* Repost content */}
+                                            {item.content && (
+                                              <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
+                                                {item.content}
+                                              </Text>
+                                            )}
+
+                                            {/* Repost image */}
+                                            {item.image_url && (
+                                              <TouchableOpacity onPress={() => setPreviewImageUrl(item.image_url)}>
+                                                <Image
+                                                  source={{ uri: item.image_url }}
+                                                  style={getResponsiveImageStyle(screenWidth)}
+                                                  resizeMode="cover"
+                                                />
+                                              </TouchableOpacity>
+                                            )}
+
+                                            {/* Original thread preview - embedded like Twitter */}
+                                            <TouchableOpacity 
+                                              onPress={() => handleThreadPress(item.original_thread)}
+                                              style={{
+                                                borderWidth: 1,
+                                                borderColor: '#e5e5e5',
+                                                borderRadius: 12,
+                                                padding: 12,
+                                                backgroundColor: '#f8f9fa',
+                                                marginTop: 16,
+                                                marginBottom: 12
+                                              }}
+                                            >
+                                              <View style={{ flexDirection: 'row' }}>
+                                                <Image
+                                                  source={{ 
+                                                    uri: item.original_thread?.profiles?.avatar_url || 
+                                                         `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0) || 'U'}&background=random` 
+                                                  }}
+                                                  style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
+                                                />
+                                                <View style={{ flex: 1 }}>
+                                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                                    <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                                                      {item.original_thread?.profiles?.username || 'Unknown User'}
+                                                    </Text>
+                                                    {item.original_thread?.profiles?.favorite_team && TEAM_LOGOS[item.original_thread.profiles.favorite_team] && (
+                                                      <Image 
+                                                        source={TEAM_LOGOS[item.original_thread.profiles.favorite_team]} 
+                                                        style={{ width: 16, height: 14, marginLeft: 2 }}
+                                                        resizeMode="contain"
+                                                      />
+                                                    )}
+                                                  </View>
+                                                  <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16, fontFamily: 'Formula1-Regular' }}>
+                                                    {item.original_thread?.content || ''}
+                                                  </Text>
+                                                  {item.original_thread?.image_url && (
+                                                    <TouchableOpacity onPress={() => setPreviewImageUrl(item.original_thread.image_url)}>
+                                                      <View style={{ alignItems: 'center', marginTop: 4 }}>
+                                                        <Image
+                                                          source={{ uri: item.original_thread.image_url }}
+                                                          style={getVeryCompactImageStyle(screenWidth)}
+                                                          resizeMode="cover"
+                                                        />
+                                                      </View>
+                                                    </TouchableOpacity>
+                                                  )}
+
+                                                </View>
+                                              </View>
+                                            </TouchableOpacity>
+
+                                            {/* Engagement bar - use helper for correct order */}
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                                              {renderRepostEngagementButtons(item)}
+                                            </View>
+                                          </View>
+                                        </View>
+                                      </View>
+                                    </TouchableOpacity>
+                                  ) : (
+                                    <TouchableOpacity onPress={() => handleThreadPress(item)}>
+                                      <PostCard
+                                        username={item.profiles?.username || 'Anonymous'}
+                                        avatarUrl={item.profiles?.avatar_url}
+                                        content={item.content}
+                                        imageUrl={item.image_url}
+                                        timestamp={item.created_at}
+                                        likes={item.likeCount || 0}
+                                        comments={replyCounts[item.id] ?? item.replyCount}
+                                        reposts={item.repostCount || 0}
+                                        isLiked={item.isLiked}
+                                        isBookmarked={typeof bookmarks[item.id] === 'boolean' ? bookmarks[item.id] : item.isBookmarked}
+                                        favoriteTeam={item.profiles?.favorite_team}
+                                        userId={item.user_id}
+                                        onCommentPress={() => handleThreadPress(item)}
+                                        onLikePress={() => handleLikeToggle(item.id, item.isLiked)}
+                                        onBookmarkPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}
+                                        onRepostPress={() => handleRepostPress(item)}
+                                        onDeletePress={() => handleDeleteThread(item.id)}
+                                        onProfilePress={(userId) => {
+                                          handleProfilePress(userId);
+                                        }}
+                                        canDelete={session && (item.user_id === session.user.id || isCurrentUserAdmin())}
+                                        canAdminDelete={isCurrentUserAdmin()}
+                                        isAdmin={isUserAdmin(item.user_id)}
+                                        showReadMore={true}
+                                        userEmail={session?.user?.email || ''}
+                                        onImagePress={imageUrl => setPreviewImageUrl(imageUrl)}
+                                      />
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                              ))}
+                              {/* Loading and end-of-feed indicators here */}
+                              {loadingMore && (
+                                <View style={{ padding: 20, alignItems: 'center', marginTop: 40 }}>
+                                  <ActivityIndicator size="small" color="#dc2626" />
+                                  <Text style={{ marginTop: 8, color: '#666666', fontSize: 14 }} className="font-formula1-regular">Loading more posts...</Text>
+                                </View>
+                              )}
+                              {!hasMore && followingThreads.length > 0 && (
+                                <View style={{ padding: 1, marginBottom: 1, alignItems: 'center' }}>
+                                  <Text style={{ color: '#666666', fontSize: 14 }} className="font-formula1-regular">You've reached the end of the feed</Text>
+                                </View>
+                              )}
+                            </>
+                          )
+                        )}
                         
                         {/* Loading Indicators for For You tab 
           {loadingMore && (
