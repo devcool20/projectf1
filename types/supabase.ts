@@ -119,6 +119,100 @@ export interface Database {
           created_at?: string
         }
       }
+      shop_products: {
+        Row: {
+          id: string
+          product_name: string
+          price: number | null
+          currency: string | null
+          image_url: string | null
+          product_link: string
+          category: string | null
+          featured: boolean | null
+          is_available: boolean
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_name: string
+          price?: number | null
+          currency?: string | null
+          image_url?: string | null
+          product_link: string
+          category?: string | null
+          featured?: boolean | null
+          is_available?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          product_name?: string
+          price?: number | null
+          currency?: string | null
+          image_url?: string | null
+          product_link?: string
+          category?: string | null
+          featured?: boolean | null
+          is_available?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+      }
+      screenings: {
+        Row: {
+          id: string
+          title: string
+          date: string
+          time: string
+          location: string
+          image_url: string | null
+          description: string | null
+          price: number | null
+          currency: string | null
+          ticket_link: string | null
+          is_active: boolean
+          created_at: string
+          round_number: number
+          grand_prix_name: string
+          timing: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          date: string
+          time: string
+          location: string
+          image_url?: string | null
+          description?: string | null
+          price?: number | null
+          currency?: string | null
+          ticket_link?: string | null
+          is_active?: boolean
+          created_at?: string
+          round_number: number
+          grand_prix_name: string
+          timing: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          date?: string
+          time?: string
+          location?: string
+          image_url?: string | null
+          description?: string | null
+          price?: number | null
+          currency?: string | null
+          ticket_link?: string | null
+          is_active?: boolean
+          created_at?: string
+          round_number?: number
+          grand_prix_name?: string
+          timing?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

@@ -86,7 +86,7 @@ export default function ShopScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#dc2626" />
         }
-        style={{ overflow: 'auto' }}
+        style={{}}
       >
         <View className="w-full pb-24">
           {/* Header */}
@@ -145,7 +145,7 @@ export default function ShopScreen() {
                     <View style={{ 
                       width: '100%', 
                       aspectRatio: isFeatured ? 1.2 : 1, 
-                      backgroundColor: '#1e2128', 
+                      backgroundColor: '#ffffff', 
                       justifyContent: 'center', 
                       alignItems: 'center',
                       position: 'relative',
@@ -154,7 +154,7 @@ export default function ShopScreen() {
                        {/* Featured Gradient Overlay */}
                        {isFeatured && (
                          <LinearGradient
-                           colors={['rgba(220, 38, 38, 0.1)', 'transparent']}
+                           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.05)']}
                            style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 1 }}
                          />
                        )}
@@ -162,7 +162,7 @@ export default function ShopScreen() {
                       {product.image_url ? (
                         <Image
                           source={{ uri: product.image_url }}
-                          style={{ width: '85%', height: '85%' }}
+                          style={{ width: '100%', height: '100%' }}
                           resizeMode="contain"
                         />
                       ) : (

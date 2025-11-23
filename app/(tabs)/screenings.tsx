@@ -72,7 +72,7 @@ export default function ScreeningsScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#dc2626" />
         }
-        style={{ overflow: 'auto' }}
+        style={{}}
       >
         <View className="w-full pb-24">
           {/* Header */}
@@ -88,7 +88,7 @@ export default function ScreeningsScreen() {
               F1 Watch Parties
             </Text>
             <Text style={{ color: '#b0b3b8', fontSize: 16, fontFamily: 'Formula1-Regular', textAlign: 'center', maxWidth: 600, lineHeight: 24 }}>
-              Experience the thrill of race day with fellow fans. High-speed action, big screens, and electric atmosphere.
+              Coming soon but you can see how this section will look like!
             </Text>
           </Animated.View>
 

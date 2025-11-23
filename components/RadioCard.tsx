@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image } from 'react-native';
 
-const teamLogos = {
+const teamLogos: { [key: string]: any } = {
   ferrari: require('../team-logos/ferrari.png'),
   mercedes: require('../team-logos/mercedes.png'),
   redbull: require('../team-logos/redbull.png'),
@@ -28,13 +28,13 @@ const SoundWave = ({ color }: { color:string }) => {
   ];
 
   return (
-    <View className="flex-row items-end h-6 space-x-px">
+    <View className="flex-row items-end h-6" style={{ width: '100%', justifyContent: 'space-between' }}>
       {barHeights.map((height, index) => (
         <View
           key={index}
           style={{
             height: height,
-            width: 2,
+            width: 3, // Slightly wider bars
             backgroundColor: color,
             borderRadius: 2,
           }}

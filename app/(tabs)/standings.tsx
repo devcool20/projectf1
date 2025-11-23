@@ -196,7 +196,7 @@ export default function StandingsScreen() {
               <Image
                 source={imageSrc}
                 style={[styles.heroImage, isWeb && styles.heroImageWeb]}
-                resizeMode="contain"
+                resizeMode="cover"
               />
             ) : (
               <View style={styles.heroImageFallback}>
@@ -209,6 +209,10 @@ export default function StandingsScreen() {
               end={{ x: 0.5, y: 1 }}
               style={styles.heroVignette}
             />
+            {/* Points at top right */}
+            <View style={{ position: 'absolute', top: 20, right: 20 }}>
+              <Text style={styles.heroPoints}>{driver.points} PTS</Text>
+            </View>
           </View>
 
           <View style={styles.heroInfo}>
@@ -224,7 +228,6 @@ export default function StandingsScreen() {
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, width: '100%' }}>
                 <Text style={[styles.heroTeam, { color: '#b0b3b8' }]}>{driver.team_name}</Text>
-                <Text style={styles.heroPoints}>{driver.points} PTS</Text>
               </View>
             </View>
           </View>
@@ -471,7 +474,7 @@ const styles = StyleSheet.create({
   cardLeftSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 40,
+    width: 50,
     marginRight: 8,
   },
   cardPosition: {
@@ -480,7 +483,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'Formula1-Regular',
     marginRight: 8,
-    width: 24,
+    width: 32,
     textAlign: 'center',
   },
   teamStripe: {
@@ -554,8 +557,9 @@ const styles = StyleSheet.create({
   // Hero
   heroContainer: {
     width: '100%',
+    height: 200,
     backgroundColor: '#23272f',
-    borderRadius: 24,
+    borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#333',
@@ -565,21 +569,24 @@ const styles = StyleSheet.create({
   },
   heroImageWrapper: {
     width: '100%',
-    height: 205, // Height for hero image
+    height: '100%', // Height for hero image
     backgroundColor: '#1a1d24',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    position: 'relative',
+    position: 'absolute',
+    top: 0,
+    left: 0,
     overflow: 'hidden',
   },
   heroImageWrapperWeb: {
-    height: 400, // Taller on web
+    height: 500, // Taller on web
   },
   heroImage: {
-    width: '100%',
-    height: '100%',
+    width: '120%',
+    height: '120%',
     position: 'absolute',
-    bottom: 0,
+    bottom: '-8%',
+    left: '-20%', // Shift left to crop out left side text
   },
   heroImageWeb: {
     width: '80%', // Constrain width on large screens
@@ -595,12 +602,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: -30, // Push down slightly to stick to border
     height: '60%', // Increased height of vignette
   },
   heroInfo: {
     padding: 20,
-    backgroundColor: '#23272f',
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   heroPosition: {
     fontSize: 42,
@@ -622,7 +633,7 @@ const styles = StyleSheet.create({
   heroPoints: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#dc2626',
+    color: '#ffffff',
     fontFamily: 'Formula1-Regular',
   },
   scrollView: {
