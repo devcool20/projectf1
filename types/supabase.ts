@@ -213,6 +213,80 @@ export interface Database {
           timing?: string
         }
       }
+      races: {
+        Row: {
+          id: string
+          name: string
+          circuit_name: string
+          round_number: number
+          country: string
+          date: string
+          is_sprint: boolean
+          fp1_time: string | null
+          fp2_time: string | null
+          fp3_time: string | null
+          qualifying_time: string | null
+          sprint_qualifying_time: string | null
+          sprint_race_time: string | null
+          race_time: string | null
+          circuit_image_url: string | null
+          circuit_length_km: number | null
+          turns: number | null
+          lap_record_time: string | null
+          lap_record_driver: string | null
+          last_winner: string | null
+          status: 'upcoming' | 'completed' | 'cancelled'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          circuit_name: string
+          round_number: number
+          country: string
+          date: string
+          is_sprint?: boolean
+          fp1_time?: string | null
+          fp2_time?: string | null
+          fp3_time?: string | null
+          qualifying_time?: string | null
+          sprint_qualifying_time?: string | null
+          sprint_race_time?: string | null
+          race_time?: string | null
+          circuit_image_url?: string | null
+          circuit_length_km?: number | null
+          turns?: number | null
+          lap_record_time?: string | null
+          lap_record_driver?: string | null
+          last_winner?: string | null
+          status?: 'upcoming' | 'completed' | 'cancelled'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          circuit_name?: string
+          round_number?: number
+          country?: string
+          date?: string
+          is_sprint?: boolean
+          fp1_time?: string | null
+          fp2_time?: string | null
+          fp3_time?: string | null
+          qualifying_time?: string | null
+          sprint_qualifying_time?: string | null
+          sprint_race_time?: string | null
+          race_time?: string | null
+          circuit_image_url?: string | null
+          circuit_length_km?: number | null
+          turns?: number | null
+          lap_record_time?: string | null
+          lap_record_driver?: string | null
+          last_winner?: string | null
+          status?: 'upcoming' | 'completed' | 'cancelled'
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

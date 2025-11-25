@@ -143,25 +143,25 @@ const DriverDetail = ({ driverName, about: aboutProp }) => {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: APP_BG }} contentContainerStyle={{ padding: 0 }}>
-      <View style={{ width: screenWidth, height: bannerHeight, position: 'relative' }}>
-    <Image
+      <View style={{ width: '100%', aspectRatio: 2.5, position: 'relative' }}>
+        <Image
           source={DRIVER_IMAGES[driver.driver_name]}
-          style={{ width: screenWidth, height: bannerHeight, marginTop: 0 }}
+          style={{ width: '100%', height: '100%', marginTop: 0 }}
           resizeMode="cover"
-    />
+        />
         {/* Upper vignette */}
         <LinearGradient
           colors={[APP_BG, 'rgba(24,26,32,0.0)']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 0.25 }}
-          style={{ position: 'absolute', left: 0, right: 0, top: 0, height: bannerHeight * 0.35 }}
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '35%' }}
         />
         {/* Lower vignette */}
         <LinearGradient
           colors={['rgba(24,26,32,0.0)', APP_BG]}
           start={{ x: 0.5, y: 0.7 }}
           end={{ x: 0.5, y: 1 }}
-          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: bannerHeight * 0.05 }}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '15%' }} // Increased slightly for better blend
         />
       </View>
       {/* Header split layout */}

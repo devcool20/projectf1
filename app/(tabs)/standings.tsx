@@ -120,9 +120,14 @@ type TeamStanding = {
 // Preload images immediately when module loads
 preloadImages();
 
+import { CalendarView } from '@/components/standings/CalendarView';
+import { CircuitInfoView } from '@/components/standings/CircuitInfoView';
+
+// ... existing imports
+
 export default function StandingsScreen() {
   const { width } = useWindowDimensions();
-  const isWeb = Platform.OS === 'web' && width > 768;
+  const isWeb = Platform.OS === 'web' && width > 1024; // Use wider breakpoint for 3-col
   
   const [activeTab, setActiveTab] = useState<'drivers' | 'teams'>('drivers');
   const [drivers, setDrivers] = useState<DriverStanding[]>([]);
@@ -339,8 +344,8 @@ export default function StandingsScreen() {
               </View>
               
               <View style={[styles.cardContent, { marginLeft: 12 }]}> 
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff', fontFamily: 'Formula1-Regular' }}>{team.team_name}</Text>
-                <Text style={{ fontSize: 12, color: '#666', fontFamily: 'Formula1-Regular', marginTop: 2 }}>{team.car_model}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff', fontFamily: 'Formula1-Regular' }}>{team.team_name}</Text>
+                <Text style={{ fontSize: 9, color: '#666', fontFamily: 'Formula1-Regular', marginTop: 2 }}>{team.car_model}</Text>
               </View>
               
               <View style={styles.cardRightSection}>
@@ -354,29 +359,8 @@ export default function StandingsScreen() {
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={[styles.standingsOuter, isWeb && styles.standingsOuterWeb]}>
-        <AnimatedReanimated.View entering={FadeInUp.duration(600)} style={styles.header}>
-          <Text style={[styles.headerTitle, { fontFamily: 'Formula1-Regular' }]}>Standings 2025</Text>
-        </AnimatedReanimated.View>
-        
-        <View style={styles.tabRowContainer}>
-            <View style={styles.tabRow}>
-            {TABS.map(tab => (
-                <TouchableOpacity
-                key={tab.key}
-                style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
-                onPress={() => {
-                    if (tab.key !== activeTab) animateTab(tab.key);
-                }}
-                >
-                <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive, { fontFamily: 'Formula1-Regular' }]}>{tab.label}</Text>
-                </TouchableOpacity>
-            ))}
-            </View>
-        </View>
-
+  const MainContent = () => (
+    <View style={[styles.standingsOuter, isWeb && styles.standingsOuterWeb]}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           {loading ? (
             <CarLoadingAnimation duration={1000} />
@@ -386,11 +370,59 @@ export default function StandingsScreen() {
               contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: 16 }}
               showsVerticalScrollIndicator={false}
             >
+              <AnimatedReanimated.View entering={FadeInUp.duration(600)} style={styles.header}>
+                <Text style={[styles.headerTitle, { fontFamily: 'Formula1-Regular' }]}>Standings 2025</Text>
+              </AnimatedReanimated.View>
+              
+              <View style={styles.tabRowContainer}>
+                  <View style={styles.tabRow}>
+                  {TABS.map(tab => (
+                      <TouchableOpacity
+                      key={tab.key}
+                      style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
+                      onPress={() => {
+                          if (tab.key !== activeTab) animateTab(tab.key);
+                      }}
+                      >
+                      <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive, { fontFamily: 'Formula1-Regular' }]}>{tab.label}</Text>
+                      </TouchableOpacity>
+                  ))}
+                  </View>
+              </View>
+
               {renderList()}
             </ScrollView>
           )}
         </Animated.View>
-      </View>
+    </View>
+  );
+
+  if (isWeb) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.webLayoutContainer}>
+          {/* Left Column - Calendar */}
+          <View style={styles.webColumnSide}>
+            <CalendarView />
+          </View>
+
+          {/* Middle Column - Standings */}
+          <View style={styles.webColumnMain}>
+            <MainContent />
+          </View>
+
+          {/* Right Column - Circuit Info */}
+          <View style={styles.webColumnSide}>
+            <CircuitInfoView />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <MainContent />
     </SafeAreaView>
   );
 }
@@ -400,6 +432,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#181a20',
   },
+  webLayoutContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    maxWidth: 1600,
+    alignSelf: 'center',
+    padding: 24,
+    gap: 24,
+    height: '100%',
+  },
+  webColumnSide: {
+    width: 300,
+    height: '90%', // Reduced height further
+    marginTop: 20, // Add top margin to align better
+  },
+  webColumnMain: {
+    flex: 1,
+    height: '100%',
+    alignItems: 'center',
+  },
   standingsOuter: {
     flex: 1,
     width: '100%',
@@ -408,7 +459,8 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
   standingsOuterWeb: {
-    maxWidth: 1200,
+    maxWidth: 600,
+    width: '100%',
   },
   header: {
     alignItems: 'center',
@@ -525,7 +577,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardName: {
-    fontSize: 16,
+    fontSize: 13, // Reduced from 14
     color: '#fff',
     fontFamily: 'Formula1-Regular',
     marginBottom: 2,
@@ -539,7 +591,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   cardTeam: {
-    fontSize: 12,
+    fontSize: 9, // Reduced from 10
     color: '#666',
     fontFamily: 'Formula1-Regular',
   },
@@ -548,7 +600,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   cardPoints: {
-    fontSize: 16,
+    fontSize: 13, // Reduced from 14
     fontWeight: '700',
     color: '#fff',
     fontFamily: 'Formula1-Regular',
@@ -589,8 +641,10 @@ const styles = StyleSheet.create({
     left: '-20%', // Shift left to crop out left side text
   },
   heroImageWeb: {
-    width: '80%', // Constrain width on large screens
-    height: '95%',
+    width: '100%', // Fill container
+    height: '100%', 
+    left: 0,
+    bottom: 0,
   },
   heroImageFallback: {
     flex: 1,

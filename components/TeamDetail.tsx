@@ -85,10 +85,10 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team }) => {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: APP_BG }} contentContainerStyle={{ padding: 0 }}>
       {/* Hero image with upper and lower vignette and back button */}
-      <View style={{ width: screenWidth, height: heroHeight, position: 'relative', marginBottom: 16, marginTop: 0 }}>
+      <View style={{ width: '100%', aspectRatio: 2, position: 'relative', marginBottom: 16, marginTop: 0 }}>
         <Image
           source={team.logo}
-          style={{ width: screenWidth, height: heroHeight, marginTop: 0 }}
+          style={{ width: '100%', height: '100%', marginTop: 0 }}
           resizeMode="contain"
         />
         {/* Back button */}
@@ -104,14 +104,14 @@ const TeamDetail: React.FC<TeamDetailProps> = ({ team }) => {
           colors={['#181a20', 'rgba(24,26,32,0.0)']}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 0.25 }}
-          style={{ position: 'absolute', left: 0, right: 0, top: 0, height: heroHeight * 0.35 }}
+          style={{ position: 'absolute', left: 0, right: 0, top: 0, height: '35%' }}
         />
         {/* Lower vignette */}
         <LinearGradient
           colors={['#181a20', 'rgba(24,26,32,0.7)', 'rgba(24,26,32,0.0)']}
           start={{ x: 0.5, y: 1 }}
           end={{ x: 0.5, y: 0 }}
-          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: heroHeight * 0.85 }}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '85%' }}
         />
       </View>
       {/* Main info row */}
