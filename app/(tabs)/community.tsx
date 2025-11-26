@@ -1689,6 +1689,13 @@ export default function CommunityScreen() {
         >
           <Text style={{ color: '#fff', fontSize: 16 }} className="font-formula1-bold">Post</Text>
         </TouchableOpacity>
+        
+        {/* Developer Signature */}
+        <View style={{ marginTop: 'auto', paddingTop: 32, paddingBottom: 16, alignItems: 'center' }}>
+          <Text style={{ color: '#999', fontSize: 9, fontFamily: 'Formula1-Regular', fontStyle: 'italic' }}>
+            made by dev
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -3288,13 +3295,6 @@ export default function CommunityScreen() {
           </Pressable>
         </Modal>
       )}
-
-      {/* Developer Signature */}
-      <View style={{ position: 'absolute', bottom: 16, left: 16, zIndex: 1 }}>
-        <Text style={{ color: '#666', fontSize: 9, fontFamily: 'Formula1-Regular', fontStyle: 'italic' }}>
-          made by dev
-        </Text>
-      </View>
 
     </SafeAreaView>
   );

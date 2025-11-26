@@ -972,6 +972,13 @@ export default function CommunityScreen() {
           >
             <Text style={styles.sidebarPostButtonText}>Post</Text>
           </TouchableOpacity>
+          
+          {/* Developer Signature */}
+          <View style={{ marginTop: 'auto', paddingTop: 32, paddingBottom: 16, alignItems: 'center' }}>
+            <Text style={{ color: '#999', fontSize: 9, fontFamily: 'Formula1-Regular', fontStyle: 'italic' }}>
+              made by dev
+            </Text>
+          </View>
         </View>
       </Animated.View>
       
