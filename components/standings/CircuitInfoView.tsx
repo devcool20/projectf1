@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { Trophy, Timer, RotateCw, Map as MapIcon } from 'lucide-react-native';
 import Svg, { Path } from 'react-native-svg';
+import { CircuitMap } from './CircuitMap';
 
 type RaceData = Database['public']['Tables']['races']['Row'];
 
@@ -38,63 +39,54 @@ export function CircuitInfoView() {
     }
   };
 
-  if (loading || !race) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading Circuit Info...</Text>
-      </View>
-    );
-  }
+  // Show circuit map even when loading/no data for testing
+  const displayRace = race || {
+    circuit_name: 'Bahrain International Circuit',
+    country: 'Bahrain',
+    turns: 15,
+    circuit_length_km: 5.412,
+    last_winner: 'Max Verstappen',
+    lap_record_time: '1:31.447',
+    lap_record_driver: 'Pedro de la Rosa (2005)',
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>Circuit Info</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>Circuit Info</Text>
+        <View style={styles.headerCircuitInfo}>
+          <Text style={styles.headerCircuitName}>{displayRace.circuit_name}</Text>
+          <Text style={styles.headerCircuitLocation}>{displayRace.country}</Text>
+        </View>
+      </View>
       
       <Animated.View entering={FadeInRight.duration(600)} style={styles.card}>
         <View style={styles.mapContainer}>
-          {/* Placeholder SVG Map - generic track shape */}
-          <Svg height="200" width="100%" viewBox="0 0 200 150">
-            <Path
-              d="M30,120 L170,120 Q190,120 190,100 L190,50 Q190,30 170,30 L100,30 Q80,30 80,50 L80,80 Q80,100 60,100 L30,100 Q10,100 10,120 Z"
-              fill="none"
-              stroke="#dc2626"
-              strokeWidth="3"
-            />
-            <Path
-              d="M30,120 L170,120 Q190,120 190,100 L190,50 Q190,30 170,30 L100,30 Q80,30 80,50 L80,80 Q80,100 60,100 L30,100 Q10,100 10,120 Z"
-              fill="none"
-              stroke="rgba(220, 38, 38, 0.3)"
-              strokeWidth="10"
-            />
-          </Svg>
-          <View style={styles.mapOverlay}>
-             <Text style={styles.circuitName}>{race.circuit_name}</Text>
-             <Text style={styles.circuitLocation}>{race.country}</Text>
-          </View>
+          <CircuitMap />
         </View>
 
         <View style={styles.statsGrid}>
           <StatItem 
             icon={<RotateCw size={16} color="#dc2626" />}
             label="Turns"
-            value={race.turns?.toString() || 'N/A'}
+            value={displayRace.turns?.toString() || 'N/A'}
           />
           <StatItem 
             icon={<MapIcon size={16} color="#dc2626" />}
             label="Length"
-            value={race.circuit_length_km ? `${race.circuit_length_km} km` : 'N/A'}
+            value={displayRace.circuit_length_km ? `${displayRace.circuit_length_km} km` : 'N/A'}
           />
           <StatItem 
             icon={<Trophy size={16} color="#dc2626" />}
             label="Last Winner"
-            value={race.last_winner || 'N/A'}
+            value={displayRace.last_winner || 'N/A'}
             fullWidth
           />
           <StatItem 
             icon={<Timer size={16} color="#dc2626" />}
             label="Lap Record"
-            value={race.lap_record_time || 'N/A'}
-            subValue={race.lap_record_driver || ''}
+            value={displayRace.lap_record_time || 'N/A'}
+            subValue={displayRace.lap_record_driver || ''}
             fullWidth
           />
         </View>
@@ -118,13 +110,12 @@ function StatItem({ icon, label, value, subValue, fullWidth }: { icon: any, labe
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     padding: 16,
     backgroundColor: '#181a20',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#333',
-    height: '100%',
+    overflow: 'hidden',
   },
   loadingText: {
     color: '#b0b3b8',
@@ -132,12 +123,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     color: '#fff',
     fontFamily: 'Formula1-Regular',
-    marginBottom: 16,
+  },
+  headerCircuitInfo: {
+    alignItems: 'flex-end',
+  },
+  headerCircuitName: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: 'Formula1-Regular',
+  },
+  headerCircuitLocation: {
+    color: '#b0b3b8',
+    fontSize: 9,
+    fontFamily: 'Formula1-Regular',
   },
   card: {
     backgroundColor: '#23272f',
@@ -145,41 +155,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#333',
+    flex: 1,
   },
   mapContainer: {
-    height: 200,
+    height: 160,
     backgroundColor: '#1e2128',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
-  mapOverlay: {
-    position: 'absolute',
-    bottom: 16,
-    left: 16,
-  },
-  circuitName: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'Formula1-Regular',
-  },
-  circuitLocation: {
-    color: '#b0b3b8',
-    fontSize: 12,
-    fontFamily: 'Formula1-Regular',
-  },
+
   statsGrid: {
-    padding: 16,
+    padding: 12,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
   },
   statItem: {
-    width: '48%', // Approx half width
+    width: '48%',
     backgroundColor: 'rgba(255,255,255,0.03)',
-    padding: 12,
-    borderRadius: 8,
+    padding: 8,
+    borderRadius: 6,
   },
   statItemFull: {
     width: '100%',
@@ -187,24 +183,24 @@ const styles = StyleSheet.create({
   statHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
+    marginBottom: 4,
+    gap: 6,
   },
   statLabel: {
     color: '#b0b3b8',
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Formula1-Regular',
   },
   statValue: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '700',
     fontFamily: 'Formula1-Regular',
   },
   statSubValue: {
     color: '#666',
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 9,
+    marginTop: 1,
     fontFamily: 'Formula1-Regular',
   },
 });

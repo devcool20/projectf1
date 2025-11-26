@@ -3289,6 +3289,13 @@ export default function CommunityScreen() {
         </Modal>
       )}
 
+      {/* Developer Signature */}
+      <View style={{ position: 'absolute', bottom: 16, left: 16, zIndex: 1 }}>
+        <Text style={{ color: '#666', fontSize: 9, fontFamily: 'Formula1-Regular', fontStyle: 'italic' }}>
+          made by dev
+        </Text>
+      </View>
+
     </SafeAreaView>
   );
 }

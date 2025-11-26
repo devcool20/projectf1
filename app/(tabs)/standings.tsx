@@ -443,8 +443,10 @@ const styles = StyleSheet.create({
   },
   webColumnSide: {
     width: 300,
-    height: '90%', // Reduced height further
-    marginTop: 20, // Add top margin to align better
+    height: '88%', // Increased to use more space
+    marginTop: 10,
+    marginBottom: 10,
+    overflow: 'hidden',
   },
   webColumnMain: {
     flex: 1,
