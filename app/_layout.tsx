@@ -7,6 +7,7 @@ import { StandingsProvider } from '@/contexts/StandingsContext';
 import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { SplashScreenComponent } from '@/components/SplashScreenComponent';
 import './globals.css';
 
 SplashScreen.preventAutoHideAsync();
@@ -88,6 +89,7 @@ function AppContent() {
 }
 
 export default function RootLayout() {
+  const [showSplash, setShowSplash] = useState(true);
   const [fontsLoaded, fontError] = useFonts({
     'Formula1-Bold': require('../assets/fonts/Formula1-Bold_web_0.ttf'),
     'Formula1-Regular': require('../assets/fonts/Formula1-Regular_web_0.ttf'),
@@ -105,10 +107,15 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <StandingsProvider>
-        <AppContent />
-      </StandingsProvider>
-    </AuthProvider>
+    <>
+      <AuthProvider>
+        <StandingsProvider>
+          <AppContent />
+        </StandingsProvider>
+      </AuthProvider>
+      
+      {/* Splash Screen - Renders at top level for immediate display */}
+      {showSplash && <SplashScreenComponent onFinish={() => setShowSplash(false)} />}
+    </>
   );
 }
