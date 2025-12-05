@@ -116,7 +116,7 @@ export default function RepostCard({
   const originalUserLogo = getLogoToShow(repost.original_thread?.profiles);
 
   return (
-    <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
+    <View style={{ padding: 16, backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#eff3f4' }}>
       {/* Main repost content - looks like a regular post */}
       <View style={{ flexDirection: 'row' }}>
         <TouchableOpacity 
@@ -135,7 +135,7 @@ export default function RepostCard({
         <View style={{ flex: 1 }}>
           {/* Repost user info */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontWeight: '600', color: '#3a3a3a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+            <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, fontFamily: 'Chirp' }}>
               {repost.profiles?.username || 'Unknown User'}
             </Text>
             {repostUserLogo && (
@@ -145,7 +145,7 @@ export default function RepostCard({
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 11, color: '#6b7280', marginLeft: 8, fontFamily: 'Inter' }}>
+            <Text style={{ fontSize: 13, color: 'rgba(83, 100, 113, 0.85)', marginLeft: 8, fontFamily: 'Chirp', fontWeight: '400' }}>
               {formatThreadTimestamp(repost.created_at)}
             </Text>
             {/* More options button for repost owner or admin - moved to top right */}
@@ -162,7 +162,7 @@ export default function RepostCard({
 
           {/* Repost content */}
           {repost.content && (
-            <Text style={{ color: '#3a3a3a', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Inter' }}>
+            <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, lineHeight: 20, marginBottom: 12, fontFamily: 'Chirp', fontWeight: '400' }}>
               {repost.content}
             </Text>
           )}
@@ -190,7 +190,7 @@ export default function RepostCard({
               />
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                  <Text style={{ fontWeight: '600', color: '#3a3a3a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                  <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, fontFamily: 'Chirp' }}>
                     {repost.original_thread?.profiles?.username || 'Unknown User'}
                   </Text>
                   {originalUserLogo && (
@@ -201,7 +201,7 @@ export default function RepostCard({
                     />
                   )}
                 </View>
-                <Text style={{ color: '#3a3a3a', fontSize: 12, lineHeight: 16, fontFamily: 'Inter' }}>
+                <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 13, lineHeight: 16, fontFamily: 'Chirp', fontWeight: '400' }}>
                   {repost.original_thread?.content}
                 </Text>
                 {repost.original_thread?.image_url && (
@@ -218,24 +218,24 @@ export default function RepostCard({
           </TouchableOpacity>
 
           {/* Engagement bar - fixed order: Like, Comment, Repost, Bookmark */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingRight: 40 }}>
             {/* Like */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <EngagementButton
                 icon={Heart}
                 active={isLiked}
-                onPress={handleLikePress}
+                onPress={() => handleLikePress({} as any)}
                 type="like"
                 size={14}
                 accessibilityLabel="Like repost"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                {likeCount}
+              <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, fontFamily: 'Chirp', fontWeight: '400', minWidth: 16 }}>
+                {likeCount > 0 ? likeCount : ''}
               </Text>
             </View>
 
             {/* Comment */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <EngagementButton
                 icon={MessageCircle}
                 active={false}
@@ -244,31 +244,31 @@ export default function RepostCard({
                 size={14}
                 accessibilityLabel="Comment"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{repost.replyCount || 0}</Text>
+              <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, fontFamily: 'Chirp', fontWeight: '400', minWidth: 16 }}>{repost.replyCount > 0 ? repost.replyCount : ''}</Text>
             </View>
 
             {/* Repost */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <EngagementButton
                 icon={Repeat2}
                 active={false}
-                onPress={handleRepostPress}
+                onPress={() => handleRepostPress({} as any)}
                 type="repost"
                 size={14}
                 accessibilityLabel="Repost"
               />
-              <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{repostCount}</Text>
+              <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, fontFamily: 'Chirp', fontWeight: '400', minWidth: 16 }}>{repostCount > 0 ? repostCount : ''}</Text>
             </View>
 
-            {/* Bookmark (if reposts should be bookmarkable, otherwise remove this block) */}
-            {/* <EngagementButton
+            {/* Bookmark */}
+            <EngagementButton
               icon={Bookmark}
-              active={false} // TODO: Add isBookmarked prop to RepostCardProps
-              onPress={() => {}} // TODO: Add bookmark handler
+              active={false}
+              onPress={() => {}}
               type="bookmark"
               size={14}
               accessibilityLabel="Bookmark repost"
-            /> */}
+            />
           </View>
         </View>
       </View>

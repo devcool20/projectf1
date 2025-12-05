@@ -1,5 +1,21 @@
 @import '../global.css';
 
+/* Import Chirp font (Twitter's font) - using system fonts as fallback */
+@font-face {
+  font-family: 'Chirp';
+  src: local('Helvetica Neue'), local('Arial'), local('sans-serif');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Chirp';
+  src: local('Helvetica Neue'), local('Arial'), local('sans-serif');
+  font-weight: 700;
+  font-style: normal;
+}
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -304,4 +320,11 @@
     outline: none !important;
     box-shadow: none !important;
   }
+}
+.font-chirp {
+  font-family: 'Chirp';
+}
+.font-chirp-bold {
+  font-family: 'Chirp';
+  font-weight: 700;
 }

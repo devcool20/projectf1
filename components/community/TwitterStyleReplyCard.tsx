@@ -144,7 +144,7 @@ export default function TwitterStyleReplyCard({
         {/* Right Column: Content */}
         <View style={{ flex: 1, paddingLeft: 12, paddingBottom: 24 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, height: 20 }}>
-            <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 14, marginRight: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={1}>
+            <Text style={{ fontWeight: '700', color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, marginRight: 4, fontFamily: 'Chirp' }} numberOfLines={1}>
               {reply.threads?.profiles?.username || 'Unknown User'}
             </Text>
             {threadLogo && (
@@ -154,12 +154,12 @@ export default function TwitterStyleReplyCard({
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 12, color: '#536471', fontFamily: 'Inter' }}>
+            <Text style={{ fontSize: 12, color: 'rgba(83, 100, 113, 0.85)', fontFamily: 'Chirp' }}>
               · {formatThreadTimestamp(reply.threads?.created_at)}
             </Text>
           </View>
           
-          <Text style={{ color: '#0f1419', fontSize: 14, lineHeight: 18, fontFamily: 'Inter' }} numberOfLines={3}>
+          <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, lineHeight: 18, fontFamily: 'Chirp' }} numberOfLines={3}>
             {reply.threads?.content || 'Original thread content'}
           </Text>
         </View>
@@ -186,7 +186,7 @@ export default function TwitterStyleReplyCard({
         {/* Right Column: Content */}
         <View style={{ flex: 1, paddingLeft: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, height: 20 }}>
-            <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 14, marginRight: 4, fontFamily: 'Formula1-Regular' }} numberOfLines={1}>
+            <Text style={{ fontWeight: '700', color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, marginRight: 4, fontFamily: 'Chirp' }} numberOfLines={1}>
               {reply.profiles?.username || 'Unknown User'}
             </Text>
             {replyLogo && (
@@ -196,16 +196,16 @@ export default function TwitterStyleReplyCard({
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 12, color: '#536471', fontFamily: 'Inter' }}>
+            <Text style={{ fontSize: 12, color: 'rgba(83, 100, 113, 0.85)', fontFamily: 'Chirp' }}>
               · {formatThreadTimestamp(reply.created_at)}
             </Text>
           </View>
           
-          <Text style={{ color: '#536471', fontSize: 12, marginBottom: 4, fontFamily: 'Inter' }}>
+          <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 12, marginBottom: 4, fontFamily: 'Chirp' }}>
             Replying to <Text style={{ color: '#1d9bf0' }}>@{reply.threads?.profiles?.username || 'unknown'}</Text>
           </Text>
           
-          <Text style={{ color: '#0f1419', fontSize: 14, lineHeight: 18, marginBottom: 8, fontFamily: 'Inter' }}>
+          <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, lineHeight: 18, marginBottom: 8, fontFamily: 'Chirp' }}>
             {reply.content}
           </Text>
 
@@ -234,7 +234,7 @@ export default function TwitterStyleReplyCard({
                 fill={isLiked ? '#f91880' : 'none'} 
               />
               {replyLikeCount > 0 && (
-                <Text style={{ marginLeft: 4, color: isLiked ? '#f91880' : '#536471', fontSize: 12, fontFamily: 'Inter' }}>
+                <Text style={{ marginLeft: 4, color: isLiked ? '#f91880' : '#536471', fontSize: 12, fontFamily: 'Chirp' }}>
                   {replyLikeCount}
                 </Text>
               )}

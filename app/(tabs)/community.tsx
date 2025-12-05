@@ -1666,7 +1666,7 @@ export default function CommunityScreen() {
                 className="space-x-4 hover:bg-muted"
               >
                 <item.icon size={20} color="#8b7300" />
-                <Text style={{ fontSize: 20, color: '#000000' }} className="font-formula1-bold" selectable={false}>{item.name}</Text>
+                <Text style={{ fontSize: 20, color: '#000000' }} className="font-chirp-bold" selectable={false}>{item.name}</Text>
               </TouchableOpacity>
             );
           })}
@@ -1687,12 +1687,12 @@ export default function CommunityScreen() {
           activeOpacity={0.85}
           onPress={() => setShowPostModal(true)}
         >
-          <Text style={{ color: '#fff', fontSize: 16 }} className="font-formula1-bold">Post</Text>
+          <Text style={{ color: '#fff', fontSize: 16 }} className="font-chirp-bold">Post</Text>
         </TouchableOpacity>
         
         {/* Developer Signature */}
         <View style={{ marginTop: 'auto', paddingTop: 32, paddingBottom: 16, alignItems: 'center' }}>
-          <Text style={{ color: '#999', fontSize: 9, fontFamily: 'Formula1-Regular', fontStyle: 'italic' }}>
+          <Text style={{ color: '#999', fontSize: 9, fontFamily: 'Chirp', fontStyle: 'italic' }}>
             made by dev
           </Text>
         </View>
@@ -1997,7 +1997,7 @@ export default function CommunityScreen() {
   // Helper function to render engagement buttons in correct order for reposts
   const renderRepostEngagementButtons = (item: any) => [
     // Like
-    <View key="likes" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+    <View key="likes" style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       <EngagementButton
         icon={Heart}
         active={item.isLiked || false}
@@ -2006,22 +2006,22 @@ export default function CommunityScreen() {
         size={14}
         accessibilityLabel="Like repost"
       />
-      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{item.likeCount || 0}</Text>
+      <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, fontFamily: 'Chirp', fontWeight: '400', minWidth: 16 }}>{item.likeCount > 0 ? item.likeCount : ''}</Text>
     </View>,
     // Comment
-    <View key="comments" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+    <View key="comments" style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       <EngagementButton
         icon={MessageCircle}
         active={false}
         onPress={() => handleThreadPress(item)}
-        type="like"
+        type="comment"
         size={14}
         accessibilityLabel="Comment"
       />
-      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13, fontFamily: 'Formula1-Regular' }}>{replyCounts[item.id] ?? item.replyCount}</Text>
+      <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, fontFamily: 'Chirp', fontWeight: '400', minWidth: 16 }}>{(replyCounts[item.id] ?? item.replyCount) > 0 ? (replyCounts[item.id] ?? item.replyCount) : ''}</Text>
     </View>,
     // Repost
-    <View key="reposts" style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+    <View key="reposts" style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       <EngagementButton
         icon={Repeat2}
         active={false}
@@ -2030,8 +2030,18 @@ export default function CommunityScreen() {
         size={14}
         accessibilityLabel="Repost"
       />
-      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{item.repostCount || 0}</Text>
-    </View>
+      <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, fontFamily: 'Chirp', fontWeight: '400', minWidth: 16 }}>{item.repostCount > 0 ? item.repostCount : ''}</Text>
+    </View>,
+    // Bookmark
+    <EngagementButton
+      key="bookmark"
+      icon={Bookmark}
+      active={false}
+      onPress={() => {}}
+      type="bookmark"
+      size={14}
+      accessibilityLabel="Bookmark repost"
+    />
   ];
 
   // Helper function to render engagement buttons for "For You" tab reposts
@@ -2047,7 +2057,7 @@ export default function CommunityScreen() {
         size={14}
           accessibilityLabel="Like repost"
         />
-        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>
+        <Text style={{ marginLeft: 4, color: 'rgba(83, 100, 113, 0.85)', fontSize: 12, fontFamily: 'Chirp' }}>
           {item.likeCount || 0}
         </Text>
       </View>,
@@ -2058,7 +2068,7 @@ export default function CommunityScreen() {
         style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
       >
         <MessageCircle size={14} color="#666666" />
-        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 13, fontFamily: 'Formula1-Regular' }}>{replyCounts[item.id] ?? item.replyCount}</Text>
+        <Text style={{ marginLeft: 4, color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, fontFamily: 'Chirp' }}>{replyCounts[item.id] ?? item.replyCount}</Text>
       </TouchableOpacity>,
       // Reposts
       <TouchableOpacity 
@@ -2067,7 +2077,7 @@ export default function CommunityScreen() {
         style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
       >
         <Repeat2 size={14} color="#666666" />
-        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{item.repostCount || 0}</Text>
+        <Text style={{ marginLeft: 4, color: 'rgba(83, 100, 113, 0.85)', fontSize: 12, fontFamily: 'Chirp' }}>{item.repostCount || 0}</Text>
       </TouchableOpacity>,
       // Bookmarks
       <EngagementButton
@@ -2121,7 +2131,7 @@ export default function CommunityScreen() {
         <TouchableOpacity onPress={toggleSidebar}>
           <Menu size={24} color="#000000" />
           </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626' }} className="font-formula1-bold" selectable={false}>projectF1</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626' }} className="font-chirp-bold" selectable={false}>projectF1</Text>
         <TouchableOpacity onPress={handleSearchToggle}>
           <Search size={24} color="#000000" />
           </TouchableOpacity>
@@ -2173,7 +2183,7 @@ export default function CommunityScreen() {
           {/* Profiles Results */}
                   {searchResults.profiles.length > 0 && (
                     <View style={{ marginBottom: 16 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#000000', marginBottom: 8 }} className="font-formula1-regular">People</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#000000', marginBottom: 8 }} className="font-chirp">People</Text>
                       {searchResults.profiles.map((profile) => (
                 <TouchableOpacity
                   key={profile.id}
@@ -2197,7 +2207,7 @@ export default function CommunityScreen() {
                           />
                           <View style={{ flex: 1 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                              <Text style={{ fontSize: 14, fontWeight: '600', color: '#000000' }} className="font-formula1-regular">
+                              <Text style={{ fontSize: 14, fontWeight: '600', color: '#000000' }} className="font-chirp">
                                 {profile.username || 'Unknown User'}
                               </Text>
                               {profile.email === 'sharmadivyanshu265@gmail.com' ? (
@@ -2215,7 +2225,7 @@ export default function CommunityScreen() {
                               )}
                             </View>
                             {profile.email && (
-                              <Text style={{ fontSize: 12, color: '#666666' }} className="font-formula1-regular">
+                              <Text style={{ fontSize: 12, color: 'rgba(83, 100, 113, 0.85)' }} className="font-chirp">
                                 {profile.email}
                               </Text>
                             )}
@@ -2228,7 +2238,7 @@ export default function CommunityScreen() {
           {/* Threads and Reposts Results */}
                   {searchResults.threads.length > 0 && (
             <View>
-                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#000000', marginBottom: 8 }} className="font-formula1-regular">Threads & Reposts</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: '#000000', marginBottom: 8 }} className="font-chirp">Threads & Reposts</Text>
                       {searchResults.threads.map((item) => (
                         <TouchableOpacity
                   key={item.id}
@@ -2255,7 +2265,7 @@ export default function CommunityScreen() {
                               style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
                             />
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              <Text style={{ fontSize: 12, fontWeight: '600', color: '#000000' }} className="font-formula1-regular">
+                              <Text style={{ fontSize: 12, fontWeight: '600', color: '#000000' }} className="font-chirp">
                                 {item.profiles?.username || 'Unknown User'}
                               </Text>
                               {item.profiles?.is_admin ? (
@@ -2273,13 +2283,13 @@ export default function CommunityScreen() {
                               )}
                               {/* Show repost indicator */}
                               {item.original_thread_id && (
-                                <Text style={{ fontSize: 10, color: '#666666', marginLeft: 4, fontStyle: 'italic' }} className="font-formula1-regular">
+                                <Text style={{ fontSize: 10, color: 'rgba(83, 100, 113, 0.85)', marginLeft: 4, fontStyle: 'italic' }} className="font-chirp">
                                   reposted
                                 </Text>
                               )}
                             </View>
                           </View>
-                          <Text style={{ fontSize: 14, color: '#000000', lineHeight: 18 }} className="font-formula1-regular">
+                          <Text style={{ fontSize: 14, color: '#000000', lineHeight: 18 }} className="font-chirp">
                             {item.content?.length > 100 ? item.content.substring(0, 100) + '...' : item.content}
                           </Text>
                           {/* Show original thread preview for reposts */}
@@ -2292,10 +2302,10 @@ export default function CommunityScreen() {
                               borderWidth: 1, 
                               borderColor: '#ffffff' 
                             }}>
-                              <Text style={{ fontSize: 12, color: '#666666', marginBottom: 4 }} className="font-formula1-regular">
+                              <Text style={{ fontSize: 12, color: 'rgba(83, 100, 113, 0.85)', marginBottom: 4 }} className="font-chirp">
                                 Original: {item.original_thread.profiles?.username || 'Unknown User'}
                               </Text>
-                              <Text style={{ fontSize: 12, color: '#000000' }} className="font-formula1-regular">
+                              <Text style={{ fontSize: 12, color: '#000000' }} className="font-chirp">
                                 {item.original_thread.content?.length > 50 ? item.original_thread.content.substring(0, 50) + '...' : item.original_thread.content}
                               </Text>
                             </View>
@@ -2308,8 +2318,8 @@ export default function CommunityScreen() {
                   {/* No Results */}
                   {searchResults.profiles.length === 0 && searchResults.threads.length === 0 && searchQuery.length > 0 && !searchLoading && (
                     <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-                      <Text style={{ fontSize: 16, color: '#666666' }} className="font-formula1-regular">No results found</Text>
-                                              <Text style={{ fontSize: 14, color: '#999999', marginTop: 4 }} className="font-formula1-regular">Try searching for something else</Text>
+                      <Text style={{ fontSize: 16, color: 'rgba(83, 100, 113, 0.85)' }} className="font-chirp">No results found</Text>
+                                              <Text style={{ fontSize: 14, color: '#999999', marginTop: 4 }} className="font-chirp">Try searching for something else</Text>
                     </View>
           )}
         </ScrollView>
@@ -2321,10 +2331,10 @@ export default function CommunityScreen() {
 
       {/* Desktop Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="hidden md:flex">
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }} className="font-formula1-bold" selectable={false}>projectF1</Text>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }} className="font-chirp-bold" selectable={false}>projectF1</Text>
         <TouchableOpacity onPress={handleSearchToggle} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8f9fa', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#ffffff' }}>
           <Search size={20} color="#666666" style={{ marginRight: 8 }} />
-          <Text style={{ color: '#666666', fontSize: 16 }}>Search</Text>
+          <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 16 }}>Search</Text>
             </TouchableOpacity>
       </View>
 
@@ -2389,17 +2399,17 @@ export default function CommunityScreen() {
                         }}>
                           <X size={24} color="#dc2626" />
             </TouchableOpacity>
-                        <Text style={{ fontSize: 20, fontWeight: '600', color: '#3a3a3a' }} className="font-formula1-regular">Bookmarks</Text>
+                        <Text style={{ fontSize: 20, fontWeight: '600', color: '#3a3a3a' }} className="font-chirp">Bookmarks</Text>
                         <View style={{ width: 24 }} />
           </View>
                       {/* Bookmarks Content */}
                       {!session ? (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, minHeight: 200 }}>
-                          <Text style={{ fontSize: 18, textAlign: 'center', color: '#666666', marginBottom: 20 }} className="font-formula1-regular">
+                          <Text style={{ fontSize: 18, textAlign: 'center', color: 'rgba(83, 100, 113, 0.85)', marginBottom: 20 }} className="font-chirp">
                             Sign in to view your bookmarked threads
                           </Text>
                                                       <TouchableOpacity onPress={() => setShowAuth(true)} style={{ backgroundColor: '#dc2626', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 8 }}>
-                              <Text style={{ color: '#ffffff', fontWeight: 'bold' }} className="font-formula1-bold">Sign In</Text>
+                              <Text style={{ color: '#ffffff', fontWeight: 'bold' }} className="font-chirp-bold">Sign In</Text>
                             </TouchableOpacity>
         </View>
                       ) : (
@@ -2408,10 +2418,10 @@ export default function CommunityScreen() {
                             <ActivityIndicator style={{ marginTop: 32 }} />
                           ) : bookmarkedThreads.length === 0 ? (
                             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, minHeight: 200 }}>
-                              <Text style={{ fontSize: 18, textAlign: 'center', color: '#666666' }} className="font-formula1-regular">
+                              <Text style={{ fontSize: 18, textAlign: 'center', color: 'rgba(83, 100, 113, 0.85)' }} className="font-chirp">
                                 No bookmarked threads yet.
                               </Text>
-                              <Text style={{ fontSize: 14, textAlign: 'center', color: '#999999', marginTop: 8 }} className="font-formula1-regular">
+                              <Text style={{ fontSize: 14, textAlign: 'center', color: '#999999', marginTop: 8 }} className="font-chirp">
                                 Tap the bookmark icon on any thread to save it here.
                               </Text>
                             </View>
@@ -2433,7 +2443,7 @@ export default function CommunityScreen() {
                                             {/* Repost user info */}
                                             <View style={{ marginBottom: 4 }}>
                                               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                <Text style={{ fontWeight: 'bold', color: '#000', fontSize: 15 }}>
+                                                <Text style={{ fontWeight: 'bold', color: 'rgba(15, 20, 25, 0.85)', fontSize: 15 }}>
                                                   {item.profiles?.username || 'Unknown User'}
                                                 </Text>
                                                 {item.profiles?.is_admin ? (
@@ -2451,14 +2461,14 @@ export default function CommunityScreen() {
                                                 )}
 
             </View>
-                                          <Text style={{ fontSize: 11, color: '#888', fontFamily: 'Formula1-Regular' }}>
+                                          <Text style={{ fontSize: 11, color: 'rgba(83, 100, 113, 0.85)', fontFamily: 'Chirp' }}>
                                             {formatThreadTimestamp(item.created_at) || ''}
                                           </Text>
                                         </View>
 
                                         {/* Repost content */}
                                         {item.content && (
-                                          <Text style={{ color: '#000', fontSize: 14, lineHeight: 18, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
+                                          <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, lineHeight: 18, marginBottom: 12, fontFamily: 'Chirp' }}>
                                             {item.content}
                                           </Text>
                                         )}
@@ -2496,7 +2506,7 @@ export default function CommunityScreen() {
                                             />
                                             <View style={{ flex: 1 }}>
                                               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                                                <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, fontFamily: 'Chirp' }}>
                                                   {item.original_thread?.profiles?.username || 'Unknown User'}
                                                 </Text>
                                                 {item.original_thread?.profiles?.is_admin ? (
@@ -2513,7 +2523,7 @@ export default function CommunityScreen() {
                                                   />
                                                 )}
                                               </View>
-                                              <Text style={{ color: '#1a1a1a', fontSize: 14, lineHeight: 18, fontFamily: 'Formula1-Regular' }}>
+                                              <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, lineHeight: 18, fontFamily: 'Chirp' }}>
                                                 {item.original_thread?.content || ''}
                                               </Text>
                                               {item.original_thread?.image_url && (
@@ -2577,10 +2587,10 @@ export default function CommunityScreen() {
                       {/* Header for "For you" / "Following" */}
                       <View style={{ flexDirection: 'row', justifyContent: 'space-around', borderBottomWidth: 1, borderBottomColor: '#9ca3af', padding: 16, backgroundColor: '#ffffff' }}>
                         <TouchableOpacity onPress={() => handleTabPress('for-you')} style={{ flex: 1, alignItems: 'center' }}>
-                                                        <Text style={{ fontSize: 18, fontWeight: '600', color: activeTab === 'for-you' ? '#000000' : '#505050' }} className="font-formula1-regular" selectable={false}>For you</Text>
+                                                        <Text style={{ fontSize: 18, fontWeight: '600', color: activeTab === 'for-you' ? '#000000' : '#505050' }} className="font-chirp" selectable={false}>For you</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => handleTabPress('following')} style={{ flex: 1, alignItems: 'center' }}>
-                          <Text style={{ fontSize: 18, fontWeight: '600', color: activeTab === 'following' ? '#000000' : '#505050' }} className="font-formula1-regular" selectable={false}>Following</Text>
+                          <Text style={{ fontSize: 18, fontWeight: '600', color: activeTab === 'following' ? '#000000' : '#505050' }} className="font-chirp" selectable={false}>Following</Text>
                         </TouchableOpacity>
                       </View>
 
@@ -2588,7 +2598,7 @@ export default function CommunityScreen() {
                       <Animated.View style={[{ backgroundColor: 'rgba(255,255,255,0.95)', padding: 0, alignItems: 'center', justifyContent: 'center', height: 44, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' }, newPostsBarStyle]} pointerEvents={hasNewThreads ? 'auto' : 'none'}>
                         {hasNewThreads && (
                           <TouchableOpacity onPress={fetchNewThreads} style={{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 16, letterSpacing: 0.5 }} className="font-formula1-regular">Show new posts</Text>
+                            <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 16, letterSpacing: 0.5 }} className="font-chirp">Show new posts</Text>
                           </TouchableOpacity>
                         )}
                       </Animated.View>
@@ -2638,7 +2648,7 @@ export default function CommunityScreen() {
                                 <Camera size={24} color="#1DA1F2" />
                               </TouchableOpacity>
                               <TouchableOpacity onPress={handleCreateThread}>
-                                <Text style={{ fontSize: 18, color: '#dc2626', fontWeight: '600' }} className="font-formula1-regular" selectable={false}>Post</Text>
+                                <Text style={{ fontSize: 18, color: '#dc2626', fontWeight: '600' }} className="font-chirp" selectable={false}>Post</Text>
                               </TouchableOpacity>
                             </View>
                           </View>
@@ -2676,7 +2686,7 @@ export default function CommunityScreen() {
                                             {/* Repost user info */}
                                             <View style={{ marginBottom: 4 }}>
                                               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                                                <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, fontFamily: 'Chirp' }}>
                                                   {item.profiles?.username || 'Unknown User'}
                                                 </Text>
                                                 {item.profiles?.is_admin ? (
@@ -2705,14 +2715,14 @@ export default function CommunityScreen() {
             </TouchableOpacity>
                                                 )}
                                               </View>
-                                              <Text style={{ fontSize: 11, color: '#888', fontFamily: 'Formula1-Regular' }}>
+                                              <Text style={{ fontSize: 13, color: 'rgba(83, 100, 113, 0.85)', fontFamily: 'Chirp', fontWeight: '400' }}>
                                                 {formatThreadTimestamp(item.created_at) || ''}
                                               </Text>
           </View>
 
                                             {/* Repost content */}
                                             {item.content && (
-                                              <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
+                                              <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, lineHeight: 20, marginBottom: 12, fontFamily: 'Chirp', fontWeight: '400' }}>
                                                 {item.content}
                                               </Text>
                                             )}
@@ -2751,7 +2761,7 @@ export default function CommunityScreen() {
                                                 />
                                                 <View style={{ flex: 1 }}>
                                                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                    <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                                                    <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, fontFamily: 'Chirp' }}>
                                                       {item.original_thread?.profiles?.username || 'Unknown User'}
                                                     </Text>
                                                     {item.original_thread?.profiles?.favorite_team && TEAM_LOGOS[item.original_thread.profiles.favorite_team] && (
@@ -2762,7 +2772,7 @@ export default function CommunityScreen() {
                                                       />
                                                     )}
           </View>
-                                                  <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16, fontFamily: 'Formula1-Regular' }}>
+                                                  <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 13, lineHeight: 16, fontFamily: 'Chirp', fontWeight: '400' }}>
                                                     {item.original_thread?.content || ''}
                                                   </Text>
                                                   {item.original_thread?.image_url && (
@@ -2782,7 +2792,7 @@ export default function CommunityScreen() {
                                             </TouchableOpacity>
 
                                             {/* Engagement bar - use helper for correct order */}
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingRight: 40 }}>
                                               {renderRepostEngagementButtons(item)}
                                             </View>
                                           </View>
@@ -2828,12 +2838,12 @@ export default function CommunityScreen() {
                               {loadingMore && (
                                 <View style={{ padding: 20, alignItems: 'center', marginTop: 40 }}>
                                   <ActivityIndicator size="small" color="#dc2626" />
-                                  <Text style={{ marginTop: 8, color: '#666666', fontSize: 14 }} className="font-formula1-regular">Loading more posts...</Text>
+                                  <Text style={{ marginTop: 8, color: 'rgba(83, 100, 113, 0.85)', fontSize: 14 }} className="font-chirp">Loading more posts...</Text>
                                 </View>
                               )}
                               {!hasMore && threads.length > 0 && (
                                 <View style={{ padding: 1, marginBottom: 1, alignItems: 'center' }}>
-                                  <Text style={{ color: '#666666', fontSize: 14 }} className="font-formula1-regular">You've reached the end of the feed</Text>
+                                  <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 14 }} className="font-chirp">You've reached the end of the feed</Text>
                                 </View>
                               )}
                             </>
@@ -2843,7 +2853,7 @@ export default function CommunityScreen() {
                             <ActivityIndicator className="mt-8" />
                           ) : followingThreads.length === 0 ? (
                             <View style={{ padding: 40, alignItems: 'center' }}>
-                              <Text style={{ color: '#666666', fontSize: 16, textAlign: 'center', marginBottom: 12 }} className="font-formula1-regular">
+                              <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 16, textAlign: 'center', marginBottom: 12 }} className="font-chirp">
                                 You aren't following anyone yet.
                               </Text>
                               <Text style={{ color: '#888888', fontSize: 14, textAlign: 'center' }}>
@@ -2876,7 +2886,7 @@ export default function CommunityScreen() {
                                             {/* Repost user info */}
                                             <View style={{ marginBottom: 4 }}>
                                               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                                                <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, fontFamily: 'Chirp' }}>
                                                   {item.profiles?.username || 'Unknown User'}
                                                 </Text>
                                                 {item.profiles?.is_admin ? (
@@ -2905,14 +2915,14 @@ export default function CommunityScreen() {
                                                   </TouchableOpacity>
                                                 )}
                                               </View>
-                                              <Text style={{ fontSize: 11, color: '#888', fontFamily: 'Formula1-Regular' }}>
+                                              <Text style={{ fontSize: 11, color: 'rgba(83, 100, 113, 0.85)', fontFamily: 'Chirp' }}>
                                                 {formatThreadTimestamp(item.created_at) || ''}
                                               </Text>
                                             </View>
 
                                             {/* Repost content */}
                                             {item.content && (
-                                              <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
+                                              <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Chirp' }}>
                                                 {item.content}
                                               </Text>
                                             )}
@@ -2951,7 +2961,7 @@ export default function CommunityScreen() {
                                                 />
                                                 <View style={{ flex: 1 }}>
                                                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                    <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                                                    <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, fontFamily: 'Chirp' }}>
                                                       {item.original_thread?.profiles?.username || 'Unknown User'}
                                                     </Text>
                                                     {item.original_thread?.profiles?.favorite_team && TEAM_LOGOS[item.original_thread.profiles.favorite_team] && (
@@ -2962,7 +2972,7 @@ export default function CommunityScreen() {
                                                       />
                                                     )}
                                                   </View>
-                                                  <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16, fontFamily: 'Formula1-Regular' }}>
+                                                  <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 12, lineHeight: 16, fontFamily: 'Chirp' }}>
                                                     {item.original_thread?.content || ''}
                                                   </Text>
                                                   {item.original_thread?.image_url && (
@@ -3027,12 +3037,12 @@ export default function CommunityScreen() {
                               {loadingMore && (
                                 <View style={{ padding: 20, alignItems: 'center', marginTop: 40 }}>
                                   <ActivityIndicator size="small" color="#dc2626" />
-                                  <Text style={{ marginTop: 8, color: '#666666', fontSize: 14 }} className="font-formula1-regular">Loading more posts...</Text>
+                                  <Text style={{ marginTop: 8, color: 'rgba(83, 100, 113, 0.85)', fontSize: 14 }} className="font-chirp">Loading more posts...</Text>
                                 </View>
                               )}
                               {!hasMore && followingThreads.length > 0 && (
                                 <View style={{ padding: 1, marginBottom: 1, alignItems: 'center' }}>
-                                  <Text style={{ color: '#666666', fontSize: 14 }} className="font-formula1-regular">You've reached the end of the feed</Text>
+                                  <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 14, fontFamily: 'Chirp' }}>You've reached the end of the feed</Text>
                                 </View>
                               )}
                             </>
@@ -3043,12 +3053,12 @@ export default function CommunityScreen() {
           {loadingMore && (
                           <View style={{ padding: 20, alignItems: 'center', marginTop: 40 }}>
                             <ActivityIndicator size="small" color="#dc2626" />
-                            <Text style={{ marginTop: 8, color: '#666666', fontSize: 14 }}>Loading more posts...</Text>
+                            <Text style={{ marginTop: 8, color: 'rgba(83, 100, 113, 0.85)', fontSize: 14 }}>Loading more posts...</Text>
             </View>
           )}
                         {!hasMore && threads.length > 0 && (
                           <View style={{ padding: 20, alignItems: 'center' }}>
-                            <Text style={{ color: '#666666', fontSize: 14 }}></Text>
+                            <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 14 }}></Text>
             </View>
           )}*/}
                       </View>
@@ -3059,7 +3069,7 @@ export default function CommunityScreen() {
                 <View className="hidden lg:block w-80 ml-12 space-y-4 shrink-0">
                   <View className="bg-muted rounded-xl">
                     <View className="p-4 border-b border-border">
-                                             <Text style={{ fontSize: 18, fontWeight: '600', fontFamily: 'Formula1-Regular' }} selectable={false}>What's happening</Text>
+                                             <Text style={{ fontSize: 18, fontWeight: '600', fontFamily: 'Chirp' }} selectable={false}>What's happening</Text>
                     </View>
                     {newsLoading ? (
                       <View className="flex-1 items-center justify-center p-8">
@@ -3073,10 +3083,10 @@ export default function CommunityScreen() {
                             className="mb-6 pb-4 border-b border-border/30"
                             onPress={() => Linking.openURL(item.link)}
                           >
-                            <Text style={{ fontSize: 14, fontWeight: '600', fontFamily: 'Formula1-Regular' }} numberOfLines={2} selectable={false}>
+                            <Text style={{ fontSize: 14, fontWeight: '600', fontFamily: 'Chirp' }} numberOfLines={2} selectable={false}>
                               {item.title}
                             </Text>
-                            <Text style={{ fontSize: 12, fontFamily: 'Formula1-Regular' }} numberOfLines={3} selectable={false}>
+                            <Text style={{ fontSize: 12, fontFamily: 'Chirp' }} numberOfLines={3} selectable={false}>
                               {truncateToLines(item.description, 120)}
                             </Text>
                           </TouchableOpacity>
@@ -3168,7 +3178,7 @@ export default function CommunityScreen() {
               <X size={28} color="#dc2626" />
             </TouchableOpacity>
             {/* Post Input */}
-            <Text style={{ fontSize: 20, fontWeight: '600', color: '#dc2626', marginBottom: 16, textAlign: 'center' }} className="font-formula1-regular">Create Post</Text>
+            <Text style={{ fontSize: 20, fontWeight: '600', color: '#dc2626', marginBottom: 16, textAlign: 'center' }} className="font-chirp">Create Post</Text>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
               {/* Avatar removed as per user request */}
               <View style={{ flex: 1, marginLeft: 12 }}>
@@ -3218,7 +3228,7 @@ export default function CommunityScreen() {
                 style={{ backgroundColor: '#dc2626', borderRadius: 9999, paddingVertical: 10, paddingHorizontal: 32, alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(220, 38, 38, 0.15)' }}
                 disabled={!modalContent.trim() && !modalImage}
               >
-                <Text style={{ color: '#fff', fontWeight: '600', fontSize: 18, opacity: (!modalContent.trim() && !modalImage) ? 0.5 : 1 }} className="font-formula1-regular">Post</Text>
+                <Text style={{ color: '#fff', fontWeight: '600', fontSize: 18, opacity: (!modalContent.trim() && !modalImage) ? 0.5 : 1 }} className="font-chirp">Post</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -3256,7 +3266,7 @@ export default function CommunityScreen() {
               }} 
               style={{ paddingVertical: 8, paddingHorizontal: 12 }}
             >
-              <Text style={{ color: '#dc2626', fontWeight: '600' }} className="font-formula1-regular">Delete</Text>
+              <Text style={{ color: '#dc2626', fontWeight: '600' }} className="font-chirp">Delete</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

@@ -90,14 +90,14 @@ const AnimatedLikeButton = ({ isLiked, likeCount, onPress }: { isLiked: boolean;
     >
       <Animated.View style={animatedStyle}>
         <View style={{ position: 'relative' }}>
-          <Heart size={14} color="#666666" fill="none" />
+          <Heart size={18} color="#536471" fill="none" />
           <Animated.View style={[{ position: 'absolute', top: 0, left: 0 }, heartAnimatedStyle]}>
-            <Heart size={14} color="#dc2626" fill="#dc2626" />
+            <Heart size={18} color="#dc2626" fill="#dc2626" />
           </Animated.View>
         </View>
       </Animated.View>
       {likeCount > 0 && (
-        <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
+        <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter', fontWeight: '400' }}>
           {likeCount}
         </Text>
       )}
@@ -839,7 +839,7 @@ export function AnimatedThreadView({
                     <View style={{ flex: 1 }}>
                       {/* Repost user info */}
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                        <Text style={{ fontWeight: '600', color: '#000', fontSize: 14, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 14, fontFamily: 'Inter' }}>
                           {threadData.profiles?.username || 'Unknown User'}
                         </Text>
                         {threadData.profiles?.is_admin ? (
@@ -855,14 +855,14 @@ export function AnimatedThreadView({
                             resizeMode="contain"
                           />
                         )}
-                        <Text style={{ fontSize: 12, color: '#888', marginLeft: 6, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ fontSize: 13, color: '#536471', marginLeft: 6, fontFamily: 'Inter', fontWeight: '400' }}>
                           {formatThreadTimestamp(threadData.created_at)}
                         </Text>
                       </View>
 
                       {/* Repost content */}
                       {threadData.content && (
-                        <Text style={{ color: '#000', fontSize: 14, lineHeight: 18, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ color: '#0f1419', fontSize: 15, lineHeight: 20, marginBottom: 12, fontFamily: 'Inter', fontWeight: '400' }}>
                           {threadData.content}
                         </Text>
                       )}
@@ -914,45 +914,45 @@ export function AnimatedThreadView({
                   </View>
 
                   {/* Engagement buttons for repost */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 60 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 50 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                       <EngagementButton
                         icon={Heart}
                         active={threadData.isLiked || false}
                         onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false, true)}
                         type="like"
-                        size={14}
+                        size={18}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter', fontWeight: '400' }}>
                         {threadData.likeCount || 0}
                       </Text>
                     </View>
 
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                       <EngagementButton
                         icon={MessageCircle}
                         active={false}
                         onPress={() => {}}
                         type="comment"
-                        size={14}
+                        size={18}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter', fontWeight: '400' }}>
                         {repostReplyCount || 0}
                       </Text>
                     </View>
 
-                                        <TouchableOpacity
+                    <TouchableOpacity
                       onPress={() => onRepostPress?.(threadData)}
-                      style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
+                      style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
                     >
                       <EngagementButton
                         icon={Repeat2}
                         active={false}
                         onPress={() => onRepostPress?.(threadData)}
                         type="repost"
-                        size={14}
+                        size={18}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter', fontWeight: '400' }}>
                         0
                       </Text>
                     </TouchableOpacity>
@@ -980,7 +980,7 @@ export function AnimatedThreadView({
 
                                           <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                  <Text style={{ fontWeight: '600', color: '#000', fontSize: 14, fontFamily: 'Formula1-Regular' }}>
+                                                  <Text style={{ fontWeight: '700', color: '#0f1419', fontSize: 14, fontFamily: 'Inter' }}>
                           {threadData.profiles?.username || 'Unknown User'}
                         </Text>
                         {threadData.profiles?.is_admin ? (
@@ -996,12 +996,12 @@ export function AnimatedThreadView({
                             resizeMode="contain"
                           />
                         )}
-                        <Text style={{ fontSize: 12, color: '#888', marginLeft: 6, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ fontSize: 13, color: '#536471', marginLeft: 6, fontFamily: 'Inter', fontWeight: '400' }}>
                           {formatThreadTimestamp(threadData.created_at)}
                         </Text>
                       </View>
 
-                      <Text style={{ color: '#000', fontSize: 14, lineHeight: 18, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ color: '#0f1419', fontSize: 15, lineHeight: 20, marginBottom: 12, fontFamily: 'Inter', fontWeight: '400' }}>
                         {threadData.content}
                       </Text>
 
@@ -1018,43 +1018,43 @@ export function AnimatedThreadView({
                   </View>
 
                   {/* Engagement buttons for regular thread */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 60 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 50 }}>
                     {/* Like */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                       <EngagementButton
                         icon={Heart}
                         active={threadData.isLiked || false}
                         onPress={() => handleThreadLikeToggle(threadData.id, threadData.isLiked || false, false)}
                         type="like"
-                        size={14}
+                        size={18}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter', fontWeight: '400' }}>
                         {threadData.likeCount || 0}
                       </Text>
                     </View>
                     {/* Comment */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                       <EngagementButton
                         icon={MessageCircle}
                         active={false}
                         onPress={() => {}}
                         type="comment"
-                        size={14}
+                        size={18}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter', fontWeight: '400' }}>
                         {threadData.replyCount || 0}
                       </Text>
                     </View>
                     {/* Repost */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                       <EngagementButton
                         icon={Repeat2}
                         active={false}
                       onPress={() => onRepostPress?.(threadData)}
                         type="repost"
-                        size={14}
+                        size={18}
                       />
-                      <Text style={{ marginLeft: 4, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter', fontWeight: '400' }}>
                         0
                       </Text>
                     </View>
@@ -1064,7 +1064,7 @@ export function AnimatedThreadView({
                       active={threadData.isBookmarked || false}
                       onPress={handleBookmarkToggle}
                       type="bookmark"
-                      size={14}
+                      size={18}
                     />
                   </View>
                 </View>

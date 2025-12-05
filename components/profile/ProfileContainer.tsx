@@ -5,6 +5,7 @@ import EngagementButton from '../engagement-button';
 import { supabase } from '@/lib/supabase';
 import { EditProfileModal } from './EditProfileModal';
 import PostCard from '../PostCard';  // Import PostCard
+import RepostCard from '../RepostCard';
 import ReplyCard from '../community/ReplyCard';  // Import ReplyCard
 import TwitterStyleReplyCard from '../community/TwitterStyleReplyCard';  // Import TwitterStyleReplyCard
 import { AnimatedThreadView } from '../community/AnimatedThreadView';  // Import regular white-themed AnimatedThreadView
@@ -1368,8 +1369,8 @@ return (
         </TouchableOpacity>
         
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#1a1a1a', marginBottom: 2, fontFamily: 'Formula1-Regular' }}>{profile.username}</Text>
-          <Text style={{ color: '#657786', fontSize: 12, fontFamily: 'Formula1-Regular' }}>{threads.length} posts</Text>
+          <Text style={{ fontWeight: 'bold', fontSize: 16, color: '#1a1a1a', marginBottom: 2, fontFamily: 'Chirp' }}>{profile.username}</Text>
+          <Text style={{ color: '#657786', fontSize: 12, fontFamily: 'Chirp' }}>{threads.length} posts</Text>
         </View>
 
         {session?.user?.id === userId ? (
@@ -1414,18 +1415,18 @@ return (
               <Text style={{ 
                 fontWeight: '700', 
                 fontSize: 20, 
-                color: '#0f1419', 
+                color: 'rgba(15, 20, 25, 0.85)', 
                 marginRight: 4,
-                fontFamily: 'Formula1-Regular'
+                fontFamily: 'Chirp'
               }}>
                 {profile.full_name || profile.username}
               </Text>
               <AdminOrTeamIcon isAdmin={isUserAdmin(profile, session)} team={profile.favorite_team} />
             </View>
             <Text style={{ 
-              color: '#536471', 
+              color: 'rgba(83, 100, 113, 0.85)', 
               fontSize: 14, 
-              fontFamily: 'Formula1-Regular'
+              fontFamily: 'Chirp'
             }}>
               @{profile.username}
             </Text>
@@ -1434,13 +1435,13 @@ return (
           {/* Bio */}
           {profile.bio && (
             <Text style={{ 
-              color: '#0f1419', 
+              color: 'rgba(15, 20, 25, 0.85)', 
               fontSize: 14, 
               lineHeight: 20, 
               textAlign: 'center',
               marginBottom: 16,
               paddingHorizontal: 20,
-              fontFamily: 'Formula1-Regular'
+              fontFamily: 'Chirp'
             }}>
               {profile.bio}
             </Text>
@@ -1462,8 +1463,8 @@ return (
               style={{ flexDirection: 'row', alignItems: 'center' }}
               activeOpacity={0.7}
             >
-              <Text style={{ fontWeight: '700', fontSize: 15, color: '#0f1419', fontFamily: 'Formula1-Regular' }}>{followersCount}</Text>
-              <Text style={{ color: '#536471', fontSize: 15, marginLeft: 4, fontFamily: 'Formula1-Regular' }}>Followers</Text>
+              <Text style={{ fontWeight: '700', fontSize: 15, color: 'rgba(15, 20, 25, 0.85)', fontFamily: 'Chirp' }}>{followersCount}</Text>
+              <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 15, marginLeft: 4, fontFamily: 'Chirp' }}>Followers</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={() => {
@@ -1473,8 +1474,8 @@ return (
               style={{ flexDirection: 'row', alignItems: 'center' }}
               activeOpacity={0.7}
             >
-              <Text style={{ fontWeight: '700', fontSize: 15, color: '#0f1419', fontFamily: 'Formula1-Regular' }}>{followingCount}</Text>
-              <Text style={{ color: '#536471', fontSize: 15, marginLeft: 4, fontFamily: 'Formula1-Regular' }}>Following</Text>
+              <Text style={{ fontWeight: '700', fontSize: 15, color: 'rgba(15, 20, 25, 0.85)', fontFamily: 'Chirp' }}>{followingCount}</Text>
+              <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 15, marginLeft: 4, fontFamily: 'Chirp' }}>Following</Text>
             </TouchableOpacity>
           </View>
 
@@ -1493,7 +1494,7 @@ return (
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={{ fontWeight: '600', color: '#0f1419', fontSize: 14, fontFamily: 'Formula1-Regular' }}>Edit Profile</Text>
+                <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, fontFamily: 'Chirp' }}>Edit Profile</Text>
               </TouchableOpacity>
             ) : session && (
               <TouchableOpacity 
@@ -1512,7 +1513,7 @@ return (
                   fontWeight: '600', 
                   color: isFollowing ? '#0f1419' : '#ffffff', 
                   fontSize: 14,
-                  fontFamily: 'Formula1-Regular'
+                  fontFamily: 'Chirp'
                 }}>
                   {isFollowing ? 'Following' : 'Follow'}
                 </Text>
@@ -1527,7 +1528,7 @@ return (
               style={{ marginBottom: 16 }}
               activeOpacity={0.7}
             >
-              <Text style={{ color: '#dc2626', fontSize: 12, fontWeight: '500', fontFamily: 'Formula1-Regular' }}>Delete Account</Text>
+              <Text style={{ color: '#dc2626', fontSize: 12, fontWeight: '500', fontFamily: 'Chirp' }}>Delete Account</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1554,7 +1555,7 @@ return (
             fontWeight: activeTab === 'posts' ? '700' : '500', 
             color: activeTab === 'posts' ? '#0f1419' : '#536471',
             fontSize: 14,
-            fontFamily: 'Formula1-Regular'
+            fontFamily: 'Chirp'
           }}>Posts</Text>
         </TouchableOpacity>
         <TouchableOpacity 
@@ -1572,7 +1573,7 @@ return (
             fontWeight: activeTab === 'replies' ? '700' : '500', 
             color: activeTab === 'replies' ? '#0f1419' : '#536471',
             fontSize: 14,
-            fontFamily: 'Formula1-Regular'
+            fontFamily: 'Chirp'
           }}>Replies</Text>
         </TouchableOpacity>
       </View>
@@ -1593,216 +1594,15 @@ return (
               threads.map((item, index) => (
                 <View key={item.id}>
                   {item.type === 'repost' ? (
-                    <TouchableOpacity onPress={() => handleThreadClick(item.id)}>
-                      <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
-                        {/* Repost content using PostCard structure */}
-                        <View style={{ flexDirection: 'row' }}>
-                          <Image
-                            source={{ 
-                              uri: item.profiles?.avatar_url || 
-                                   `https://ui-avatars.com/api/?name=${item.profiles?.username?.charAt(0)}&background=random` 
-                            }}
-                            style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
-                          />
-                          <View style={{ flex: 1, marginLeft: 10 }}>
-                            {/* Repost user info */}
-                            <View style={{ marginBottom: 4 }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                <Text style={{ fontWeight: '600', color: '#000', fontSize: 14, fontFamily: 'Formula1-Regular' }}>
-                                  {item.profiles?.username || 'Unknown User'}
-                                </Text>
-                                {item.profiles?.is_admin ? (
-                                  <Image 
-                                    source={require('@/assets/images/favicon.png')} 
-                                    style={{ width: 24, height: 22, marginLeft: 4 }}
-                                    resizeMode="contain"
-                                  />
-                                ) : item.profiles?.favorite_team && TEAM_LOGOS[item.profiles.favorite_team] && (
-                                  <Image 
-                                    source={TEAM_LOGOS[item.profiles.favorite_team]} 
-                                    style={{ width: 24, height: 22, marginLeft: 4 }}
-                                    resizeMode="contain"
-                                  />
-                                )}
-                                {/* More options button for repost owner or admin - moved to top right */}
-                                {session && (item.user_id === session.user.id || isUserAdmin(item.profiles, session)) && (
-                                  <TouchableOpacity 
-                                    onPress={(e) => openRepostDeleteMenu(item.id, e)}
-                                    style={{ 
-                                      marginLeft: 'auto',
-                                      padding: 4
-                                    }}
-                                  >
-                                    <MoreHorizontal size={20} color="#888" />
-                                  </TouchableOpacity>
-                                )}
-                              </View>
-                              <Text style={{ fontSize: 11, color: '#888', fontFamily: 'Formula1-Regular' }}>
-                                {new Date(item.created_at).toLocaleDateString()}
-                              </Text>
-                            </View>
-
-                            {/* Repost content */}
-                            {item.content && (
-                              <Text style={{ color: '#000', fontSize: 14, lineHeight: 20, marginBottom: 12, fontFamily: 'Formula1-Regular' }}>
-                                {item.content}
-                              </Text>
-                            )}
-
-                            {/* Repost image */}
-                            {item.image_url && (
-                              <View style={{ alignItems: 'center', marginBottom: 12 }}>
-                                <Image
-                                  source={{ uri: item.image_url }}
-                                  style={getResponsiveImageStyle(screenWidth)}
-                                  resizeMode="cover"
-                                />
-                              </View>
-                            )}
-
-                            {/* Original thread preview - embedded like Twitter */}
-                            <TouchableOpacity 
-                              onPress={() => handleThreadClick(item.original_thread?.id)}
-                              style={{
-                                borderWidth: 1,
-                                borderColor: '#ffffff',
-                                borderRadius: 12,
-                                padding: 12,
-                                backgroundColor: '#f8f9fa',
-                                marginTop: 16,
-                                marginBottom: 12
-                              }}
-                            >
-                              <View style={{ flexDirection: 'row' }}>
-                                <Image
-                                  source={{ 
-                                    uri: item.original_thread?.profiles?.avatar_url || 
-                                         `https://ui-avatars.com/api/?name=${item.original_thread?.profiles?.username?.charAt(0)}&background=random` 
-                                  }}
-                                  style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
-                                />
-                                <View style={{ flex: 1 }}>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                    <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
-                                      {item.original_thread?.profiles?.username || 'Unknown User'}
-                                    </Text>
-                                    {item.original_thread?.profiles?.is_admin ? (
-                                      <Image 
-                                        source={require('@/assets/images/favicon.png')} 
-                                        style={{ width: 16, height: 14, marginLeft: 2 }}
-                                        resizeMode="contain"
-                                      />
-                                    ) : item.original_thread?.profiles?.favorite_team && TEAM_LOGOS[item.original_thread.profiles.favorite_team] && (
-                                      <Image 
-                                        source={TEAM_LOGOS[item.original_thread.profiles.favorite_team]} 
-                                        style={{ width: 16, height: 14, marginLeft: 2 }}
-                                        resizeMode="contain"
-                                      />
-                                    )}
-                                  </View>
-                                  <Text style={{ color: '#1a1a1a', fontSize: 12, lineHeight: 16, fontFamily: 'Formula1-Regular' }}>
-                                    {item.original_thread?.content || ''}
-                                  </Text>
-                                  {item.original_thread?.image_url && (
-                                    <View style={{ alignItems: 'center', marginTop: 4 }}>
-                                      <Image
-                                        source={{ uri: item.original_thread.image_url }}
-                                        style={getVeryCompactImageStyle(screenWidth)}
-                                        resizeMode="cover"
-                                      />
-                                    </View>
-                                  )}
-
-                                </View>
-                              </View>
-                            </TouchableOpacity>
-
-                            {/* Engagement bar */}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                              {Platform.OS === 'web' ? (
-                                <>
-                                  {/* Likes */}
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                                    <EngagementButton
-                                      icon={Heart}
-                                      active={item.isLiked || false}
-                                      onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-                                      type="like"
-                                      size={14}
-                                      accessibilityLabel="Like repost"
-                                    />
-                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                                      {item.likeCount || 0}
-                                    </Text>
-                                  </View>
-
-                                  {/* Comments */}
-                                  <TouchableOpacity 
-                                    onPress={() => handleThreadClick(item.id)}
-                                    style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                                  >
-                                    <MessageCircle size={14} color="#666666" />
-                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
-                                  </TouchableOpacity>
-
-                                  {/* Reposts */}
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                                    <EngagementButton
-                                      icon={Repeat2}
-                                      active={false} // TODO: Add isReposted prop to track repost state
-                                      onPress={() => handleRepostRepost(item)}
-                                      type="repost"
-                                      size={14}
-                                      accessibilityLabel="Repost"
-                                    />
-                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
-                                  </View>
-                                </>
-                              ) : (
-                                <>
-                                  {/* Comments */}
-                                  <TouchableOpacity 
-                                    onPress={() => handleThreadClick(item.id)}
-                                    style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}
-                                  >
-                                    <MessageCircle size={14} color="#666666" />
-                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.replyCount || 0}</Text>
-                                  </TouchableOpacity>
-
-                                  {/* Reposts */}
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                                    <EngagementButton
-                                      icon={Repeat2}
-                                      active={false} // TODO: Add isReposted prop to track repost state
-                                      onPress={() => handleRepostRepost(item)}
-                                      type="repost"
-                                      size={14}
-                                      accessibilityLabel="Repost"
-                                    />
-                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>{item.repostCount || 0}</Text>
-                                  </View>
-
-                                  {/* Likes */}
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 24 }}>
-                                    <EngagementButton
-                                      icon={Heart}
-                                      active={item.isLiked || false}
-                                      onPress={() => handleRepostLikeToggle(item.id, item.isLiked || false)}
-                                      type="like"
-                                      size={14}
-                                      accessibilityLabel="Like repost"
-                                    />
-                                    <Text style={{ marginLeft: 4, color: '#666666', fontSize: 12 }}>
-                                      {item.likeCount || 0}
-                                    </Text>
-                                  </View>
-                                </>
-                              )}
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
+                    <RepostCard
+                      repost={item}
+                      onProfilePress={handleProfilePress}
+                      onThreadPress={handleThreadClick}
+                      onLikePress={(id, isLiked) => handleRepostLikeToggle(id, isLiked)}
+                      onRepostPress={() => handleRepostRepost(item)}
+                      onDeletePress={() => handleRepostDeletePress(item.id)}
+                      session={session}
+                    />
                   ) : (
                     <TouchableOpacity onPress={() => handleThreadClick(item.id)}>
                       <PostCard

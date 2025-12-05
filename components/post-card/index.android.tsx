@@ -103,7 +103,7 @@ const PostCard: FC<PostCardProps> = ({
         </View>
       )}
       <View style={styles.actions}>
-        <View style={styles.actionButtons}>
+
           <View style={styles.actionButton}>
             <GuestModeWrapper onPress={onLikePress}>
               <EngagementButton
@@ -111,7 +111,7 @@ const PostCard: FC<PostCardProps> = ({
                 active={isLiked || false}
                 onPress={onLikePress}
                 type="like"
-                size={20}
+                size={18}
                 accessibilityLabel="Like post"
               />
             </GuestModeWrapper>
@@ -119,25 +119,25 @@ const PostCard: FC<PostCardProps> = ({
           </View>
           <GuestModeWrapper onPress={onCommentPress}>
             <TouchableOpacity onPress={onCommentPress} style={styles.actionButton}>
-              <MessageCircle size={20} color="#6b7280" />
+              <MessageCircle size={18} color="#536471" />
               {comments > 0 && <Text style={styles.actionText}>{comments}</Text>}
             </TouchableOpacity>
           </GuestModeWrapper>
-          <GuestModeWrapper onPress={onRepostPress}>
+          <GuestModeWrapper onPress={onRepostPress || (() => {})}>
             <TouchableOpacity onPress={onRepostPress} style={styles.actionButton}>
-              <Repeat2 size={20} color="#6b7280" />
+              <Repeat2 size={18} color="#536471" />
             </TouchableOpacity>
           </GuestModeWrapper>
-          <GuestModeWrapper onPress={onBookmarkPress}>
+          <GuestModeWrapper onPress={onBookmarkPress || (() => {})}>
             <TouchableOpacity onPress={onBookmarkPress} style={styles.actionButton}>
-              <Bookmark size={20} color={isBookmarked ? '#f59e0b' : '#6b7280'} fill={isBookmarked ? '#f59e0b' : 'transparent'} />
+              <Bookmark size={18} color={isBookmarked ? '#f59e0b' : '#536471'} fill={isBookmarked ? '#f59e0b' : 'transparent'} />
             </TouchableOpacity>
           </GuestModeWrapper>
 
-        </View>
+
         {showDeleteButton && (
-          <TouchableOpacity onPress={onDeletePress}>
-            <MoreHorizontal size={18} color="#6b7280" />
+          <TouchableOpacity onPress={onDeletePress} style={{ marginLeft: 'auto' }}>
+            <MoreHorizontal size={18} color="#536471" />
           </TouchableOpacity>
         )}
       </View>

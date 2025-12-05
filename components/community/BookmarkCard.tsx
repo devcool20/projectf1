@@ -87,7 +87,7 @@ export default function BookmarkCard({
         {/* Content Column */}
         <View style={{ flex: 1, paddingLeft: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: '#000000', marginRight: 8, fontFamily: 'Formula1-Regular' }}>{username}</Text>
+            <Text style={{ fontSize: 15, fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', marginRight: 8, fontFamily: 'Chirp' }}>{username}</Text>
             {logoToShow && (
               <Image 
                 source={logoToShow} 
@@ -103,14 +103,14 @@ export default function BookmarkCard({
               />
             )}
           </View>
-          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8, fontFamily: 'Formula1-Regular' }}>{formatThreadTimestamp(timestamp)}</Text>
+          <Text style={{ fontSize: 14, color: 'rgba(83, 100, 113, 0.85)', marginBottom: 8, fontFamily: 'Chirp' }}>{formatThreadTimestamp(timestamp)}</Text>
           {/* Content */}
-          <Text style={{ fontSize: 14, color: '#000000', lineHeight: 20, marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
+          <Text style={{ fontSize: 14, color: 'rgba(15, 20, 25, 0.85)', lineHeight: 20, marginBottom: 8, fontFamily: 'Chirp' }}>
             {displayedContent}
           </Text>
           {shouldTruncate && (
             <TouchableOpacity onPress={() => setExpanded(true)}>
-              <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 13, marginBottom: 4, fontFamily: 'Formula1-Regular' }}>Read more</Text>
+              <Text style={{ color: '#dc2626', fontWeight: '600', fontSize: 13, marginBottom: 4, fontFamily: 'Chirp' }}>Read more</Text>
             </TouchableOpacity>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
