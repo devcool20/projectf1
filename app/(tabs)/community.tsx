@@ -29,7 +29,7 @@ import BookmarkCard from '@/components/community/BookmarkCard';
 import RepostModal from '@/components/RepostModal';
 
 
-import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, Search } from 'lucide-react-native';
+import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, Search, ArrowLeft } from 'lucide-react-native';
 import EngagementButton from '@/components/engagement-button';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
@@ -2127,34 +2127,31 @@ export default function CommunityScreen() {
     return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
       {/* Mobile Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="md:hidden">
-        <TouchableOpacity onPress={toggleSidebar}>
-          <Menu size={24} color="#000000" />
+      {!showSearch ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="md:hidden">
+          <TouchableOpacity onPress={toggleSidebar}>
+            <Menu size={24} color="#000000" />
           </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626' }} className="font-chirp-bold" selectable={false}>projectF1</Text>
-        <TouchableOpacity onPress={handleSearchToggle}>
-          <Search size={24} color="#000000" />
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#dc2626' }} className="font-chirp-bold" selectable={false}>projectF1</Text>
+          <TouchableOpacity onPress={handleSearchToggle}>
+            <Search size={24} color="#000000" />
           </TouchableOpacity>
         </View>
-
-      {/* Search Bar */}
-      {showSearch && (
-        <View style={{ padding: 16, backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Search size={20} color="#666666" style={{ marginRight: 8 }} />
+      ) : (
+        <View style={{ padding: 12, backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#e5e5e5' }} className="md:hidden">
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f2f5', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 }}>
+            <TouchableOpacity onPress={handleSearchToggle} style={{ marginRight: 10 }}>
+              <ArrowLeft size={20} color="#65676b" />
+            </TouchableOpacity>
+            <Search size={18} color="#65676b" style={{ marginRight: 10 }} />
           <TextInput
               placeholder="Search threads and people..."
-              placeholderTextColor="#999999"
+              placeholderTextColor="#65676b"
               style={{
                 flex: 1,
-                fontSize: 16,
+                fontSize: 15,
                 color: '#000000',
-                paddingVertical: 8,
-                paddingHorizontal: 12,
-                backgroundColor: '#f8f9fa',
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: '#ffffff',
+                fontFamily: 'Inter',
               }}
             value={searchQuery}
               onChangeText={setSearchQuery}
@@ -2168,14 +2165,16 @@ export default function CommunityScreen() {
                 }}
                 style={{ marginLeft: 8, padding: 4 }}
               >
-                <X size={16} color="#666666" />
+                <X size={18} color="#65676b" />
           </TouchableOpacity>
       )}
           </View>
+        </View>
+      )}
 
       {/* Search Results */}
-          {searchQuery.length > 0 && (
-            <View style={{ marginTop: 16 }}>
+      {searchQuery.length > 0 && (
+        <View style={{ marginTop: 16 }}>
               {searchLoading ? (
                 <ActivityIndicator style={{ marginVertical: 20 }} />
               ) : (
@@ -2326,8 +2325,6 @@ export default function CommunityScreen() {
               )}
             </View>
           )}
-        </View>
-      )}
 
       {/* Desktop Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e5e5', backgroundColor: '#ffffff' }} className="hidden md:flex">
@@ -2684,41 +2681,37 @@ export default function CommunityScreen() {
 
                                           <View style={{ flex: 1 }}>
                                             {/* Repost user info */}
-                                            <View style={{ marginBottom: 4 }}>
-                                              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, fontFamily: 'Chirp' }}>
-                                                  {item.profiles?.username || 'Unknown User'}
-                                                </Text>
-                                                {item.profiles?.is_admin ? (
-                                                  <Image 
-                                                    source={require('@/assets/images/favicon.png')} 
-                                                    style={{ width: 24, height: 22, marginLeft: 4 }}
-                                                    resizeMode="contain"
-                                                  />
-                                                ) : item.profiles?.favorite_team && TEAM_LOGOS[item.profiles.favorite_team] && (
-                                                  <Image 
-                                                    source={TEAM_LOGOS[item.profiles.favorite_team]} 
-                                                    style={{ width: 24, height: 22, marginLeft: 4 }}
-                                                    resizeMode="contain"
-                                                  />
-                                                )}
-                                                {/* More options button for repost owner or admin - moved to top right */}
-                                                {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
-            <TouchableOpacity
-                                                    onPress={(e) => openRepostDeleteMenu(item.id, e)}
-                                                    style={{ 
-                                                      marginLeft: 'auto',
-                                                      padding: 4
-                                                    }}
-                                                  >
-                                                    <MoreHorizontal size={20} color="#888" />
-            </TouchableOpacity>
-                                                )}
-                                              </View>
-                                              <Text style={{ fontSize: 13, color: 'rgba(83, 100, 113, 0.85)', fontFamily: 'Chirp', fontWeight: '400' }}>
-                                                {formatThreadTimestamp(item.created_at) || ''}
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                              <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 15, fontFamily: 'Chirp' }}>
+                                                {item.profiles?.username || 'Unknown User'}
                                               </Text>
-          </View>
+                                              {item.profiles?.is_admin ? (
+                                                <Image 
+                                                  source={require('@/assets/images/favicon.png')} 
+                                                  style={{ width: 14, height: 14, marginHorizontal: 4 }}
+                                                  resizeMode="contain"
+                                                />
+                                              ) : item.profiles?.favorite_team && TEAM_LOGOS[item.profiles.favorite_team] && (
+                                                <Image 
+                                                  source={TEAM_LOGOS[item.profiles.favorite_team]} 
+                                                  style={{ width: 14, height: 14, marginHorizontal: 4 }}
+                                                  resizeMode="contain"
+                                                />
+                                              )}
+                                              <Text style={{ fontSize: 13, color: 'rgba(83, 100, 113, 0.85)', fontFamily: 'Chirp', fontWeight: '400' }}>· {formatThreadTimestamp(item.created_at) || ''}</Text>
+                                              {/* More options button for repost owner or admin - moved to top right */}
+                                              {session && (item.user_id === session.user.id || isCurrentUserAdmin()) && (
+                                                <TouchableOpacity
+                                                  onPress={(e) => openRepostDeleteMenu(item.id, e)}
+                                                  style={{ 
+                                                    marginLeft: 'auto',
+                                                    padding: 4
+                                                  }}
+                                                >
+                                                  <MoreHorizontal size={20} color="#888" />
+                                                </TouchableOpacity>
+                                              )}
+                                            </View>
 
                                             {/* Repost content */}
                                             {item.content && (
@@ -2743,11 +2736,11 @@ export default function CommunityScreen() {
                                               onPress={() => handleThreadPress(item.original_thread)}
                                               style={{
                                                 borderWidth: 1,
-                                                borderColor: '#e5e5e5',
+                                                borderColor: 'rgba(207, 217, 222, 0.5)',
                                                 borderRadius: 12,
                                                 padding: 12,
-                                                backgroundColor: '#f8f9fa',
-                                                marginTop: 16,
+                                                backgroundColor: 'rgba(247, 249, 249, 0.8)',
+                                                marginTop: 8,
                                                 marginBottom: 12
                                               }}
                                             >
@@ -2760,19 +2753,19 @@ export default function CommunityScreen() {
                                                   style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
                                                 />
                                                 <View style={{ flex: 1 }}>
-                                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                                                    <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, fontFamily: 'Chirp' }}>
+                                                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                                    <Text style={{ fontWeight: '600', color: 'rgba(83, 100, 113, 0.95)', fontSize: 13, fontFamily: 'Chirp' }}>
                                                       {item.original_thread?.profiles?.username || 'Unknown User'}
                                                     </Text>
                                                     {item.original_thread?.profiles?.favorite_team && TEAM_LOGOS[item.original_thread.profiles.favorite_team] && (
                                                       <Image 
                                                         source={TEAM_LOGOS[item.original_thread.profiles.favorite_team]} 
-                                                        style={{ width: 16, height: 14, marginLeft: 2 }}
+                                                        style={{ width: 12, height: 12, marginLeft: 4, opacity: 0.8 }}
                                                         resizeMode="contain"
                                                       />
                                                     )}
           </View>
-                                                  <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 13, lineHeight: 16, fontFamily: 'Chirp', fontWeight: '400' }}>
+                                                  <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, lineHeight: 18, fontFamily: 'Chirp', fontWeight: '400' }} numberOfLines={3}>
                                                     {item.original_thread?.content || ''}
                                                   </Text>
                                                   {item.original_thread?.image_url && (

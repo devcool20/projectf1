@@ -804,7 +804,7 @@ export function AnimatedThreadView({
             <TouchableOpacity onPress={handleCloseWithAnimation} style={{ marginRight: 12 }}>
               <ArrowLeft size={24} color="#3a3a3a" />
             </TouchableOpacity>
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#3a3a3a', fontFamily: 'Formula1-Regular' }}>
+            <Text style={{ fontSize: 16, fontWeight: '500', color: '#3a3a3a', fontFamily: 'Inter' }}>
               Thread
             </Text>
           </View>
@@ -832,7 +832,7 @@ export function AnimatedThreadView({
                           uri: threadData.profiles?.avatar_url || 
                                `https://ui-avatars.com/api/?name=${threadData.profiles?.username?.charAt(0) || 'U'}&background=random` 
                         }}
-                        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
+                        style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#f3f4f6' }}
                       />
                     </TouchableOpacity>
 
@@ -900,10 +900,10 @@ export function AnimatedThreadView({
                               style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
                             />
                             <View style={{ flex: 1 }}>
-                              <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                              <Text style={{ fontWeight: '600', color: '#1a1a1a', fontSize: 14, fontFamily: 'Inter' }}>
                                 {threadData.original_thread?.profiles?.username || 'Unknown User'}
                               </Text>
-                              <Text style={{ color: '#1a1a1a', fontSize: 14, lineHeight: 18, fontFamily: 'Formula1-Regular' }}>
+                              <Text style={{ color: '#536471', fontSize: 13, lineHeight: 18, fontFamily: 'Inter', marginTop: 2 }}>
                                 {threadData.original_thread?.content}
                               </Text>
                             </View>
@@ -915,6 +915,7 @@ export function AnimatedThreadView({
 
                   {/* Engagement buttons for repost */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingLeft: 50 }}>
+                    {/* Like */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                       <EngagementButton
                         icon={Heart}
@@ -927,7 +928,7 @@ export function AnimatedThreadView({
                         {threadData.likeCount || 0}
                       </Text>
                     </View>
-
+                    {/* Comment */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                       <EngagementButton
                         icon={MessageCircle}
@@ -940,11 +941,8 @@ export function AnimatedThreadView({
                         {repostReplyCount || 0}
                       </Text>
                     </View>
-
-                    <TouchableOpacity
-                      onPress={() => onRepostPress?.(threadData)}
-                      style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}
-                    >
+                    {/* Repost */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                       <EngagementButton
                         icon={Repeat2}
                         active={false}
@@ -955,10 +953,15 @@ export function AnimatedThreadView({
                       <Text style={{ marginLeft: 4, color: '#536471', fontSize: 13, fontFamily: 'Inter', fontWeight: '400' }}>
                         0
                       </Text>
-                    </TouchableOpacity>
-
-                    {/* In the engagement bar for reposts (threadData.type === 'repost'), remove the EngagementButton for bookmark.
-                        Only show Like, Comment, and Repost icons for reposts. */}
+                    </View>
+                    {/* Bookmark */}
+                    <EngagementButton
+                      icon={Bookmark}
+                      active={threadData.isBookmarked || false}
+                      onPress={handleBookmarkToggle}
+                      type="bookmark"
+                      size={18}
+                    />
                   </View>
                 </View>
               ) : (
@@ -974,7 +977,7 @@ export function AnimatedThreadView({
                           uri: threadData.profiles?.avatar_url || 
                                `https://ui-avatars.com/api/?name=${threadData.profiles?.username?.charAt(0) || 'U'}&background=random` 
                         }}
-                        style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6' }}
+                        style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#f3f4f6' }}
                       />
                     </TouchableOpacity>
 
@@ -1079,7 +1082,7 @@ export function AnimatedThreadView({
                     source={{
                       uri: currentUserProfile?.avatar_url || session?.user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${session?.user?.user_metadata?.username?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}&background=random`
                     }}
-                    style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }}
+                    style={{ width: 32, height: 32, borderRadius: 16, marginRight: 12 }}
                   />
                   <View style={{ flex: 1 }}>
                     <TextInput
@@ -1099,7 +1102,7 @@ export function AnimatedThreadView({
                         borderColor: '#e5e5e5',
                         minHeight: 40,
                         maxHeight: 120,
-                        fontFamily: 'Formula1-Regular',
+                        fontFamily: 'Inter',
                       }}
                     />
                     {replyImage && (
@@ -1142,7 +1145,7 @@ export function AnimatedThreadView({
                         }}
                         disabled={!newReply.trim() && !replyImage}
                       >
-                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13, fontFamily: 'Inter' }}>
                           Reply
                         </Text>
                       </TouchableOpacity>
@@ -1157,12 +1160,12 @@ export function AnimatedThreadView({
               {loadingReplies && replies.length === 0 ? (
                 <View style={{ alignItems: 'center', marginTop: 20 }}>
                   <ActivityIndicator size="small" color="#666666" />
-                  <Text style={{ marginTop: 8, color: '#666666', fontSize: 11, fontFamily: 'Formula1-Regular' }}>
+                  <Text style={{ marginTop: 8, color: '#666666', fontSize: 11, fontFamily: 'Inter' }}>
                     Loading replies...
                   </Text>
                 </View>
               ) : replies.length === 0 ? (
-                <Text style={{ textAlign: 'center', marginTop: 20, color: '#666666', fontFamily: 'Formula1-Regular' }}>
+                <Text style={{ textAlign: 'center', marginTop: 20, color: '#666666', fontFamily: 'Inter' }}>
                   No replies yet. Be the first to reply!
                 </Text>
               ) : (
@@ -1173,18 +1176,18 @@ export function AnimatedThreadView({
                         uri: reply.profiles?.avatar_url || 
                              `https://ui-avatars.com/api/?name=${reply.profiles?.username?.charAt(0) || 'U'}&background=random` 
                       }}
-                      style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }}
+                      style={{ width: 32, height: 32, borderRadius: 16, marginRight: 12 }}
                     />
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ fontWeight: '600', color: '#000', fontSize: 15, fontFamily: 'Inter' }}>
                           {reply.profiles?.username || 'Unknown User'}
                         </Text>
-                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8, fontFamily: 'Formula1-Regular' }}>
+                        <Text style={{ fontSize: 11, color: '#888', marginLeft: 8, fontFamily: 'Inter' }}>
                           {formatThreadTimestamp(reply.created_at)}
                         </Text>
                       </View>
-                      <Text style={{ color: '#000', fontSize: 14, lineHeight: 18, marginBottom: 8, fontFamily: 'Formula1-Regular' }}>
+                      <Text style={{ color: '#000', fontSize: 14, lineHeight: 18, marginBottom: 8, fontFamily: 'Inter' }}>
                         {reply.content}
                       </Text>
                       {reply.image_url && (
@@ -1201,7 +1204,7 @@ export function AnimatedThreadView({
                             size={14}
                             accessibilityLabel="Like reply"
                         />
-                          <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 11, minWidth: 16, textAlign: 'left', fontFamily: 'Formula1-Regular' }}>{reply.likeCount || 0}</Text>
+                          <Text style={{ marginLeft: 4, color: '#6b7280', fontSize: 11, minWidth: 16, textAlign: 'left', fontFamily: 'Inter' }}>{reply.likeCount || 0}</Text>
                         </View>
                         {/* Comment */}
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>

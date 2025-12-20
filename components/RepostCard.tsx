@@ -141,13 +141,11 @@ export default function RepostCard({
             {repostUserLogo && (
               <Image 
                 source={repostUserLogo} 
-                style={{ width: 24, height: 22, marginLeft: 4 }}
+                style={{ width: 14, height: 14, marginHorizontal: 4 }}
                 resizeMode="contain"
               />
             )}
-            <Text style={{ fontSize: 13, color: 'rgba(83, 100, 113, 0.85)', marginLeft: 8, fontFamily: 'Chirp', fontWeight: '400' }}>
-              {formatThreadTimestamp(repost.created_at)}
-            </Text>
+            <Text style={{ fontSize: 13, color: 'rgba(83, 100, 113, 0.85)', fontFamily: 'Chirp', fontWeight: '400' }}>· {formatThreadTimestamp(repost.created_at)}</Text>
             {/* More options button for repost owner or admin - moved to top right */}
             {session && (repost.user_id === session.user.id || repost.profiles?.is_admin) && onDeletePress && (
               <TouchableOpacity 
@@ -172,11 +170,11 @@ export default function RepostCard({
             onPress={(e) => handleOriginalThreadPress(repost.original_thread_id, e)}
             style={{
               borderWidth: 1,
-              borderColor: '#e5e5e5',
-              borderRadius: 8,
+              borderColor: 'rgba(207, 217, 222, 0.5)',
+              borderRadius: 12,
               padding: 12,
-              backgroundColor: '#f9f9f9',
-              marginTop: 16,
+              backgroundColor: 'rgba(247, 249, 249, 0.8)',
+              marginTop: 8,
               marginBottom: 12
             }}
           >
@@ -189,19 +187,19 @@ export default function RepostCard({
                 style={{ width: 32, height: 32, borderRadius: 16, marginRight: 8 }}
               />
               <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                  <Text style={{ fontWeight: '600', color: 'rgba(15, 20, 25, 0.85)', fontSize: 14, fontFamily: 'Chirp' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <Text style={{ fontWeight: '600', color: 'rgba(83, 100, 113, 0.95)', fontSize: 13, fontFamily: 'Chirp' }}>
                     {repost.original_thread?.profiles?.username || 'Unknown User'}
                   </Text>
                   {originalUserLogo && (
                     <Image 
                       source={originalUserLogo} 
-                      style={{ width: 16, height: 14, marginLeft: 2 }}
+                      style={{ width: 12, height: 12, marginLeft: 4, opacity: 0.8 }}
                       resizeMode="contain"
                     />
                   )}
                 </View>
-                <Text style={{ color: 'rgba(15, 20, 25, 0.85)', fontSize: 13, lineHeight: 16, fontFamily: 'Chirp', fontWeight: '400' }}>
+                <Text style={{ color: 'rgba(83, 100, 113, 0.85)', fontSize: 13, lineHeight: 18, fontFamily: 'Chirp', fontWeight: '400' }} numberOfLines={3}>
                   {repost.original_thread?.content}
                 </Text>
                 {repost.original_thread?.image_url && (
