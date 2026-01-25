@@ -48,7 +48,7 @@ function AppContent() {
             fontFamily: 'Formula1-Bold',
           },
           headerBackTitle: 'Back',
-          headerBackVisible: true,
+          headerBackVisible: false,
         }}
       >
         <Stack.Screen

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, memo } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Heart, MessageCircle, Trash2, Bookmark, Repeat2, MoreHorizontal } from 'lucide-react-native';
 import { PostCardProps } from './types.android';
@@ -24,7 +24,7 @@ const TEAM_LOGOS: { [key: string]: any } = {
 // Admin logo
 const ADMIN_LOGO = require('@/assets/images/favicon.png');
 
-const PostCard: FC<PostCardProps> = ({
+const PostCardComponent: FC<PostCardProps> = ({
   username,
   avatarUrl,
   content,
@@ -144,5 +144,16 @@ const PostCard: FC<PostCardProps> = ({
     </View>
   );
 };
+
+const PostCard = memo(PostCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.userId === nextProps.userId &&
+    prevProps.isLiked === nextProps.isLiked &&
+    prevProps.isBookmarked === nextProps.isBookmarked &&
+    prevProps.likes === nextProps.likes &&
+    prevProps.comments === nextProps.comments &&
+    prevProps.content === nextProps.content
+  );
+});
 
 export default PostCard; 

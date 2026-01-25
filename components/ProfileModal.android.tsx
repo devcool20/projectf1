@@ -28,11 +28,6 @@ export const ProfileModal: FC<ProfileModalProps> = ({
   session, 
   onLogin 
 }) => {
-  // Don't render if no session
-  if (!session) {
-    return null;
-  }
-
   const [selectedTeam, setSelectedTeam] = useState<F1Team>(F1_TEAMS[0]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);

@@ -22,7 +22,7 @@ type OtherUserProfileModalProps = {
   isVisible: boolean;
   onClose: () => void;
   userId: string;
-  currentUserId: string;
+  currentUserId?: string | null;
 };
 
 type UserProfile = {
@@ -46,9 +46,11 @@ export const OtherUserProfileModal: React.FC<OtherUserProfileModalProps> = ({
   useEffect(() => {
     if (isVisible && userId) {
       fetchProfile();
-      checkFollowStatus();
+      if (currentUserId) {
+        checkFollowStatus();
+      }
     }
-  }, [isVisible, userId]);
+  }, [isVisible, userId, currentUserId]);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -81,6 +83,10 @@ export const OtherUserProfileModal: React.FC<OtherUserProfileModalProps> = ({
   };
 
   const checkFollowStatus = async () => {
+    if (!currentUserId || !userId) {
+      setIsFollowing(false);
+      return;
+    }
     try {
       const { data, error } = await supabase
         .from('follows')
@@ -142,7 +148,6 @@ export const OtherUserProfileModal: React.FC<OtherUserProfileModalProps> = ({
     <Modal
       visible={isVisible}
       animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onClose}
       transparent={true}
     >

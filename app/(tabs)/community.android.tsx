@@ -14,19 +14,22 @@ import {
   FlatList,
   Dimensions,
   Pressable,
+  Linking,
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { AuthModal } from '@/components/auth/AuthModal.android';
 import PostCard from '@/components/post-card/index.android';
-import { AnimatedThreadView } from '@/components/community/AnimatedThreadView.tsx';
+import { AnimatedThreadView } from '@/components/community/AnimatedThreadView.android';
 import { User, Camera, X, Menu, MessageCircle, Clapperboard, ShoppingCart, Trophy, Bookmark, Heart, Search, MoreHorizontal, Repeat2 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { ProfileModal } from '@/components/ProfileModal.android';
+import { ProfileModal } from '@/components/ProfileModal';
 import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
 import { useRouter, usePathname } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { LockedScreen } from '@/components/auth/LockedScreen';
 import RepostModal from '@/components/RepostModal';
+import { BookmarkCard } from '@/components/community/BookmarkCard.android';
+import { RepostCard } from '@/components/RepostCard.android';
 import styles from './community.styles.android';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -42,6 +45,13 @@ const NAV_ITEMS = [
 
 const ADMIN_EMAIL = 'sharmadivyanshu265@gmail.com';
 const FEED_LIMIT = 15;
+const RSS_TO_JSON_URL = 'https://feedtojson.vercel.app/https%3A%2F%2Fwww.formula1.com%2Fen%2Flatest%2Fall.xml';
+
+// Function to shuffle array and get random items
+const getRandomNews = (newsArray: any[], count: number = 5) => {
+  const shuffled = [...newsArray].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+};
 
 export default function CommunityScreen() {
   const router = useRouter();
@@ -60,6 +70,8 @@ export default function CommunityScreen() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   const [adminUserId, setAdminUserId] = useState<string>('');
+  const [news, setNews] = useState<any[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
   
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -269,6 +281,19 @@ export default function CommunityScreen() {
 
       if (threadsError) throw threadsError;
 
+      // Fetch repost counts for these threads
+      const { data: repostCountsData } = await supabase
+        .from('reposts')
+        .select('original_thread_id')
+        .in('original_thread_id', threadsData?.map((t: any) => t.id) || []);
+      
+      const repostCountMap = (repostCountsData || []).reduce((acc: any, curr: any) => {
+        acc[curr.original_thread_id] = (acc[curr.original_thread_id] || 0) + 1;
+        return acc;
+      }, {});
+
+      if (threadsError) throw threadsError;
+
       // Fetch reposts
       const { data: repostsData, error: repostsError } = await supabase
         .from('reposts')
@@ -290,6 +315,7 @@ export default function CommunityScreen() {
         uniqueId: `thread-${t.id}`,
         likeCount: t.likes[0]?.count || 0,
         replyCount: t.replies[0]?.count || 0,
+        repostCount: repostCountMap[t.id] || 0,
       }));
 
       // Process reposts
@@ -431,17 +457,51 @@ export default function CommunityScreen() {
 
       if (error) throw error;
 
+      // Fetch repost counts for search results
+      const { data: repostCountsData } = await supabase
+        .from('reposts')
+        .select('original_thread_id')
+        .in('original_thread_id', data?.map((t: any) => t.id) || []);
+      
+      const repostCountMap = (repostCountsData || []).reduce((acc: any, curr: any) => {
+        acc[curr.original_thread_id] = (acc[curr.original_thread_id] || 0) + 1;
+        return acc;
+      }, {});
+
       const processedResults = data.map(t => ({
         ...t,
         type: 'thread',
         uniqueId: `thread-${t.id}`,
         likeCount: t.likes[0]?.count || 0,
         replyCount: t.replies[0]?.count || 0,
+        repostCount: repostCountMap[t.id] || 0,
       }));
 
       setSearchResults(processedResults);
     } catch (error) {
       console.error('Error searching threads:', error);
+    }
+  }, []);
+
+  const fetchNews = useCallback(async () => {
+    try {
+      const res = await fetch(RSS_TO_JSON_URL);
+      const data = await res.json();
+      if (data && data.items) {
+        const transformedNews = data.items.map((item: any) => ({
+          ...item,
+          title: item.title || 'No title',
+          description: item.description?.replace(/<[^>]*>/g, '')?.trim() || 'No description available',
+          link: item.link || '#',
+          pubDate: item.published || item.publishedParsed || new Date().toISOString(),
+          source: { name: 'Formula 1' },
+        }));
+        setNews(getRandomNews(transformedNews, 5));
+      }
+    } catch (error) {
+      console.error('Error fetching news:', error);
+    } finally {
+      setNewsLoading(false);
     }
   }, []);
 
@@ -606,6 +666,16 @@ export default function CommunityScreen() {
       return;
     }
 
+    // OPTIMISTIC UPDATE - Update UI immediately
+    setThreads(prev => prev.map(t => 
+      t.id === threadId ? { 
+        ...t, 
+        isLiked: !isLiked, 
+        likeCount: isLiked ? Math.max(0, (t.likeCount || 1) - 1) : (t.likeCount || 0) + 1 
+      } : t
+    ));
+
+    // Update server in background
     try {
       if (threadType === 'thread') {
         if (isLiked) {
@@ -620,13 +690,16 @@ export default function CommunityScreen() {
           await supabase.from('likes').insert({ repost_id: threadId, user_id: session.user.id });
         }
       }
-
-      // Update local state
-      setThreads(prev => prev.map(t => 
-        t.id === threadId ? { ...t, isLiked: !isLiked, likeCount: isLiked ? t.likeCount - 1 : t.likeCount + 1 } : t
-      ));
     } catch (error) {
       console.error('Error toggling like:', error);
+      // Revert on error
+      setThreads(prev => prev.map(t => 
+        t.id === threadId ? { 
+          ...t, 
+          isLiked: isLiked, 
+          likeCount: isLiked ? (t.likeCount || 0) + 1 : Math.max(0, (t.likeCount || 1) - 1)
+        } : t
+      ));
     }
   };
 
@@ -636,19 +709,29 @@ export default function CommunityScreen() {
       return;
     }
 
+    // OPTIMISTIC UPDATE - Update UI immediately
+    setThreads(prev => prev.map(t => 
+      t.id === threadId ? { ...t, isBookmarked: !isBookmarked } : t
+    ));
+    setBookmarkedThreads(prev => 
+      isBookmarked 
+        ? prev.filter(t => t.id !== threadId)
+        : [...prev, threads.find(t => t.id === threadId)].filter(Boolean)
+    );
+
+    // Update server in background
     try {
       if (isBookmarked) {
         await supabase.from('bookmarks').delete().eq('thread_id', threadId).eq('user_id', session.user.id);
       } else {
         await supabase.from('bookmarks').insert({ thread_id: threadId, user_id: session.user.id });
       }
-
-      // Update local state
-      setThreads(prev => prev.map(t => 
-        t.id === threadId ? { ...t, isBookmarked: !isBookmarked } : t
-      ));
     } catch (error) {
       console.error('Error toggling bookmark:', error);
+      // Revert on error
+      setThreads(prev => prev.map(t => 
+        t.id === threadId ? { ...t, isBookmarked: isBookmarked } : t
+      ));
     }
   };
 
@@ -694,7 +777,7 @@ export default function CommunityScreen() {
     setShowRepostModal(true);
   };
 
-  const handleRepostSuccess = (newRepost: any) => {
+  const handleRepostSuccess = () => {
     setShowRepostModal(false);
     setSelectedThreadForRepost(null);
     fetchThreads(session);
@@ -734,6 +817,7 @@ export default function CommunityScreen() {
     };
 
     setupSession();
+    fetchNews();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
@@ -773,8 +857,46 @@ export default function CommunityScreen() {
     }
   }, [searchQuery, searchThreads]);
 
+  const renderNews = () => {
+    if (newsLoading) return null;
+    
+    return (
+      <View style={styles.newsContainer}>
+        <View style={styles.newsHeader}>
+          <Text style={styles.newsTitle}>Latest News</Text>
+          <Text style={styles.newsSubtitle}>F1.com</Text>
+        </View>
+        <FlatList
+          data={news}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.newsList}
+          keyExtractor={(item) => item.guid || item.link}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              style={styles.newsCard}
+              onPress={() => Linking.openURL(item.link)}
+            >
+              <Image 
+                source={{ uri: item.image || 'https://via.placeholder.com/280x140/dc2626/ffffff?text=F1+News' }} 
+                style={styles.newsImage} 
+                defaultSource={require('@/assets/images/icon.png')}
+              />
+              <View style={styles.newsContent}>
+                <Text style={styles.newsItemTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.newsTime}>{new Date(item.pubDate).toLocaleDateString()}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+    );
+  };
+
   const renderCreateThread = () => (
-    <View style={styles.createThreadContainer}>
+    <View>
+      {!showBookmarks && !showSearch && renderNews()}
+      <View style={styles.createThreadContainer}>
       <View style={styles.createThreadRow}>
         <User size={40} color="gray" />
         <View style={styles.createThreadInputContainer}>
@@ -794,7 +916,7 @@ export default function CommunityScreen() {
               </TouchableOpacity>
             </View>
           )}
-          <View style={styles.createThreadActions}>
+      <View style={styles.createThreadActions}>
             <TouchableOpacity onPress={pickImage}>
               <Camera size={24} color="#1DA1F2" />
             </TouchableOpacity>
@@ -804,7 +926,9 @@ export default function CommunityScreen() {
           </View>
         </View>
       </View>
+      </View>
     </View>
+
   );
 
   const renderHeader = () => (
@@ -819,7 +943,17 @@ export default function CommunityScreen() {
         <TouchableOpacity onPress={() => setShowSearch(!showSearch)} style={styles.headerButton}>
           <Search size={20} color="#3a3a3a" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => session ? setShowProfileModal(true) : setShowAuth(true)} style={styles.headerButton}>
+        <TouchableOpacity 
+          onPress={() => {
+            if (session) {
+              setSidebarOpen(false); // Close sidebar if open
+              setShowProfileModal(true);
+            } else {
+              setShowAuth(true);
+            }
+          }} 
+          style={styles.headerButton}
+        >
           <User size={20} color="#3a3a3a" />
         </TouchableOpacity>
       </View>
@@ -869,10 +1003,10 @@ export default function CommunityScreen() {
   if (isViewingProfile && selectedProfile) {
     return (
       <OtherUserProfileModal
-        visible={true}
+        isVisible={true}
         onClose={handleCloseProfile}
         userId={selectedProfile.id}
-        session={session}
+        currentUserId={session?.user?.id}
       />
     );
   }
@@ -984,33 +1118,74 @@ export default function CommunityScreen() {
       
       <FlatList
         data={showBookmarks ? bookmarkedThreads : (showSearch ? searchResults : (activeTab === 'following' ? followingThreads : threads))}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleThreadPress(item)} style={styles.threadTouchable}>
-            <PostCard
-              username={item.profiles?.username || 'Anonymous'}
-              avatarUrl={item.profiles?.avatar_url}
-              content={item.content}
-              imageUrl={item.image_url}
-              timestamp={item.created_at}
-              likes={item.likeCount || 0}
-              comments={item.replyCount || 0}
-              isLiked={item.isLiked}
-              isBookmarked={item.isBookmarked}
-              favoriteTeam={item.profiles?.favorite_team}
-              userId={item.user_id}
-              onCommentPress={() => handleThreadPress(item)}
-              onLikePress={() => handleLikeToggle(item.id, item.isLiked, item.type)}
-              onBookmarkPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}
-              onRepostPress={() => handleRepostPress(item)}
-              onDeletePress={() => handleDeleteThread(item.id, item.type)}
-              onProfilePress={handleProfilePress}
-              canDelete={session && item.user_id === session.user.id}
-              canAdminDelete={isCurrentUserAdmin()}
-              isAdmin={isUserAdmin(item.user_id)}
-              threadType={item.type}
-            />
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => {
+          // Render bookmark view
+          if (showBookmarks) {
+            return (
+              <BookmarkCard
+                thread={item}
+                onThreadPress={handleThreadPress}
+                onLikePress={handleLikeToggle}
+                onCommentPress={handleThreadPress}
+                onRepostPress={handleRepostPress}
+                onBookmarkPress={handleBookmarkToggle}
+                onProfilePress={handleProfilePress}
+                onImagePress={(url) => {/* Handle image preview */}}
+              />
+            );
+          }
+          
+          // Render repost with RepostCard
+          if (item.type === 'repost') {
+            return (
+              <RepostCard
+                repost={item}
+                onThreadPress={handleThreadPress}
+                onLikePress={handleLikeToggle}
+                onCommentPress={handleThreadPress}
+                onRepostPress={handleRepostPress}
+                onBookmarkPress={handleBookmarkToggle}
+                onDeletePress={handleDeleteThread}
+                onProfilePress={handleProfilePress}
+                onImagePress={(url) => {/* Handle image preview */}}
+                canDelete={session && item.user_id === session.user.id}
+                canAdminDelete={isCurrentUserAdmin()}
+                isAdmin={isUserAdmin(item.user_id)}
+              />
+            );
+          }
+          
+          // Render regular thread with PostCard
+          return (
+            <TouchableOpacity onPress={() => handleThreadPress(item)} style={styles.threadTouchable}>
+              <PostCard
+                username={item.profiles?.username || 'Anonymous'}
+                avatarUrl={item.profiles?.avatar_url}
+                content={item.content}
+                imageUrl={item.image_url}
+                timestamp={item.created_at}
+                likes={item.likeCount || 0}
+                comments={item.replyCount || 0}
+                reposts={item.repostCount || 0}
+                isLiked={item.isLiked}
+                isBookmarked={item.isBookmarked}
+                favoriteTeam={item.profiles?.favorite_team}
+                userId={item.user_id}
+                userEmail={item.profiles?.email}
+                onCommentPress={() => handleThreadPress(item)}
+                onLikePress={() => handleLikeToggle(item.id, item.isLiked, item.type)}
+                onBookmarkPress={() => handleBookmarkToggle(item.id, item.isBookmarked)}
+                onRepostPress={() => handleRepostPress(item)}
+                onDeletePress={() => handleDeleteThread(item.id, item.type)}
+                onProfilePress={handleProfilePress}
+                canDelete={session && item.user_id === session.user.id}
+                canAdminDelete={isCurrentUserAdmin()}
+                isAdmin={isUserAdmin(item.user_id)}
+                showReadMore={true}
+              />
+            </TouchableOpacity>
+          );
+        }}
         keyExtractor={(item) => item.uniqueId || `${item.type}-${item.id}`}
         ListHeaderComponent={!showBookmarks && !showSearch ? renderCreateThread : null}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -1022,6 +1197,12 @@ export default function CommunityScreen() {
             {showBookmarks ? 'No bookmarks yet.' : showSearch ? 'No results found.' : 'No threads yet.'}
           </Text>
         )}
+        // PERFORMANCE OPTIMIZATIONS
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={10}
       />
 
       {/* Modals */}
@@ -1052,9 +1233,9 @@ export default function CommunityScreen() {
           setShowRepostModal(false);
           setSelectedThreadForRepost(null);
         }}
-        thread={selectedThreadForRepost}
+        originalThread={selectedThreadForRepost}
         session={session}
-        onSuccess={handleRepostSuccess}
+        onRepostSuccess={handleRepostSuccess}
       />
 
       {/* Post Modal */}

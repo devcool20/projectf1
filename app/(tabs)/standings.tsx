@@ -369,6 +369,9 @@ export default function StandingsScreen() {
               style={styles.scrollView} 
               contentContainerStyle={{ paddingBottom: 32, paddingHorizontal: 16 }}
               showsVerticalScrollIndicator={false}
+              bounces={false}
+              overScrollMode="never"
+              scrollEventThrottle={16}
             >
               <AnimatedReanimated.View entering={FadeInUp.duration(600)} style={styles.header}>
                 <Text style={[styles.headerTitle, { fontFamily: 'Formula1-Regular' }]}>Standings 2025</Text>

@@ -13,7 +13,10 @@
       "bundleIdentifier": "com.projectf1.app"
     },
     "android": {
-      "package": "com.projectf1.app"
+      "package": "com.projectf1.app",
+      "jsEngine": "hermes",
+      "enableHermes": true,
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "bundler": "metro",
