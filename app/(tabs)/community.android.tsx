@@ -20,7 +20,7 @@ import { supabase } from '@/lib/supabase';
 import { AuthModal } from '@/components/auth/AuthModal.android';
 import PostCard from '@/components/post-card/index.android';
 import { AnimatedThreadView } from '@/components/community/AnimatedThreadView.android';
-import { User, Camera, X, Menu, MessageCircle, Clapperboard, ShoppingCart, Trophy, Bookmark, Heart, Search, MoreHorizontal, Repeat2 } from 'lucide-react-native';
+import { User, Camera, X, Menu, MessageCircle, Clapperboard, ShoppingCart, Trophy, Bookmark, Heart, Search, MoreHorizontal, Repeat2, Shield, FileText } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
 import { OtherUserProfileModal } from '@/components/OtherUserProfileModal';
@@ -1097,6 +1097,42 @@ export default function CommunityScreen() {
               <Text style={styles.sidebarItemText}>{item.name}</Text>
             </TouchableOpacity>
           ))}
+
+          {/* Legal Links Section */}
+          <View style={{ marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.2)' }}>
+            <TouchableOpacity
+              onPress={() => {
+                router.push('/privacy');
+                closeSidebar();
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 12,
+                borderRadius: 9999,
+              }}
+            >
+              <Shield size={20} color="rgba(255, 255, 255, 0.7)" />
+              <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)', marginLeft: 12 }}>Privacy Policy</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              onPress={() => {
+                router.push('/terms');
+                closeSidebar();
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 12,
+                borderRadius: 9999,
+              }}
+            >
+              <FileText size={20} color="rgba(255, 255, 255, 0.7)" />
+              <Text style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.7)', marginLeft: 12 }}>Terms of Service</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity
             style={styles.sidebarPostButton}
             onPress={() => {

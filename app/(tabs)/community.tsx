@@ -29,7 +29,7 @@ import BookmarkCard from '@/components/community/BookmarkCard';
 import RepostModal from '@/components/RepostModal';
 
 
-import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, Search, ArrowLeft } from 'lucide-react-native';
+import { Home, Clapperboard, Trophy, User, Camera, X, ShoppingCart, MoreHorizontal, Menu, Bookmark, Heart, MessageCircle, Repeat2, Search, ArrowLeft, Shield, FileText } from 'lucide-react-native';
 import EngagementButton from '@/components/engagement-button';
 import * as ImagePicker from 'expo-image-picker';
 import { ProfileModal } from '@/components/ProfileModal';
@@ -1670,7 +1670,45 @@ export default function CommunityScreen() {
               </TouchableOpacity>
             );
           })}
-          </View>
+        </View>
+
+        {/* Legal Links Section */}
+        <View style={{ marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb' }}>
+          <TouchableOpacity
+            onPress={() => {
+              router.push('/privacy');
+              closeSidebar();
+            }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              padding: 12,
+              borderRadius: 9999,
+            }}
+            className="hover:bg-muted"
+          >
+            <Shield size={18} color="#6b7280" />
+            <Text style={{ fontSize: 14, color: '#6b7280', marginLeft: 12 }} className="font-chirp">Privacy Policy</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            onPress={() => {
+              router.push('/terms');
+              closeSidebar();
+            }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              padding: 12,
+              borderRadius: 9999,
+            }}
+            className="hover:bg-muted"
+          >
+            <FileText size={18} color="#6b7280" />
+            <Text style={{ fontSize: 14, color: '#6b7280', marginLeft: 12 }} className="font-chirp">Terms of Service</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
           style={{
             backgroundColor: '#dc2626',
